@@ -42,6 +42,31 @@ class _AssistantTabState extends State<AssistantTab> {
   };
 
   void _handleOption(String option) {
+    if (option == 'Start Over') {
+      setState(() {
+        _messages.clear();
+        _messages.add({
+          'isBot': true,
+          'text':
+              'Hello! I am your AI Auto Assistant. Is something wrong with your car?',
+          'options': ['Yes, help me diagnose', 'Just looking for tips'],
+        });
+      });
+      return;
+    }
+
+    if (option == 'Book Inspection') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const CreateOrderScreen(
+            preFillDescription: 'General Inspection requested via Assistant',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _messages.add({'isBot': false, 'text': option});
 
@@ -55,6 +80,13 @@ class _AssistantTabState extends State<AssistantTab> {
           'isBot': true,
           'text': 'Can you be more specific about "$option"?',
           'options': nextOptions,
+        });
+      } else if (option == 'Just looking for tips') {
+        _messages.add({
+          'isBot': true,
+          'text':
+              'Keep an eye on tire pressure, check fluids every 2 weeks, and never ignore squeaking brakes! Would you like a professional inspection?',
+          'options': ['Book Inspection', 'Start Over'],
         });
       } else {
         _messages.add({

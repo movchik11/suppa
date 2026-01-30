@@ -101,8 +101,18 @@ class OrderCubit extends Cubit<OrderState> {
       });
 
       emit(OrderCreated());
+    } on PostgrestException catch (e) {
+      emit(OrderError('Database error: ${e.message} (${e.code})'));
     } catch (e) {
-      emit(OrderError('Failed to create order: ${e.toString()}'));
+      if (e.toString().contains('Failed to fetch')) {
+        emit(
+          OrderError(
+            'Network error: Failed to connect to server. Please check your connection or CORS settings.',
+          ),
+        );
+      } else {
+        emit(OrderError('Unexpected error: ${e.toString()}'));
+      }
     }
   }
 

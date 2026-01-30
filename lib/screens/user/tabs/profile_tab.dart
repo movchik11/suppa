@@ -8,7 +8,6 @@ import 'package:supa/screens/auth/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:supa/screens/user/sos_screen.dart';
 import 'package:supa/screens/user/locations_screen.dart';
 
 class ProfileTab extends StatelessWidget {
@@ -29,12 +28,14 @@ class ProfileTab extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        if (state is ProfileLoading) {
+        if (state is ProfileLoading || state is ProfileInitial) {
           return const AppLoadingIndicator();
         }
 
-        if (state is ProfileLoaded) {
-          final profile = state.profile;
+        if (state is ProfileLoaded || state is ProfileActionSuccess) {
+          final profile = (state is ProfileLoaded)
+              ? state.profile
+              : (context.read<ProfileCubit>().state as ProfileLoaded).profile;
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -175,21 +176,6 @@ class ProfileTab extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Language switcher coming soon!'),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.emergency, color: Colors.red),
-                        title: const Text('SOS Assistance'),
-                        subtitle: const Text('Emergency help & contacts'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SOSScreen(),
                             ),
                           );
                         },

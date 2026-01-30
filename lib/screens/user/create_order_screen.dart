@@ -40,12 +40,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.preSelectedService != null) {
-      _issueController.text =
-          'Service: ${widget.preSelectedService!.name}\n${widget.preSelectedService!.description}';
-    } else if (widget.preFillDescription != null) {
-      _issueController.text = widget.preFillDescription!;
-    }
+    // Pre-filling removed as per user request to allow manual input.
   }
 
   @override

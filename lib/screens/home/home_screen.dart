@@ -5,6 +5,9 @@ import 'package:supa/screens/user/tabs/history_tab.dart';
 import 'package:supa/screens/user/tabs/profile_tab.dart';
 import 'package:supa/screens/user/tabs/assistant_tab.dart';
 import 'package:supa/screens/user/create_order_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supa/cubits/profile_cubit.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,21 +41,50 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(_titles[_selectedIndex]),
-        actions: _selectedIndex == 2
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CreateOrderScreen(),
-                    ),
-                  ),
+        actions: [
+          if (_selectedIndex == 0) ...[
+            IconButton(
+              icon: const Icon(Icons.add_shopping_cart, color: Colors.blue),
+              tooltip: 'Book Service',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateOrderScreen(),
                 ),
-              ]
-            : null,
+              ),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: () => setState(() => _selectedIndex = 4),
+              child: BlocBuilder<ProfileCubit, ProfileState>(
+                builder: (context, state) {
+                  String? avatarUrl;
+                  if (state is ProfileLoaded)
+                    avatarUrl = state.profile.avatarUrl;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.blue.withAlpha(51),
+                      backgroundImage: avatarUrl != null
+                          ? CachedNetworkImageProvider(avatarUrl)
+                          : null,
+                      child: avatarUrl == null
+                          ? const Icon(Icons.person, size: 18)
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
       ),
-      body: _tabs[_selectedIndex],
+      body: _selectedIndex == 2
+          ? GarageTab(
+              onNavigateToServices: () => setState(() => _selectedIndex = 0),
+            )
+          : _tabs[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {

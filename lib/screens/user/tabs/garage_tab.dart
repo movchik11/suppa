@@ -12,7 +12,8 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 
 class GarageTab extends StatelessWidget {
-  const GarageTab({super.key});
+  final VoidCallback? onNavigateToServices;
+  const GarageTab({super.key, this.onNavigateToServices});
 
   @override
   Widget build(BuildContext context) {
@@ -115,37 +116,45 @@ class GarageTab extends StatelessWidget {
         )
         .length;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.blue.withAlpha(25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.withAlpha(51)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.notifications_active, color: Colors.blue, size: 30),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$upcomingServices Upcoming Services',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const Text(
-                  'Keep your cars in top shape!',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
+    return InkWell(
+      onTap: onNavigateToServices,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.blue.withAlpha(25),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.blue.withAlpha(51)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.notifications_active,
+              color: Colors.blue,
+              size: 30,
             ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$upcomingServices Upcoming Services',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Text(
+                    'Tap to view available services',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

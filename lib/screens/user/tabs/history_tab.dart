@@ -53,7 +53,11 @@ class HistoryTab extends StatelessWidget {
               children: [
                 const Icon(Icons.error, size: 80, color: Colors.red),
                 const SizedBox(height: 16),
-                Text(state.message),
+                Text(
+                  'Failed to load history: ${state.message}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ],
             ),
           );
