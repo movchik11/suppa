@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supa/screens/user/create_order_screen.dart';
 
 class AssistantTab extends StatefulWidget {
   const AssistantTab({super.key});
@@ -143,11 +144,22 @@ class _AssistantTabState extends State<AssistantTab> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
-                // Future: Navigate to booking or service
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreateOrderScreen(
+                      preFillDescription: 'Diagnosis: ${msg['text']}',
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 45),
                 backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('Book Suggested Service'),
             ),

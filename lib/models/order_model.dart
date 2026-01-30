@@ -8,6 +8,8 @@ class Order {
   final DateTime? scheduledAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? branchName;
+  final String urgencyLevel;
 
   Order({
     required this.id,
@@ -19,6 +21,8 @@ class Order {
     this.scheduledAt,
     required this.createdAt,
     required this.updatedAt,
+    this.branchName,
+    this.urgencyLevel = 'Normal',
   });
 
   factory Order.fromMap(Map<String, dynamic> map) {
@@ -34,6 +38,8 @@ class Order {
           : null,
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
+      branchName: map['branch_name'],
+      urgencyLevel: map['urgency_level'] ?? 'Normal',
     );
   }
 
@@ -45,6 +51,8 @@ class Order {
       'issue_description': issueDescription,
       'status': status,
       'scheduled_at': scheduledAt?.toIso8601String(),
+      'branch_name': branchName,
+      'urgency_level': urgencyLevel,
     };
   }
 }

@@ -254,7 +254,27 @@ class ProfileTab extends StatelessWidget {
           );
         }
 
-        return const Center(child: Text('Something went wrong'));
+        if (state is ProfileError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(state.message, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.read<ProfileCubit>().fetchProfile(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Fallback or Initial state
+        context.read<ProfileCubit>().fetchProfile();
+        return const AppLoadingIndicator();
       },
     );
   }

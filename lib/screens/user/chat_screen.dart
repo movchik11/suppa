@@ -44,55 +44,64 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: BlocBuilder<ChatCubit, ChatState>(
-                builder: (context, state) {
-                  if (state is ChatLoading) {
-                    return const AppLoadingIndicator();
-                  }
-                  if (state is ChatLoaded) {
-                    final messages = state.messages;
-                    if (messages.isEmpty) {
-                      return const Center(
-                        child: Text('Start a conversation...'),
-                      );
+        body: BlocListener<ChatCubit, ChatState>(
+          listener: (context, state) {
+            if (state is ChatError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: Column(
+            children: [
+              Expanded(
+                child: BlocBuilder<ChatCubit, ChatState>(
+                  builder: (context, state) {
+                    if (state is ChatLoading) {
+                      return const AppLoadingIndicator();
                     }
-
-                    // Auto scroll to bottom
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_scrollController.hasClients) {
-                        _scrollController.animateTo(
-                          _scrollController.position.maxScrollExtent,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
+                    if (state is ChatLoaded) {
+                      final messages = state.messages;
+                      if (messages.isEmpty) {
+                        return const Center(
+                          child: Text('Start a conversation...'),
                         );
                       }
-                    });
 
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final msg = messages[index];
-                        final isMe =
-                            msg.senderId ==
-                            Supabase.instance.client.auth.currentUser?.id;
-                        return _buildMessageBubble(msg, isMe);
-                      },
-                    );
-                  }
-                  if (state is ChatError) {
-                    return Center(child: Text('Error: ${state.message}'));
-                  }
-                  return const SizedBox.shrink();
-                },
+                      // Auto scroll to bottom
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.animateTo(
+                            _scrollController.position.maxScrollExtent,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          );
+                        }
+                      });
+
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final msg = messages[index];
+                          final isMe =
+                              msg.senderId ==
+                              Supabase.instance.client.auth.currentUser?.id;
+                          return _buildMessageBubble(msg, isMe);
+                        },
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
-            ),
-            _buildInputArea(context),
-          ],
+              _buildInputArea(context),
+            ],
+          ),
         ),
       ),
     );

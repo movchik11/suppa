@@ -8,21 +8,19 @@ class Service {
   final String category;
   final String? estimatedTime;
   final double rating;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final bool isCombo;
 
   Service({
     required this.id,
     required this.name,
     required this.description,
-    required this.durationHours,
     required this.price,
+    required this.category,
+    required this.durationHours,
     this.imageUrl,
-    this.category = 'General',
-    this.estimatedTime,
     this.rating = 5.0,
-    required this.createdAt,
-    required this.updatedAt,
+    this.estimatedTime,
+    this.isCombo = false,
   });
 
   factory Service.fromMap(Map<String, dynamic> map) {
@@ -35,9 +33,8 @@ class Service {
       imageUrl: map['image_url'],
       category: map['category'] ?? 'General',
       estimatedTime: map['estimated_time'],
-      rating: (map['rating'] as num?)?.toDouble() ?? 5.0,
-      createdAt: DateTime.parse(map['created_at']),
-      updatedAt: DateTime.parse(map['updated_at']),
+      rating: (map['rating'] ?? 5.0).toDouble(),
+      isCombo: map['is_combo'] ?? false,
     );
   }
 

@@ -53,7 +53,9 @@ class _ServicesTabState extends State<ServicesTab> {
                       if (selectedCategory == 'All') ...[
                         _buildSectionHeader('Special Combo Packs'),
                         const SizedBox(height: 12),
-                        _buildComboPacks(),
+                        _buildComboPacks(
+                          state.services.where((s) => s.isCombo).toList(),
+                        ),
                         const SizedBox(height: 24),
                         _buildSectionHeader('All Services'),
                         const SizedBox(height: 12),
@@ -140,72 +142,82 @@ class _ServicesTabState extends State<ServicesTab> {
     );
   }
 
-  Widget _buildComboPacks() {
+  Widget _buildComboPacks(List<Service> combos) {
+    if (combos.isEmpty) {
+      return const Center(child: Text('No promo packs available'));
+    }
     return SizedBox(
       height: 160,
-      child: ListView(
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        children: [
-          _buildComboCard(
-            'Full Maintenance',
-            'Oil + Filters + Check',
-            '89.99',
-            const Color(0xFF673AB7),
-          ),
-          _buildComboCard(
-            'Winter Ready',
-            'Tires + Battery + Fluids',
-            '120.00',
-            const Color(0xFF1E88E5),
-          ),
-        ],
+        itemCount: combos.length,
+        itemBuilder: (context, index) {
+          final service = combos[index];
+          return _buildComboCard(service);
+        },
       ),
     );
   }
 
-  Widget _buildComboCard(String title, String desc, String price, Color color) {
-    return Container(
-      width: 260,
-      margin: const EdgeInsets.only(right: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withAlpha(51),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(77)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'SAVE 20%',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+  Widget _buildComboCard(Service service) {
+    final color = Colors.blue; // Default or could be based on category
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                CreateOrderScreen(preSelectedService: service),
+          ),
+        );
+      },
+      child: Container(
+        width: 260,
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withAlpha(51),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withAlpha(77)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'PROMO PACK',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            desc,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          const Spacer(),
-          Text(
-            '\$$price',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              service.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              service.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            const Spacer(),
+            Text(
+              '\$${service.price.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
     );
   }

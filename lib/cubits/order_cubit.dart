@@ -78,6 +78,8 @@ class OrderCubit extends Cubit<OrderState> {
     String issueDescription, {
     String? vehicleId,
     DateTime? scheduledAt,
+    String? branchName,
+    String urgencyLevel = 'Normal',
   }) async {
     emit(OrderLoading());
     try {
@@ -94,6 +96,8 @@ class OrderCubit extends Cubit<OrderState> {
         'status': 'pending',
         'vehicle_id': vehicleId,
         'scheduled_at': scheduledAt?.toIso8601String(),
+        'branch_name': branchName,
+        'urgency_level': urgencyLevel,
       });
 
       emit(OrderCreated());
