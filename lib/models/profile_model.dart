@@ -5,6 +5,9 @@ class Profile {
   final String? displayName;
   final String? phoneNumber;
   final String? avatarUrl;
+  final int loyaltyPoints;
+  final String preferredContact;
+  final bool notificationsEnabled;
   final DateTime createdAt;
 
   Profile({
@@ -14,6 +17,9 @@ class Profile {
     this.displayName,
     this.phoneNumber,
     this.avatarUrl,
+    this.loyaltyPoints = 0,
+    this.preferredContact = 'Phone',
+    this.notificationsEnabled = true,
     required this.createdAt,
   });
 
@@ -25,7 +31,12 @@ class Profile {
       displayName: map['display_name'],
       phoneNumber: map['phone_number'],
       avatarUrl: map['avatar_url'],
-      createdAt: DateTime.parse(map['created_at']),
+      loyaltyPoints: map['loyalty_points'] ?? 0,
+      preferredContact: map['preferred_contact'] ?? 'Phone',
+      notificationsEnabled: map['notifications_enabled'] ?? true,
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
+          : DateTime.now(),
     );
   }
 
@@ -35,6 +46,9 @@ class Profile {
       'phone_number': phoneNumber,
       'avatar_url': avatarUrl,
       'role': role,
+      'loyalty_points': loyaltyPoints,
+      'preferred_contact': preferredContact,
+      'notifications_enabled': notificationsEnabled,
     };
   }
 }

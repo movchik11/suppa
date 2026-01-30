@@ -7,6 +7,7 @@ import 'package:supa/models/vehicle_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 
 class GarageTab extends StatelessWidget {
@@ -71,17 +72,123 @@ class GarageTab extends StatelessWidget {
 
       return RefreshIndicator(
         onRefresh: () => context.read<GarageCubit>().fetchVehicles(),
-        child: ListView.builder(
+        child: ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: state.vehicles.length,
-          itemBuilder: (context, index) {
-            final vehicle = state.vehicles[index];
-            return _VehicleCard(vehicle: vehicle);
-          },
+          children: [
+            // --- MAINTENANCE OVERVIEW ---
+            _buildMaintenanceOverview(state.vehicles),
+            const SizedBox(height: 24),
+
+            _buildSectionHeader('Your Vehicles'),
+            const SizedBox(height: 12),
+            ...state.vehicles.map((v) => _VehicleCard(vehicle: v)),
+
+            const SizedBox(height: 24),
+            _buildSectionHeader('Recent Expenses'),
+            const SizedBox(height: 12),
+            _buildExpenseLedger(state.expenses, state.vehicles),
+            const SizedBox(height: 80), // Space for FAB
+          ],
         ),
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildMaintenanceOverview(List<Vehicle> vehicles) {
+    int upcomingServices = vehicles
+        .where(
+          (v) =>
+              v.nextServiceMileage != null ||
+              (v.lastServiceDate != null &&
+                  v.lastServiceDate!.isBefore(
+                    DateTime.now().subtract(const Duration(days: 180)),
+                  )),
+        )
+        .length;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.blue.withAlpha(25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.blue.withAlpha(51)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_active, color: Colors.blue, size: 30),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$upcomingServices Upcoming Services',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const Text(
+                  'Keep your cars in top shape!',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.grey),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpenseLedger(List<dynamic> expenses, List<Vehicle> vehicles) {
+    if (expenses.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(
+            child: Text(
+              'No expenses recorded yet',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Column(
+        children: expenses.take(5).map((e) {
+          final vehicle = vehicles.firstWhere(
+            (v) => v.id == e.vehicleId,
+            orElse: () => vehicles.first,
+          );
+          return ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.white12,
+              child: Icon(Icons.receipt_long, size: 20, color: Colors.blue),
+            ),
+            title: Text(e.category),
+            subtitle: Text('${vehicle.brand} ${vehicle.model}'),
+            trailing: Text(
+              '-\$${e.amount.toStringAsFixed(2)}',
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   void _showVehicleDialog(BuildContext context, {Vehicle? initialVehicle}) {
@@ -297,22 +404,37 @@ class _VehicleCard extends StatelessWidget {
                         fontSize: 18,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    if (vehicle.licensePlate != null)
-                      Text(
-                        'Plate: ${vehicle.licensePlate}',
-                        style: const TextStyle(color: Colors.grey),
+                    const SizedBox(height: 6),
+                    if (vehicle.nextServiceMileage != null)
+                      _buildReminderBadge(
+                        Icons.settings_suggest,
+                        'Service at ${vehicle.nextServiceMileage} km',
+                        Colors.orange,
                       ),
-                    if (vehicle.year != null)
+                    if (vehicle.insuranceExpiry != null)
+                      _buildReminderBadge(
+                        Icons.security,
+                        'Ins: ${DateFormat('MMM yyyy').format(vehicle.insuranceExpiry!)}',
+                        Colors.blue,
+                      ),
+                    if (vehicle.nextServiceMileage == null &&
+                        vehicle.insuranceExpiry == null)
                       Text(
-                        'Year: ${vehicle.year}',
-                        style: const TextStyle(color: Colors.grey),
+                        'Plate: ${vehicle.licensePlate ?? 'N/A'}',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
                       ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: const Icon(Icons.add_chart, color: Colors.blue, size: 20),
+                onPressed: () => _showExpenseDialog(context, vehicle.id),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                 onPressed: () {
                   showDialog(
                     context: context,
@@ -346,6 +468,88 @@ class _VehicleCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildReminderBadge(IconData icon, String text, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExpenseDialog(BuildContext context, String vehicleId) {
+    final amountController = TextEditingController();
+    String selectedCategory = 'Fuel';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Expense'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amountController,
+              decoration: const InputDecoration(labelText: 'Amount (\$)'),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: selectedCategory,
+              decoration: const InputDecoration(labelText: 'Category'),
+              items: [
+                'Fuel',
+                'Repair',
+                'Service',
+                'Wash',
+                'Insurance',
+                'Other',
+              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              onChanged: (val) => selectedCategory = val!,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final amount = double.tryParse(amountController.text);
+              if (amount != null) {
+                context.read<GarageCubit>().addExpense(
+                  vehicleId: vehicleId,
+                  amount: amount,
+                  category: selectedCategory,
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
       ),
     );
   }

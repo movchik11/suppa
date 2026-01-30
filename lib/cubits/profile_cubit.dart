@@ -54,6 +54,9 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? phoneNumber,
     XFile? avatar,
     String? existingAvatarUrl,
+    int? loyaltyPoints,
+    String? preferredContact,
+    bool? notificationsEnabled,
   }) async {
     emit(ProfileLoading());
     try {
@@ -70,14 +73,17 @@ class ProfileCubit extends Cubit<ProfileState> {
         avatarUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
       }
 
-      await supabase
-          .from('profiles')
-          .update({
-            'display_name': displayName,
-            'phone_number': phoneNumber,
-            'avatar_url': avatarUrl,
-          })
-          .eq('id', userId);
+      final updates = {
+        if (displayName != null) 'display_name': displayName,
+        if (phoneNumber != null) 'phone_number': phoneNumber,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (loyaltyPoints != null) 'loyalty_points': loyaltyPoints,
+        if (preferredContact != null) 'preferred_contact': preferredContact,
+        if (notificationsEnabled != null)
+          'notifications_enabled': notificationsEnabled,
+      };
+
+      await supabase.from('profiles').update(updates).eq('id', userId);
 
       emit(ProfileActionSuccess());
       await fetchProfile();

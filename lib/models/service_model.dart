@@ -5,6 +5,9 @@ class Service {
   final double durationHours;
   final double price;
   final String? imageUrl;
+  final String category;
+  final String? estimatedTime;
+  final double rating;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -15,6 +18,9 @@ class Service {
     required this.durationHours,
     required this.price,
     this.imageUrl,
+    this.category = 'General',
+    this.estimatedTime,
+    this.rating = 5.0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,6 +33,9 @@ class Service {
       durationHours: (map['duration_hours'] as num?)?.toDouble() ?? 0.0,
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       imageUrl: map['image_url'],
+      category: map['category'] ?? 'General',
+      estimatedTime: map['estimated_time'],
+      rating: (map['rating'] as num?)?.toDouble() ?? 5.0,
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
     );
@@ -39,6 +48,9 @@ class Service {
       'duration_hours': durationHours,
       'price': price,
       'image_url': imageUrl,
+      'category': category,
+      'estimated_time': estimatedTime,
+      'rating': rating,
     };
   }
 }

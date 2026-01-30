@@ -7,6 +7,9 @@ class Vehicle {
   final String? licensePlate;
   final String? color;
   final String? imageUrl;
+  final DateTime? lastServiceDate;
+  final int? nextServiceMileage;
+  final DateTime? insuranceExpiry;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +22,9 @@ class Vehicle {
     this.licensePlate,
     this.color,
     this.imageUrl,
+    this.lastServiceDate,
+    this.nextServiceMileage,
+    this.insuranceExpiry,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,6 +39,13 @@ class Vehicle {
       licensePlate: map['license_plate'],
       color: map['color'],
       imageUrl: map['image_url'],
+      lastServiceDate: map['last_service_date'] != null
+          ? DateTime.parse(map['last_service_date'])
+          : null,
+      nextServiceMileage: map['next_service_mileage'],
+      insuranceExpiry: map['insurance_expiry'] != null
+          ? DateTime.parse(map['insurance_expiry'])
+          : null,
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
     );
@@ -47,6 +60,9 @@ class Vehicle {
       'color': color,
       'image_url': imageUrl,
       'user_id': userId,
+      'last_service_date': lastServiceDate?.toIso8601String(),
+      'next_service_mileage': nextServiceMileage,
+      'insurance_expiry': insuranceExpiry?.toIso8601String(),
     };
   }
 }

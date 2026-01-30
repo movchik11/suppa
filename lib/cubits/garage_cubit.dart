@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/vehicle_model.dart';
+import 'package:supa/models/expense_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -12,7 +13,8 @@ class GarageLoading extends GarageState {}
 
 class VehiclesLoaded extends GarageState {
   final List<Vehicle> vehicles;
-  VehiclesLoaded(this.vehicles);
+  final List<Expense> expenses;
+  VehiclesLoaded(this.vehicles, {this.expenses = const []});
 }
 
 class VehicleActionSuccess extends GarageState {}
@@ -48,7 +50,17 @@ class GarageCubit extends Cubit<GarageState> {
           .map((item) => Vehicle.fromMap(item))
           .toList();
 
-      emit(VehiclesLoaded(vehicles));
+      final expenseData = await supabase
+          .from('vehicle_expenses')
+          .select()
+          .eq('profile_id', userId)
+          .order('date', ascending: false);
+
+      final List<Expense> expenses = (expenseData as List)
+          .map((item) => Expense.fromMap(item))
+          .toList();
+
+      emit(VehiclesLoaded(vehicles, expenses: expenses));
     } catch (e) {
       emit(GarageError('Failed to load garage: ${e.toString()}'));
     }
@@ -111,6 +123,9 @@ class GarageCubit extends Cubit<GarageState> {
     String? color,
     XFile? newImage,
     String? existingImageUrl,
+    DateTime? lastServiceDate,
+    int? nextServiceMileage,
+    DateTime? insuranceExpiry,
   }) async {
     emit(GarageLoading());
     try {
@@ -137,6 +152,12 @@ class GarageCubit extends Cubit<GarageState> {
             'license_plate': licensePlate,
             'color': color,
             'image_url': imageUrl,
+            if (lastServiceDate != null)
+              'last_service_date': lastServiceDate.toIso8601String(),
+            if (nextServiceMileage != null)
+              'next_service_mileage': nextServiceMileage,
+            if (insuranceExpiry != null)
+              'insurance_expiry': insuranceExpiry.toIso8601String(),
           })
           .eq('id', vehicleId);
 
@@ -148,12 +169,38 @@ class GarageCubit extends Cubit<GarageState> {
   }
 
   // Delete vehicle
+  // Delete vehicle
   Future<void> deleteVehicle(String vehicleId) async {
     try {
       await supabase.from('vehicles').delete().eq('id', vehicleId);
       await fetchVehicles();
     } catch (e) {
       emit(GarageError('Failed to delete vehicle: ${e.toString()}'));
+    }
+  }
+
+  Future<void> addExpense({
+    required String vehicleId,
+    required double amount,
+    required String category,
+    String? description,
+  }) async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await supabase.from('vehicle_expenses').insert({
+        'vehicle_id': vehicleId,
+        'profile_id': userId,
+        'amount': amount,
+        'category': category,
+        'description': description,
+        'date': DateTime.now().toIso8601String(),
+      });
+
+      await fetchVehicles();
+    } catch (e) {
+      emit(GarageError('Failed to add expense: ${e.toString()}'));
     }
   }
 }
