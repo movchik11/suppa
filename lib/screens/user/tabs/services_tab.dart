@@ -10,59 +10,56 @@ class ServicesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ServiceCubit()..fetchServices(),
-      child: BlocBuilder<ServiceCubit, ServiceState>(
-        builder: (context, state) {
-          if (state is ServiceLoading) {
-            return Center(
-              child: Lottie.asset(
-                'assets/animations/loading.json',
-                height: 200,
-                errorBuilder: (context, error, stackTrace) =>
-                    const CircularProgressIndicator(),
-              ),
-            );
-          } else if (state is ServicesLoaded) {
-            if (state.services.isEmpty) {
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.construction, size: 80, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text('No services available yet'),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () => context.read<ServiceCubit>().fetchServices(),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: state.services.length,
-                itemBuilder: (context, index) {
-                  final service = state.services[index];
-                  return _ServiceListItem(service: service);
-                },
-              ),
-            );
-          } else if (state is ServiceError) {
-            return Center(
+    return BlocBuilder<ServiceCubit, ServiceState>(
+      builder: (context, state) {
+        if (state is ServiceLoading) {
+          return Center(
+            child: Lottie.asset(
+              'assets/animations/loading.json',
+              height: 200,
+              errorBuilder: (context, error, stackTrace) =>
+                  const CircularProgressIndicator(),
+            ),
+          );
+        } else if (state is ServicesLoaded) {
+          if (state.services.isEmpty) {
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error, size: 80, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(state.message),
+                  Icon(Icons.construction, size: 80, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text('No services available yet'),
                 ],
               ),
             );
           }
-          return const SizedBox.shrink();
-        },
-      ),
+
+          return RefreshIndicator(
+            onRefresh: () => context.read<ServiceCubit>().fetchServices(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.services.length,
+              itemBuilder: (context, index) {
+                final service = state.services[index];
+                return _ServiceListItem(service: service);
+              },
+            ),
+          );
+        } else if (state is ServiceError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, size: 80, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(state.message),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 }
@@ -88,13 +85,28 @@ class _ServiceListItem extends StatelessWidget {
               ),
               child: Image.network(
                 service.imageUrl!,
-                height: 180,
+                height: 200,
+                width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  height: 180,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.car_repair, size: 60),
+                  height: 200,
+                  color: Colors.white12,
+                  child: const Icon(
+                    Icons.car_repair,
+                    size: 80,
+                    color: Colors.white38,
+                  ),
                 ),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 200,
+                    color: Colors.white12,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white24),
+                    ),
+                  );
+                },
               ),
             ),
           Padding(

@@ -32,6 +32,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     }
   }
 
+  @override
   void dispose() {
     _carModelController.dispose();
     _issueController.dispose();
@@ -153,7 +154,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   children: [
                                     Expanded(
                                       child: DropdownButtonFormField<String>(
-                                        value: _selectedVehicleId,
+                                        initialValue: _selectedVehicleId,
                                         style: const TextStyle(
                                           color: Colors.white,
                                         ),
@@ -395,7 +396,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       lastDate: DateTime.now().add(const Duration(days: 30)),
     );
 
-    if (date != null) {
+    if (date != null && context.mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),

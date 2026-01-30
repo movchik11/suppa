@@ -32,7 +32,7 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> _checkSession() async {
     await Future.delayed(Duration.zero); // Ensure next event loop for listeners
     final session = supabase.auth.currentSession;
-    if (session != null && session.user != null) {
+    if (session != null) {
       await _fetchRoleAndEmit(session.user);
     } else {
       emit(AuthUnauthenticated());

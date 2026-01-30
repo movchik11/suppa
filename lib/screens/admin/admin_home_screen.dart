@@ -171,27 +171,27 @@ class AdminHomeScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
+            RadioListTile<String>(
               title: const Text('User'),
-              leading: Radio(
-                value: 'user',
-                groupValue: currentRole,
-                onChanged: (value) {
+              value: 'user',
+              groupValue: currentRole,
+              onChanged: (value) {
+                if (value != null) {
                   Navigator.pop(dialogContext);
-                  context.read<AdminCubit>().updateUserRole(userId, 'user');
-                },
-              ),
+                  context.read<AdminCubit>().updateUserRole(userId, value);
+                }
+              },
             ),
-            ListTile(
+            RadioListTile<String>(
               title: const Text('Admin'),
-              leading: Radio(
-                value: 'admin',
-                groupValue: currentRole,
-                onChanged: (value) {
+              value: 'admin',
+              groupValue: currentRole,
+              onChanged: (value) {
+                if (value != null) {
                   Navigator.pop(dialogContext);
-                  context.read<AdminCubit>().updateUserRole(userId, 'admin');
-                },
-              ),
+                  context.read<AdminCubit>().updateUserRole(userId, value);
+                }
+              },
             ),
           ],
         ),

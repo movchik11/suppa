@@ -18,7 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordVisible = false;
   final supabase = Supabase.instance.client;
 
-  register() async {
+  Future<void> register() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -73,24 +73,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: GlassContainer(
-                borderRadius: BorderRadius.circular(20),
-                blur: 10,
-                borderGradient: LinearGradient(
-                  colors: [
-                    Colors.white.withAlpha(153),
-                    Colors.white.withAlpha(26),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withAlpha(26),
-                    Colors.white.withAlpha(13),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Form(
@@ -128,19 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(
                             labelText: 'Email',
-                            labelStyle: TextStyle(color: Colors.white70),
-                            prefixIcon: Icon(
-                              Icons.email_outlined,
-                              color: Colors.white70,
-                            ),
-                            fillColor: Colors.white12,
-                            filled: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(10),
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
+                            prefixIcon: Icon(Icons.email_outlined),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -159,19 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             labelText: 'Password',
-                            labelStyle: const TextStyle(color: Colors.white70),
-                            prefixIcon: const Icon(
-                              Icons.lock_outline,
-                              color: Colors.white70,
-                            ),
-                            fillColor: Colors.white12,
-                            filled: true,
-                            border: const OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(10),
-                              ),
-                              borderSide: BorderSide.none,
-                            ),
+                            prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
@@ -205,23 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               )
                             : ElevatedButton(
                                 onPressed: register,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.deepPurple,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 15,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Register',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                child: const Text('Register'),
                               ),
                         const SizedBox(height: 20),
                         Row(

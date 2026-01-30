@@ -4,6 +4,7 @@ class Profile {
   final String role;
   final String? displayName;
   final String? phoneNumber;
+  final String? avatarUrl;
   final DateTime createdAt;
 
   Profile({
@@ -12,6 +13,7 @@ class Profile {
     required this.role,
     this.displayName,
     this.phoneNumber,
+    this.avatarUrl,
     required this.createdAt,
   });
 
@@ -22,6 +24,7 @@ class Profile {
       role: map['role'] ?? 'user',
       displayName: map['display_name'],
       phoneNumber: map['phone_number'],
+      avatarUrl: map['avatar_url'],
       createdAt: DateTime.parse(map['created_at']),
     );
   }
@@ -30,6 +33,7 @@ class Profile {
     return {
       'display_name': displayName,
       'phone_number': phoneNumber,
+      'avatar_url': avatarUrl,
       'role': role,
     };
   }
