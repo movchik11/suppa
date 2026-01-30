@@ -3,6 +3,7 @@ import 'package:supa/screens/user/tabs/services_tab.dart';
 import 'package:supa/screens/user/tabs/garage_tab.dart';
 import 'package:supa/screens/user/tabs/history_tab.dart';
 import 'package:supa/screens/user/tabs/profile_tab.dart';
+import 'package:supa/screens/user/tabs/assistant_tab.dart';
 import 'package:supa/screens/user/create_order_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _tabs = [
     const ServicesTab(),
+    const AssistantTab(),
     const GarageTab(),
     const HistoryTab(),
     const ProfileTab(),
@@ -24,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _titles = [
     'Our Services',
+    'AI Assistant',
     'My Garage',
     'Order History',
     'My Profile',
@@ -62,6 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.build), label: 'Services'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy),
+            label: 'Assistant',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_car),
             label: 'Garage',

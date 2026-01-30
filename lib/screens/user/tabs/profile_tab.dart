@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/cubits/profile_cubit.dart';
+import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supa/screens/auth/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supa/screens/user/sos_screen.dart';
+import 'package:supa/screens/user/locations_screen.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -75,6 +78,10 @@ class ProfileTab extends StatelessWidget {
 
                 // --- LOYALTY CARD ---
                 _buildLoyaltyCard(profile),
+                const SizedBox(height: 24),
+
+                // --- REFERRAL SECTION ---
+                _buildInviteSection(profile),
                 const SizedBox(height: 24),
 
                 // --- PERSONAL INFO ---
@@ -172,9 +179,48 @@ class ProfileTab extends StatelessWidget {
                           );
                         },
                       ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.emergency, color: Colors.red),
+                        title: const Text('SOS Assistance'),
+                        subtitle: const Text('Emergency help & contacts'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SOSScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.location_on,
+                          color: Colors.blue,
+                        ),
+                        title: const Text('Our Branches'),
+                        subtitle: const Text('Find and navigate to us'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LocationsScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 24),
+
+                // --- APPEARANCE ---
+                _buildSectionHeader('Appearance'),
+                _buildAppThemesSection(context),
 
                 const SizedBox(height: 32),
                 SizedBox(
@@ -296,6 +342,104 @@ class ProfileTab extends StatelessWidget {
             style: const TextStyle(color: Colors.white54, fontSize: 11),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAppThemesSection(BuildContext context) {
+    final isLightMode = context.watch<ThemeCubit>().state;
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          isLightMode ? Icons.light_mode : Icons.dark_mode,
+          color: Colors.orange,
+        ),
+        title: const Text('Theme Settings'),
+        subtitle: Text(isLightMode ? 'Light Appearance' : 'Dark Appearance'),
+        trailing: Switch(
+          value: isLightMode,
+          onChanged: (val) => context.read<ThemeCubit>().toggleTheme(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInviteSection(Profile profile) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.green.withAlpha(25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.withAlpha(51)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Invite Friends',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Get 50 points for every friend!',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white12,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    profile.referralCode ?? 'AUTO-REF',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          _buildQRPlaceholder(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQRPlaceholder() {
+    return Container(
+      width: 80,
+      height: 80,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 5,
+          mainAxisSpacing: 2,
+          crossAxisSpacing: 2,
+        ),
+        itemCount: 25,
+        itemBuilder: (context, index) {
+          return Container(
+            color: (index % 3 == 0 || index % 7 == 2)
+                ? Colors.black
+                : Colors.transparent,
+          );
+        },
       ),
     );
   }

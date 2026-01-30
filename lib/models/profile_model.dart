@@ -8,6 +8,9 @@ class Profile {
   final int loyaltyPoints;
   final String preferredContact;
   final bool notificationsEnabled;
+  final String? referralCode;
+  final String? referredBy;
+  final bool isLightMode;
   final DateTime createdAt;
 
   Profile({
@@ -20,6 +23,9 @@ class Profile {
     this.loyaltyPoints = 0,
     this.preferredContact = 'Phone',
     this.notificationsEnabled = true,
+    this.referralCode,
+    this.referredBy,
+    this.isLightMode = false,
     required this.createdAt,
   });
 
@@ -34,6 +40,9 @@ class Profile {
       loyaltyPoints: map['loyalty_points'] ?? 0,
       preferredContact: map['preferred_contact'] ?? 'Phone',
       notificationsEnabled: map['notifications_enabled'] ?? true,
+      referralCode: map['referral_code'],
+      referredBy: map['referred_by'],
+      isLightMode: map['is_light_mode'] ?? false,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : DateTime.now(),
@@ -49,6 +58,7 @@ class Profile {
       'loyalty_points': loyaltyPoints,
       'preferred_contact': preferredContact,
       'notifications_enabled': notificationsEnabled,
+      'is_light_mode': isLightMode,
     };
   }
 }

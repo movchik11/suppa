@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/garage_cubit.dart';
 import 'package:supa/models/vehicle_model.dart';
+import 'package:supa/models/document_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -426,44 +427,67 @@ class _VehicleCard extends StatelessWidget {
                           fontSize: 13,
                         ),
                       ),
+                    const SizedBox(height: 12),
+                    _buildDocumentVault(
+                      context,
+                      vehicle.id,
+                      (context.read<GarageCubit>().state as VehiclesLoaded)
+                          .documents,
+                    ),
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.add_chart, color: Colors.blue, size: 20),
-                onPressed: () => _showExpenseDialog(context, vehicle.id),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      title: const Text('Delete Vehicle'),
-                      content: const Text(
-                        'Are you sure you want to remove this vehicle from your garage?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            context.read<GarageCubit>().deleteVehicle(
-                              vehicle.id,
-                            );
-                            Navigator.pop(dialogContext);
-                          },
-                          child: const Text(
-                            'Delete',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
+              Column(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.add_chart,
+                      color: Colors.blue,
+                      size: 20,
                     ),
-                  );
-                },
+                    onPressed: () => _showExpenseDialog(context, vehicle.id),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.file_copy,
+                      color: Colors.green,
+                      size: 20,
+                    ),
+                    onPressed: () => _showDocumentDialog(context, vehicle.id),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Delete Vehicle'),
+                          content: const Text(
+                            'Are you sure you want to remove this vehicle from your garage?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                context.read<GarageCubit>().deleteVehicle(
+                                  vehicle.id,
+                                );
+                                Navigator.pop(dialogContext);
+                              },
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -550,6 +574,133 @@ class _VehicleCard extends StatelessWidget {
             child: const Text('Add'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentVault(
+    BuildContext context,
+    String vehicleId,
+    List<VehicleDocument> allDocs,
+  ) {
+    final docs = allDocs.where((d) => d.vehicleId == vehicleId).toList();
+    if (docs.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 25,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: docs.length,
+        itemBuilder: (context, index) {
+          final doc = docs[index];
+          return Container(
+            margin: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.green.withAlpha(25),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.green.withAlpha(51)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.description, size: 12, color: Colors.green),
+                const SizedBox(width: 4),
+                Text(
+                  doc.type,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showDocumentDialog(BuildContext context, String vehicleId) {
+    final picker = ImagePicker();
+    XFile? selectedImage;
+    String selectedType = 'Insurance';
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Upload Document'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: selectedType,
+                decoration: const InputDecoration(labelText: 'Document Type'),
+                items: ['Insurance', 'TechPass', 'License', 'Other']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (val) => selectedType = val!,
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () async {
+                  final img = await picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (img != null) setState(() => selectedImage = img);
+                },
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(20),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.white12),
+                    image: selectedImage != null
+                        ? DecorationImage(
+                            image: FileImage(File(selectedImage!.path)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: selectedImage == null
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, size: 40),
+                            SizedBox(height: 8),
+                            Text(
+                              'Select Photo',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        )
+                      : null,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedImage != null) {
+                  dialogContext.read<GarageCubit>().addDocument(
+                    vehicleId: vehicleId,
+                    type: selectedType,
+                    image: selectedImage!,
+                  );
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: const Text('Upload'),
+            ),
+          ],
+        ),
       ),
     );
   }

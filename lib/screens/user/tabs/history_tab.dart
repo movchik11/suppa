@@ -5,6 +5,7 @@ import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:intl/intl.dart';
+import 'package:supa/screens/user/chat_screen.dart';
 
 class HistoryTab extends StatelessWidget {
   const HistoryTab({super.key});
@@ -152,6 +153,34 @@ class _OrderHistoryCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (!isCancelled) ...[
+              const Divider(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          orderId: order.id,
+                          serviceName: order.carModel,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                  label: const Text('Chat with Master'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.blue,
+                    side: BorderSide(color: Colors.blue.withAlpha(77)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

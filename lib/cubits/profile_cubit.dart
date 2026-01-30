@@ -57,6 +57,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     int? loyaltyPoints,
     String? preferredContact,
     bool? notificationsEnabled,
+    bool? isLightMode,
   }) async {
     emit(ProfileLoading());
     try {
@@ -81,6 +82,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         if (preferredContact != null) 'preferred_contact': preferredContact,
         if (notificationsEnabled != null)
           'notifications_enabled': notificationsEnabled,
+        if (isLightMode != null) 'is_light_mode': isLightMode,
       };
 
       await supabase.from('profiles').update(updates).eq('id', userId);

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/vehicle_model.dart';
 import 'package:supa/models/expense_model.dart';
+import 'package:supa/models/document_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -14,7 +15,12 @@ class GarageLoading extends GarageState {}
 class VehiclesLoaded extends GarageState {
   final List<Vehicle> vehicles;
   final List<Expense> expenses;
-  VehiclesLoaded(this.vehicles, {this.expenses = const []});
+  final List<VehicleDocument> documents;
+  VehiclesLoaded(
+    this.vehicles, {
+    this.expenses = const [],
+    this.documents = const [],
+  });
 }
 
 class VehicleActionSuccess extends GarageState {}
@@ -60,7 +66,16 @@ class GarageCubit extends Cubit<GarageState> {
           .map((item) => Expense.fromMap(item))
           .toList();
 
-      emit(VehiclesLoaded(vehicles, expenses: expenses));
+      final docData = await supabase
+          .from('vehicle_documents')
+          .select()
+          .eq('profile_id', userId);
+
+      final List<VehicleDocument> documents = (docData as List)
+          .map((item) => VehicleDocument.fromMap(item))
+          .toList();
+
+      emit(VehiclesLoaded(vehicles, expenses: expenses, documents: documents));
     } catch (e) {
       emit(GarageError('Failed to load garage: ${e.toString()}'));
     }
@@ -201,6 +216,41 @@ class GarageCubit extends Cubit<GarageState> {
       await fetchVehicles();
     } catch (e) {
       emit(GarageError('Failed to add expense: ${e.toString()}'));
+    }
+  }
+
+  Future<void> addDocument({
+    required String vehicleId,
+    required String type,
+    required XFile image,
+    DateTime? expiryDate,
+  }) async {
+    emit(GarageLoading());
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final fileName =
+          'doc_${vehicleId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final bytes = await image.readAsBytes();
+      await supabase.storage
+          .from('vehicle-documents')
+          .uploadBinary(fileName, bytes);
+      final imageUrl = supabase.storage
+          .from('vehicle-documents')
+          .getPublicUrl(fileName);
+
+      await supabase.from('vehicle_documents').insert({
+        'vehicle_id': vehicleId,
+        'profile_id': userId,
+        'type': type,
+        'image_url': imageUrl,
+        'expiry_date': expiryDate?.toIso8601String(),
+      });
+
+      await fetchVehicles();
+    } catch (e) {
+      emit(GarageError('Failed to add document: ${e.toString()}'));
     }
   }
 }
