@@ -4,6 +4,8 @@ import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/cubits/profile_cubit.dart';
 import 'package:supa/screens/auth/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supa/components/app_loading_indicator.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -24,7 +26,7 @@ class ProfileTab extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is ProfileLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoadingIndicator();
         }
 
         if (state is ProfileLoaded) {
@@ -52,7 +54,7 @@ class ProfileTab extends StatelessWidget {
                     radius: 60,
                     backgroundColor: Colors.blue.withAlpha(51),
                     backgroundImage: profile.avatarUrl != null
-                        ? NetworkImage(profile.avatarUrl!)
+                        ? CachedNetworkImageProvider(profile.avatarUrl!)
                         : null,
                     child: profile.avatarUrl == null
                         ? const Icon(Icons.person, size: 70, color: Colors.blue)

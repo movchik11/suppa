@@ -4,6 +4,8 @@ import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:supa/screens/user/create_order_screen.dart';
+import 'package:supa/components/app_loading_indicator.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ServicesTab extends StatelessWidget {
   const ServicesTab({super.key});
@@ -13,14 +15,7 @@ class ServicesTab extends StatelessWidget {
     return BlocBuilder<ServiceCubit, ServiceState>(
       builder: (context, state) {
         if (state is ServiceLoading) {
-          return Center(
-            child: Lottie.asset(
-              'assets/animations/loading.json',
-              height: 200,
-              errorBuilder: (context, error, stackTrace) =>
-                  const CircularProgressIndicator(),
-            ),
-          );
+          return const AppLoadingIndicator();
         } else if (state is ServicesLoaded) {
           if (state.services.isEmpty) {
             return const Center(
@@ -79,34 +74,33 @@ class _ServiceListItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (service.imageUrl != null)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              child: Image.network(
-                service.imageUrl!,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 200,
-                  color: Colors.white12,
-                  child: const Icon(
-                    Icons.car_repair,
-                    size: 80,
-                    color: Colors.white38,
-                  ),
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
                 ),
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 200,
+                child: CachedNetworkImage(
+                  imageUrl: service.imageUrl!,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Container(
                     color: Colors.white12,
                     child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white24),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white24,
+                      ),
                     ),
-                  );
-                },
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.white12,
+                    child: const Icon(
+                      Icons.car_repair,
+                      size: 80,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ),
               ),
             ),
           Padding(

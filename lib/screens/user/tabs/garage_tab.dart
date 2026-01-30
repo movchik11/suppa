@@ -5,6 +5,8 @@ import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/garage_cubit.dart';
 import 'package:supa/models/vehicle_model.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supa/components/app_loading_indicator.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 
 class GarageTab extends StatelessWidget {
@@ -39,14 +41,7 @@ class GarageTab extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, GarageState state) {
     if (state is GarageLoading) {
-      return Center(
-        child: Lottie.asset(
-          'assets/animations/loading.json',
-          height: 200,
-          errorBuilder: (context, error, stackTrace) =>
-              const CircularProgressIndicator(),
-        ),
-      );
+      return const AppLoadingIndicator();
     } else if (state is VehiclesLoaded) {
       if (state.vehicles.isEmpty) {
         return Center(
@@ -163,7 +158,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                         )
                       : (widget.initialVehicle?.imageUrl != null
                             ? DecorationImage(
-                                image: NetworkImage(
+                                image: CachedNetworkImageProvider(
                                   widget.initialVehicle!.imageUrl!,
                                 ),
                                 fit: BoxFit.cover,
@@ -277,7 +272,7 @@ class _VehicleCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   image: vehicle.imageUrl != null
                       ? DecorationImage(
-                          image: NetworkImage(vehicle.imageUrl!),
+                          image: CachedNetworkImageProvider(vehicle.imageUrl!),
                           fit: BoxFit.cover,
                         )
                       : null,

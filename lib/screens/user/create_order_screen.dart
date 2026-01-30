@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
-import 'package:supa/components/glass_container.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/garage_cubit.dart';
+import 'package:supa/components/app_loading_indicator.dart';
+import 'package:supa/components/glass_container.dart';
 import 'package:intl/intl.dart';
 import 'package:supa/models/service_model.dart';
 
@@ -65,14 +65,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         },
         builder: (context, state) {
           if (state is OrderLoading) {
-            return Center(
-              child: Lottie.asset(
-                'assets/animations/loading.json',
-                height: 200,
-                errorBuilder: (context, error, stackTrace) =>
-                    const CircularProgressIndicator(),
-              ),
-            );
+            return const AppLoadingIndicator(message: 'Creating your order...');
           }
 
           return Container(
@@ -149,119 +142,70 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                             builder: (context, garageState) {
                               if (garageState is VehiclesLoaded &&
                                   garageState.vehicles.isNotEmpty) {
-                                return Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                return Column(
                                   children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<String>(
-                                        initialValue: _selectedVehicleId,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                        dropdownColor: const Color(0xFF311B92),
-                                        decoration: const InputDecoration(
-                                          labelText: 'Select Your Vehicle',
-                                          labelStyle: TextStyle(
-                                            color: Colors.white70,
-                                          ),
-                                          prefixIcon: Icon(
-                                            Icons.directions_car,
-                                            color: Colors.white70,
-                                          ),
-                                          fillColor: Colors.white12,
-                                          filled: true,
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.all(
-                                              Radius.circular(10),
-                                            ),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                        ),
-                                        items: garageState.vehicles
-                                            .map(
-                                              (v) => DropdownMenuItem(
-                                                value: v.id,
-                                                child: Text(
-                                                  '${v.brand} ${v.model} (${v.licensePlate})',
-                                                ),
+                                    DropdownButtonFormField<String>(
+                                      value: _selectedVehicleId,
+                                      dropdownColor: const Color(0xFF1E1E2E),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Select Your Vehicle',
+                                        prefixIcon: Icon(Icons.directions_car),
+                                      ),
+                                      items: garageState.vehicles
+                                          .map(
+                                            (v) => DropdownMenuItem(
+                                              value: v.id,
+                                              child: Text(
+                                                '${v.brand} ${v.model} (${v.licensePlate})',
                                               ),
-                                            )
-                                            .toList(),
-                                        onChanged: (val) {
-                                          setState(() {
-                                            _selectedVehicleId = val;
-                                            final vehicle = garageState.vehicles
-                                                .firstWhere((v) => v.id == val);
-                                            _carModelController.text =
-                                                '${vehicle.brand} ${vehicle.model}';
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      height: 56,
-                                      child: ElevatedButton(
-                                        onPressed: () =>
-                                            _showAddVehicleDialog(context),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white24,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
                                             ),
-                                          ),
-                                        ),
-                                        child: const Icon(Icons.add),
-                                      ),
+                                          )
+                                          .toList(),
+                                      onChanged: (val) {
+                                        setState(() {
+                                          _selectedVehicleId = val;
+                                          final vehicle = garageState.vehicles
+                                              .firstWhere((v) => v.id == val);
+                                          _carModelController.text =
+                                              '${vehicle.brand} ${vehicle.model}';
+                                        });
+                                      },
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextButton.icon(
+                                      onPressed: () =>
+                                          _showAddVehicleDialog(context),
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Add Another Vehicle'),
                                     ),
                                   ],
                                 );
                               }
-                              return const SizedBox.shrink();
+                              return ElevatedButton.icon(
+                                onPressed: () => _showAddVehicleDialog(context),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add A Vehicle'),
+                              );
                             },
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Center(
-                              child: Text(
-                                '— OR —',
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 12,
-                                ),
+                          const SizedBox(height: 20),
+
+                          if (_selectedVehicleId == null)
+                            TextFormField(
+                              controller: _carModelController,
+                              decoration: const InputDecoration(
+                                labelText: 'Car Model (Manual Entry)',
+                                hintText: 'e.g., Toyota Camry 2020',
+                                prefixIcon: Icon(Icons.edit_note),
                               ),
+                              validator: (value) {
+                                if (_selectedVehicleId == null &&
+                                    (value == null || value.isEmpty)) {
+                                  return 'Please enter your car model';
+                                }
+                                return null;
+                              },
                             ),
-                          ),
-                          TextFormField(
-                            controller: _carModelController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'Car Model',
-                              labelStyle: TextStyle(color: Colors.white70),
-                              hintText: 'e.g., Toyota Camry 2020',
-                              hintStyle: TextStyle(color: Colors.white38),
-                              prefixIcon: Icon(
-                                Icons.directions_car,
-                                color: Colors.white70,
-                              ),
-                              fillColor: Colors.white12,
-                              filled: true,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(10),
-                                ),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your car model';
-                              }
-                              return null;
-                            },
-                          ),
                           const SizedBox(height: 20),
                           TextFormField(
                             controller: _issueController,
