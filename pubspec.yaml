@@ -33,4 +33,6 @@ flutter:
   assets:
     - .env
     - assets/animations/
-    - assets/translations/
+    - assets/translations/en.json
+    - assets/translations/ru.json
+    - assets/translations/tm.json
