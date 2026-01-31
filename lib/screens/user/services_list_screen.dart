@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/models/service_model.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ServicesListScreen extends StatelessWidget {
   const ServicesListScreen({super.key});
@@ -12,7 +13,7 @@ class ServicesListScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => ServiceCubit()..fetchServices(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Our Services')),
+        appBar: AppBar(title: Text('ourServices'.tr())),
         body: BlocBuilder<ServiceCubit, ServiceState>(
           builder: (context, state) {
             if (state is ServiceLoading) {
@@ -26,13 +27,13 @@ class ServicesListScreen extends StatelessWidget {
               );
             } else if (state is ServicesLoaded) {
               if (state.services.isEmpty) {
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.construction, size: 80, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text('No services available yet'),
+                      Text('noServices'.tr()),
                     ],
                   ),
                 );
@@ -131,7 +132,9 @@ class _ServiceListItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${service.durationHours} hours',
+                          'hoursArg'.tr(
+                            args: [service.durationHours.toString()],
+                          ),
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],

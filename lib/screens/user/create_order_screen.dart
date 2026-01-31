@@ -7,6 +7,7 @@ import 'package:supa/components/app_loading_indicator.dart';
 import 'package:supa/components/glass_container.dart';
 import 'package:intl/intl.dart';
 import 'package:supa/models/service_model.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CreateOrderScreen extends StatefulWidget {
   final Service? preSelectedService;
@@ -29,13 +30,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   String? _selectedVehicleId;
   DateTime? _scheduledAt;
   String? _selectedBranch;
-  String _selectedUrgency = 'Normal';
+  String _selectedUrgency = 'normal';
 
-  final List<String> _urgencies = ['Normal', 'Urgent', 'Emergency'];
-  final List<String> _branches = [
-    'Main Service Center',
-    'West Branch & Body Shop',
-  ];
+  final List<String> _urgencies = ['normal', 'urgent', 'emergency'];
+  final List<String> _branches = ['mainBranch', 'westBranch'];
 
   @override
   void initState() {
@@ -81,14 +79,14 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Book Service')),
+      appBar: AppBar(title: Text('bookService'.tr())),
       body: BlocConsumer<OrderCubit, OrderState>(
         listener: (context, state) {
           if (state is OrderCreated) {
             HapticFeedback.mediumImpact();
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Order created successfully!'),
+              SnackBar(
+                content: Text('orderSuccess'.tr()),
                 backgroundColor: Colors.green,
               ),
             );
@@ -104,15 +102,18 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         },
         builder: (context, state) {
           if (state is OrderLoading) {
-            return const AppLoadingIndicator(message: 'Generating order...');
+            return AppLoadingIndicator(message: 'generatingOrder'.tr());
           }
 
           return Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF673AB7), Color(0xFF0F0F1E)],
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).scaffoldBackgroundColor,
+                ],
               ),
             ),
             child: SafeArea(
@@ -135,18 +136,20 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Premium Service Booking',
+                            'premiumBooking'.tr(),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.color,
                             ),
                           ),
                           const SizedBox(height: 32),
 
                           // --- VEHICLE SELECTION ---
-                          _buildLabel('YOUR VEHICLE'),
+                          _buildLabel('yourVehicle'.tr()),
                           BlocBuilder<GarageCubit, GarageState>(
                             builder: (context, garageState) {
                               if (garageState is VehiclesLoaded) {
@@ -155,7 +158,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                     onPressed: () =>
                                         _showAddVehicleDialog(context),
                                     icon: const Icon(Icons.add),
-                                    label: const Text('Add a Vehicle First'),
+                                    label: Text('addVehicleFirst'.tr()),
                                   );
                                 }
                                 return DropdownButtonFormField<String>(
@@ -167,9 +170,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                       Icons.directions_car,
                                       color: Colors.blue,
                                     ),
-                                    hintText: 'Choose from garage',
-                                    hintStyle: const TextStyle(
-                                      color: Colors.white38,
+                                    hintText: 'chooseFromGarage'.tr(),
+                                    hintStyle: TextStyle(
+                                      color: Theme.of(context).hintColor,
                                     ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -185,8 +188,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                         ),
                                       )
                                       .toList(),
-                                  validator: (v) =>
-                                      v == null ? 'Selection required' : null,
+                                  validator: (v) => v == null
+                                      ? 'selectionRequired'.tr()
+                                      : null,
                                   onChanged: (val) {
                                     setState(() {
                                       _selectedVehicleId = val;
@@ -206,7 +210,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           const SizedBox(height: 20),
 
                           // --- BRANCH SELECTION ---
-                          _buildLabel('SERVICE CENTER'),
+                          _buildLabel('serviceCenter'.tr()),
                           DropdownButtonFormField<String>(
                             value: _selectedBranch,
                             dropdownColor: const Color(0xFF1E1E2E),
@@ -216,8 +220,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 Icons.store,
                                 color: Colors.blue,
                               ),
-                              hintText: 'Select location',
-                              hintStyle: const TextStyle(color: Colors.white38),
+                              hintText: 'selectLocation'.tr(),
+                              hintStyle: TextStyle(
+                                color: Theme.of(context).hintColor,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -226,12 +232,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 .map(
                                   (b) => DropdownMenuItem(
                                     value: b,
-                                    child: Text(b),
+                                    child: Text(b.tr()),
                                   ),
                                 )
                                 .toList(),
                             validator: (v) =>
-                                v == null ? 'Location required' : null,
+                                v == null ? 'locationRequired'.tr() : null,
                             onChanged: (val) =>
                                 setState(() => _selectedBranch = val),
                           ),
@@ -244,7 +250,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildLabel('URGENCY'),
+                                    _buildLabel('urgency'.tr()),
                                     DropdownButtonFormField<String>(
                                       value: _selectedUrgency,
                                       dropdownColor: const Color(0xFF1E1E2E),
@@ -262,7 +268,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                           .map(
                                             (u) => DropdownMenuItem(
                                               value: u,
-                                              child: Text(u),
+                                              child: Text(u.tr()),
                                             ),
                                           )
                                           .toList(),
@@ -278,7 +284,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildLabel('DATE/TIME'),
+                                    _buildLabel('dateTime'.tr()),
                                     GestureDetector(
                                       onTap: () => _pickDateTime(context),
                                       child: Container(
@@ -304,13 +310,15 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                             const SizedBox(width: 6),
                                             Text(
                                               _scheduledAt == null
-                                                  ? 'Select'
+                                                  ? 'select'.tr()
                                                   : DateFormat(
                                                       'MM/dd HH:mm',
                                                     ).format(_scheduledAt!),
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.white,
+                                                color: Theme.of(
+                                                  context,
+                                                ).textTheme.bodyLarge?.color,
                                               ),
                                             ),
                                           ],
@@ -325,23 +333,28 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           const SizedBox(height: 20),
 
                           // --- ISSUE DESCRIPTION ---
-                          _buildLabel('ISSUE DESCRIPTION'),
+                          _buildLabel('issueDescription'.tr()),
                           TextFormField(
                             controller: _issueController,
                             style: const TextStyle(color: Colors.white),
                             maxLines: 3,
                             decoration: InputDecoration(
-                              hintText: 'What is wrong with the car?',
-                              hintStyle: const TextStyle(color: Colors.white38),
-                              fillColor: Colors.white.withAlpha(15),
+                              hintText: 'describeIssue'.tr(),
+                              hintStyle: TextStyle(
+                                color: Theme.of(context).hintColor,
+                              ),
+                              fillColor: Theme.of(
+                                context,
+                              ).cardColor.withAlpha(51),
                               filled: true,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                            validator: (v) =>
-                                (v == null || v.isEmpty) ? 'Required' : null,
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? 'required'.tr()
+                                : null,
                           ),
 
                           const SizedBox(height: 32),
@@ -351,10 +364,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                               if (_formKey.currentState!.validate()) {
                                 if (_scheduledAt == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Please select a date/time',
-                                      ),
+                                    SnackBar(
+                                      content: Text('selectDateTime'.tr()),
                                     ),
                                   );
                                   return;
@@ -378,9 +389,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                               ),
                               elevation: 8,
                             ),
-                            child: const Text(
-                              'CONFIRM APPOINTMENT',
-                              style: TextStyle(
+                            child: Text(
+                              'confirmAppointment'.tr(),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.1,
@@ -416,57 +427,148 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   }
 
   void _showAddVehicleDialog(BuildContext context) {
-    final brandC = TextEditingController();
     final modelC = TextEditingController();
-    final yearC = TextEditingController();
     final plateC = TextEditingController();
+    String? sBrand;
+    String? sColor;
+    int? sYear;
+
+    final List<String> brands = [
+      'Opel',
+      'BMW',
+      'Mercedes',
+      'Toyota',
+      'Ford',
+      'Hyundai',
+      'Kia',
+      'Other',
+    ];
+    final List<String> colors = [
+      'White',
+      'Black',
+      'Silver',
+      'Grey',
+      'Blue',
+      'Red',
+      'Gold',
+    ];
+    final List<int> years = List.generate(27, (index) => 2026 - index);
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
-        title: const Text('New Vehicle', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: brandC,
-              decoration: const InputDecoration(labelText: 'Brand'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2E),
+          title: Text(
+            'newVehicle'.tr(),
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
             ),
-            TextField(
-              controller: modelC,
-              decoration: const InputDecoration(labelText: 'Model'),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: sBrand,
+                    dropdownColor: const Color(0xFF1E1E2E),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    decoration: InputDecoration(labelText: 'brand'.tr()),
+                    items: brands
+                        .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                        .toList(),
+                    onChanged: (val) => setState(() => sBrand = val),
+                  ),
+                  TextField(
+                    controller: modelC,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    decoration: InputDecoration(labelText: 'model'.tr()),
+                  ),
+                  DropdownButtonFormField<int>(
+                    value: sYear,
+                    dropdownColor: const Color(0xFF1E1E2E),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    decoration: InputDecoration(labelText: 'year'.tr()),
+                    items: years
+                        .map(
+                          (y) => DropdownMenuItem(
+                            value: y,
+                            child: Text(y.toString()),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) => setState(() => sYear = val),
+                  ),
+                  TextFormField(
+                    controller: plateC,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: '${'licensePlate'.tr()} (XX-XXXX-XX)',
+                      hintText: 'e.g. AG-1234-LB',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'plateRequired'.tr();
+                      final reg = RegExp(r'^[A-Z]{2}-\d{4}-[A-Z]{2}$');
+                      if (!reg.hasMatch(value)) return 'Format: XX-XXXX-XX';
+                      final suffix = value.substring(value.length - 2);
+                      final allowed = ['AG', 'LB', 'MR', 'DZ', 'AH', 'AK'];
+                      if (!allowed.contains(suffix))
+                        return 'Invalid regional code';
+                      return null;
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    value: sColor,
+                    dropdownColor: const Color(0xFF1E1E2E),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                    decoration: InputDecoration(labelText: 'color'.tr()),
+                    items: colors
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (val) => setState(() => sColor = val),
+                  ),
+                ],
+              ),
             ),
-            TextField(
-              controller: yearC,
-              decoration: const InputDecoration(labelText: 'Year'),
-              keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('cancel'.tr()),
             ),
-            TextField(
-              controller: plateC,
-              decoration: const InputDecoration(labelText: 'License Plate'),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate() &&
+                    sBrand != null &&
+                    modelC.text.isNotEmpty) {
+                  context.read<GarageCubit>().addVehicle(
+                    brand: sBrand!,
+                    model: modelC.text,
+                    year: sYear,
+                    licensePlate: plateC.text,
+                    color: sColor ?? 'Not set',
+                  );
+                  Navigator.pop(ctx);
+                }
+              },
+              child: Text('save'.tr()),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              context.read<GarageCubit>().addVehicle(
-                brand: brandC.text,
-                model: modelC.text,
-                year: int.tryParse(yearC.text) ?? 2022,
-                licensePlate: plateC.text,
-                color: 'Not set',
-              );
-              Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }

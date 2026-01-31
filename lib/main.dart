@@ -10,14 +10,24 @@ import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/screens/splash/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-  runApp(const MainApp());
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('ru'), Locale('tm')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -44,6 +54,9 @@ class MainApp extends StatelessWidget {
             themeMode: isLightMode ? ThemeMode.light : ThemeMode.dark,
             theme: _buildTheme(Brightness.light),
             darkTheme: _buildTheme(Brightness.dark),
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
             home: const SplashScreen(),
           );
         },
@@ -58,7 +71,6 @@ class MainApp extends StatelessWidget {
         ? const Color(0xFF0F0F1E)
         : const Color(0xFFF8F9FE);
     final cardBg = isDark ? const Color(0xFF1E1E2E) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
 
     return ThemeData(
       useMaterial3: true,
@@ -77,35 +89,37 @@ class MainApp extends StatelessWidget {
               onSurface: Color(0xFF1A1A2E),
             ),
       scaffoldBackgroundColor: scaffoldBg,
-      textTheme: GoogleFonts.outfitTextTheme(
-        isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
-      ).apply(bodyColor: textColor, displayColor: textColor),
+      textTheme:
+          GoogleFonts.outfitTextTheme(
+            isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
+          ).apply(
+            bodyColor: isDark ? Colors.white : Colors.black87,
+            displayColor: isDark ? Colors.white : Colors.black,
+          ),
       appBarTheme: AppBarTheme(
         backgroundColor: scaffoldBg,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: textColor),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
         titleTextStyle: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: textColor,
+          color: isDark ? Colors.white : Colors.black87,
         ),
       ),
       cardTheme: CardThemeData(
         color: cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        elevation: isDark ? 0 : 2,
-        shadowColor: Colors.black12,
+        elevation: isDark ? 0 : 8,
+        shadowColor: isDark ? Colors.transparent : Colors.black.withAlpha(40),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark
             ? Colors.white.withAlpha(13)
-            : Colors.black.withAlpha(10),
-        hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
-        labelStyle: TextStyle(
-          color: isDark ? Colors.white70 : Colors.black.withAlpha(179),
-        ),
+            : Colors.grey.withAlpha(30),
+        hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[700]),
+        labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
@@ -113,7 +127,7 @@ class MainApp extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide(
-            color: isDark ? Colors.white10 : Colors.black12,
+            color: isDark ? Colors.white10 : Colors.black.withAlpha(40),
             width: 1,
           ),
         ),

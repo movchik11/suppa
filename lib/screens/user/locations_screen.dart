@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LocationsScreen extends StatelessWidget {
   const LocationsScreen({super.key});
 
   final List<Map<String, dynamic>> _branches = const [
     {
-      'name': 'Main Service Center',
+      'name': 'mainBranch',
       'address': '123 Ashgabat St, Center',
       'lat': 37.96,
       'lng': 58.32,
@@ -14,7 +15,7 @@ class LocationsScreen extends StatelessWidget {
       'hours': '08:00 - 20:00',
     },
     {
-      'name': 'West Branch & Body Shop',
+      'name': 'westBranch',
       'address': '45 West Industrial Zone',
       'lat': 37.92,
       'lng': 58.28,
@@ -33,7 +34,7 @@ class LocationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('OUR BRANCHES')),
+      appBar: AppBar(title: Text('ourBranches'.tr())),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _branches.length,
@@ -49,7 +50,7 @@ class LocationsScreen extends StatelessWidget {
                     child: Icon(Icons.location_on, color: Colors.white),
                   ),
                   title: Text(
-                    branch['name'],
+                    (branch['name'] as String).tr(),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(branch['address']),
@@ -99,7 +100,7 @@ class LocationsScreen extends StatelessWidget {
                         onPressed: () =>
                             _openInMaps(branch['lat'], branch['lng']),
                         icon: const Icon(Icons.directions, size: 18),
-                        label: const Text('NAVIGATE'),
+                        label: Text('navigate'.tr()),
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(120, 40),
                           padding: const EdgeInsets.symmetric(horizontal: 16),

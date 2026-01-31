@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/garage_cubit.dart';
 import 'package:supa/models/vehicle_model.dart';
 import 'package:supa/models/document_model.dart';
@@ -10,6 +9,8 @@ import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
+
+import 'package:easy_localization/easy_localization.dart';
 
 class GarageTab extends StatelessWidget {
   final VoidCallback? onNavigateToServices;
@@ -51,21 +52,30 @@ class GarageTab extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Lottie.asset(
-                'assets/animations/drifting_car.json',
-                height: 200,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.directions_car,
-                  size: 80,
-                  color: Colors.grey,
-                ),
+              const Icon(
+                Icons.directions_car_outlined,
+                size: 80,
+                color: Colors.grey,
               ),
               const SizedBox(height: 16),
-              const Text('Your garage is empty'),
-              const SizedBox(height: 8),
-              const Text(
-                'Add your car to track repair history',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                'noVehicles'.tr(),
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => _showVehicleDialog(context),
+                icon: const Icon(Icons.add),
+                label: Text('addVehicle'.tr()),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
               ),
             ],
           ),
@@ -77,18 +87,14 @@ class GarageTab extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // --- MAINTENANCE OVERVIEW ---
-            _buildMaintenanceOverview(state.vehicles),
-            const SizedBox(height: 24),
-
-            _buildSectionHeader('Your Vehicles'),
+            _buildSectionHeader(context, 'yourVehicles'.tr()),
             const SizedBox(height: 12),
             ...state.vehicles.map((v) => _VehicleCard(vehicle: v)),
 
             const SizedBox(height: 24),
-            _buildSectionHeader('Recent Expenses'),
+            _buildSectionHeader(context, 'recentExpenses'.tr()),
             const SizedBox(height: 12),
-            _buildExpenseLedger(state.expenses, state.vehicles),
+            _buildExpenseLedger(context, state.expenses, state.vehicles),
             const SizedBox(height: 80), // Space for FAB
           ],
         ),
@@ -97,77 +103,30 @@ class GarageTab extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-    );
-  }
-
-  Widget _buildMaintenanceOverview(List<Vehicle> vehicles) {
-    int upcomingServices = vehicles
-        .where(
-          (v) =>
-              v.nextServiceMileage != null ||
-              (v.lastServiceDate != null &&
-                  v.lastServiceDate!.isBefore(
-                    DateTime.now().subtract(const Duration(days: 180)),
-                  )),
-        )
-        .length;
-
-    return InkWell(
-      onTap: onNavigateToServices,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.blue.withAlpha(25),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.blue.withAlpha(51)),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.notifications_active,
-              color: Colors.blue,
-              size: 30,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$upcomingServices Upcoming Services',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const Text(
-                    'Tap to view available services',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).textTheme.titleLarge?.color,
       ),
     );
   }
 
-  Widget _buildExpenseLedger(List<dynamic> expenses, List<Vehicle> vehicles) {
+  Widget _buildExpenseLedger(
+    BuildContext context,
+    List<dynamic> expenses,
+    List<Vehicle> vehicles,
+  ) {
     if (expenses.isEmpty) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Center(
             child: Text(
-              'No expenses recorded yet',
-              style: TextStyle(color: Colors.grey),
+              'noExpensesYet'.tr(),
+              style: TextStyle(color: Theme.of(context).hintColor),
             ),
           ),
         ),
@@ -221,22 +180,63 @@ class _VehicleFormDialog extends StatefulWidget {
 }
 
 class _VehicleFormDialogState extends State<_VehicleFormDialog> {
-  final _brandController = TextEditingController();
   final _modelController = TextEditingController();
-  final _yearController = TextEditingController();
   final _plateController = TextEditingController();
-  final _colorController = TextEditingController();
   XFile? _image;
+
+  String? _selectedBrand;
+  String? _selectedColor;
+  int? _selectedYear;
+
+  final List<String> _brands = [
+    'Opel',
+    'BMW',
+    'Mercedes',
+    'Toyota',
+    'Ford',
+    'Hyundai',
+    'Kia',
+    'Honda',
+    'Mazda',
+    'Nissan',
+    'Volkswagen',
+    'Audi',
+    'Lexus',
+    'Tesla',
+    'Other',
+  ];
+  final List<String> _colors = [
+    'White',
+    'Black',
+    'Silver',
+    'Grey',
+    'Blue',
+    'Red',
+    'Gold',
+    'Green',
+    'Yellow',
+    'Brown',
+    'Beige',
+  ];
+  final List<int> _years = List.generate(27, (index) => 2026 - index);
 
   @override
   void initState() {
     super.initState();
     if (widget.initialVehicle != null) {
-      _brandController.text = widget.initialVehicle!.brand;
+      _selectedBrand = _brands.firstWhere(
+        (b) =>
+            b.toLowerCase() ==
+            (widget.initialVehicle!.brand ?? '').toLowerCase(),
+        orElse: () => 'Other',
+      );
       _modelController.text = widget.initialVehicle!.model;
-      _yearController.text = widget.initialVehicle!.year?.toString() ?? '';
+      _selectedYear = widget.initialVehicle!.year;
       _plateController.text = widget.initialVehicle!.licensePlate ?? '';
-      _colorController.text = widget.initialVehicle!.color ?? '';
+      _selectedColor = _colors.firstWhere(
+        (c) => c.toLowerCase() == widget.initialVehicle!.color?.toLowerCase(),
+        orElse: () => 'White',
+      );
     }
   }
 
@@ -253,9 +253,10 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.initialVehicle != null;
+    final lCode = context.locale.languageCode;
 
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Vehicle' : 'Add Vehicle'),
+      title: Text(isEditing ? 'edit'.tr() : 'addVehicle'.tr()),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -283,35 +284,81 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                             : null),
                 ),
                 child: _image == null && widget.initialVehicle?.imageUrl == null
-                    ? const Icon(
-                        Icons.add_a_photo,
-                        size: 40,
-                        color: Colors.grey,
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.add_a_photo,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'addPhoto'.tr(),
+                            style: TextStyle(
+                              color: Theme.of(context).hintColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       )
                     : null,
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _brandController,
-              decoration: const InputDecoration(labelText: 'Brand'),
+            DropdownButtonFormField<String>(
+              value: _selectedBrand,
+              decoration: InputDecoration(labelText: 'brand'.tr()),
+              items: _brands
+                  .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedBrand = val),
             ),
+            const SizedBox(height: 8),
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(labelText: 'Model'),
+              decoration: InputDecoration(labelText: 'model'.tr()),
             ),
-            TextField(
-              controller: _yearController,
-              decoration: const InputDecoration(labelText: 'Year'),
-              keyboardType: TextInputType.number,
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              value: _selectedYear,
+              decoration: InputDecoration(labelText: 'year'.tr()),
+              items: _years
+                  .map(
+                    (y) =>
+                        DropdownMenuItem(value: y, child: Text(y.toString())),
+                  )
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedYear = val),
             ),
-            TextField(
+            const SizedBox(height: 8),
+            TextFormField(
               controller: _plateController,
-              decoration: const InputDecoration(labelText: 'License Plate'),
+              decoration: InputDecoration(
+                labelText: '${'licensePlate'.tr()} (XX-XXXX-XX)',
+                hintText: 'e.g. AG-1234-LB',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Plate is required';
+                final reg = RegExp(r'^[A-Z]{2}-\d{4}-[A-Z]{2}$');
+                if (!reg.hasMatch(value)) return 'Format: XX-XXXX-XX';
+                final suffix = value.substring(value.length - 2);
+                final allowed = ['AG', 'LB', 'MR', 'DZ', 'AH', 'AK'];
+                if (!allowed.contains(suffix)) return 'Invalid regional code';
+                return null;
+              },
             ),
-            TextField(
-              controller: _colorController,
-              decoration: const InputDecoration(labelText: 'Color'),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _selectedColor,
+              decoration: InputDecoration(labelText: 'color'.tr()),
+              items: _colors.map((c) {
+                String colorName = c;
+                if (lCode == 'tk' && c == 'White') colorName = 'Ak';
+                if (lCode == 'ru' && c == 'White') colorName = 'Белый';
+                return DropdownMenuItem(value: c, child: Text(colorName));
+              }).toList(),
+              onChanged: (val) => setState(() => _selectedColor = val),
             ),
           ],
         ),
@@ -319,37 +366,36 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text('cancel'.tr()),
         ),
         ElevatedButton(
           onPressed: () {
-            if (_brandController.text.isNotEmpty &&
-                _modelController.text.isNotEmpty) {
+            if (_selectedBrand != null && _modelController.text.isNotEmpty) {
               if (isEditing) {
                 context.read<GarageCubit>().updateVehicle(
                   vehicleId: widget.initialVehicle!.id,
-                  brand: _brandController.text,
+                  brand: _selectedBrand!,
                   model: _modelController.text,
-                  year: int.tryParse(_yearController.text),
+                  year: _selectedYear,
                   licensePlate: _plateController.text,
-                  color: _colorController.text,
+                  color: _selectedColor ?? 'Not set',
                   newImage: _image,
                   existingImageUrl: widget.initialVehicle!.imageUrl,
                 );
               } else {
                 context.read<GarageCubit>().addVehicle(
-                  brand: _brandController.text,
+                  brand: _selectedBrand!,
                   model: _modelController.text,
-                  year: int.tryParse(_yearController.text),
+                  year: _selectedYear,
                   licensePlate: _plateController.text,
-                  color: _colorController.text,
+                  color: _selectedColor ?? 'Not set',
                   image: _image,
                 );
               }
               Navigator.pop(context);
             }
           },
-          child: Text(isEditing ? 'Save' : 'Add'),
+          child: Text(isEditing ? 'update'.tr() : 'add'.tr()),
         ),
       ],
     );
@@ -470,14 +516,12 @@ class _VehicleCard extends StatelessWidget {
                       showDialog(
                         context: context,
                         builder: (dialogContext) => AlertDialog(
-                          title: const Text('Delete Vehicle'),
-                          content: const Text(
-                            'Are you sure you want to remove this vehicle from your garage?',
-                          ),
+                          title: Text('deleteTitle'.tr()),
+                          content: Text('confirmDelete'.tr()),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(dialogContext),
-                              child: const Text('Cancel'),
+                              child: Text('cancel'.tr()),
                             ),
                             TextButton(
                               onPressed: () {
@@ -486,9 +530,9 @@ class _VehicleCard extends StatelessWidget {
                                 );
                                 Navigator.pop(dialogContext);
                               },
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.red),
+                              child: Text(
+                                'delete'.tr(),
+                                style: const TextStyle(color: Colors.red),
                               ),
                             ),
                           ],

@@ -119,6 +119,35 @@ class OrderCubit extends Cubit<OrderState> {
   // Update order status (admin only)
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
+      // Get the order to find the user_id if we are completing it
+      if (newStatus == 'completed') {
+        final orderData = await supabase
+            .from('orders')
+            .select('user_id, status')
+            .eq('id', orderId)
+            .single();
+
+        final userId = orderData['user_id'];
+        final currentStatus = orderData['status'];
+
+        // Only award points if move from non-completed to completed
+        if (currentStatus != 'completed') {
+          // Increment loyalty points in profiles table
+          // Note: In a production app, this should be a transaction or RPC
+          final profileData = await supabase
+              .from('profiles')
+              .select('loyalty_points')
+              .eq('id', userId)
+              .single();
+
+          int currentPoints = profileData['loyalty_points'] ?? 0;
+          await supabase
+              .from('profiles')
+              .update({'loyalty_points': currentPoints + 100})
+              .eq('id', userId);
+        }
+      }
+
       await supabase
           .from('orders')
           .update({'status': newStatus})

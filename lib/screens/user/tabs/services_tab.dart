@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:supa/screens/user/create_order_screen.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:easy_localization/easy_localization.dart';
 
 class ServicesTab extends StatefulWidget {
   const ServicesTab({super.key});
@@ -16,32 +17,41 @@ class ServicesTab extends StatefulWidget {
 
 class _ServicesTabState extends State<ServicesTab> {
   String selectedCategory = 'All';
-  final List<String> categories = [
-    'All',
-    'General',
-    'Engine',
-    'Body',
-    'Diagnostics',
-    'Tires',
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final List<String> categories = [
+      'all',
+      'general',
+      'engine',
+      'body',
+      'diagnostics',
+      'tires',
+    ];
+
+    String getCategoryLabel(String cat) {
+      return cat.tr();
+    }
+
     return BlocBuilder<ServiceCubit, ServiceState>(
       builder: (context, state) {
         if (state is ServiceLoading) {
           return const AppLoadingIndicator();
         } else if (state is ServicesLoaded) {
-          final filteredServices = selectedCategory == 'All'
+          final filteredServices = selectedCategory == 'all'
               ? state.services
               : state.services
-                    .where((s) => s.category == selectedCategory)
+                    .where(
+                      (s) =>
+                          s.category.toLowerCase() ==
+                          selectedCategory.toLowerCase(),
+                    )
                     .toList();
 
           return Column(
             children: [
               // --- CATEGORY SELECTOR ---
-              _buildCategorySelector(),
+              _buildCategorySelector(categories, getCategoryLabel),
 
               Expanded(
                 child: RefreshIndicator(
@@ -50,22 +60,23 @@ class _ServicesTabState extends State<ServicesTab> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       // --- COMBO PACKS SECTION ---
-                      if (selectedCategory == 'All') ...[
-                        _buildSectionHeader('Special Combo Packs'),
+                      if (selectedCategory == 'all') ...[
+                        _buildSectionHeader(context, 'specialComboPacks'.tr()),
                         const SizedBox(height: 12),
                         _buildComboPacks(
+                          context,
                           state.services.where((s) => s.isCombo).toList(),
                         ),
                         const SizedBox(height: 24),
-                        _buildSectionHeader('All Services'),
+                        _buildSectionHeader(context, 'allServices'.tr()),
                         const SizedBox(height: 12),
                       ],
 
                       if (filteredServices.isEmpty)
-                        const Center(
+                        Center(
                           child: Padding(
-                            padding: EdgeInsets.only(top: 40),
-                            child: Text('No services in this category'),
+                            padding: const EdgeInsets.only(top: 40),
+                            child: Text('noServicesInCategory'.tr()),
                           ),
                         )
                       else
@@ -95,18 +106,22 @@ class _ServicesTabState extends State<ServicesTab> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
+        color: Theme.of(context).textTheme.titleLarge?.color,
       ),
     );
   }
 
-  Widget _buildCategorySelector() {
+  Widget _buildCategorySelector(
+    List<String> categories,
+    String Function(String) getLabel,
+  ) {
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -121,19 +136,22 @@ class _ServicesTabState extends State<ServicesTab> {
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               selected: isSelected,
-              label: Text(category),
+              label: Text(getLabel(category)),
               onSelected: (val) {
                 setState(() => selectedCategory = category);
               },
-              backgroundColor: Colors.white12,
+              backgroundColor: Theme.of(context).cardColor,
               selectedColor: Colors.blue.withAlpha(51),
               checkmarkColor: Colors.blue,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.blue : Colors.white70,
+                color: isSelected ? Colors.blue : Theme.of(context).hintColor,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? Colors.blue : Colors.transparent,
+                ),
               ),
             ),
           );
@@ -142,9 +160,9 @@ class _ServicesTabState extends State<ServicesTab> {
     );
   }
 
-  Widget _buildComboPacks(List<Service> combos) {
+  Widget _buildComboPacks(BuildContext context, List<Service> combos) {
     if (combos.isEmpty) {
-      return const Center(child: Text('No promo packs available'));
+      return Center(child: Text('noPromoPacks'.tr()));
     }
     return SizedBox(
       height: 160,
@@ -153,14 +171,14 @@ class _ServicesTabState extends State<ServicesTab> {
         itemCount: combos.length,
         itemBuilder: (context, index) {
           final service = combos[index];
-          return _buildComboCard(service);
+          return _buildComboCard(context, service);
         },
       ),
     );
   }
 
-  Widget _buildComboCard(Service service) {
-    final color = Colors.blue; // Default or could be based on category
+  Widget _buildComboCard(BuildContext context, Service service) {
+    final color = Colors.blue;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -189,9 +207,9 @@ class _ServicesTabState extends State<ServicesTab> {
                 color: color,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'PROMO PACK',
-                style: TextStyle(
+              child: Text(
+                'promoPack'.tr(),
+                style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -203,18 +221,29 @@ class _ServicesTabState extends State<ServicesTab> {
               service.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.titleLarge?.color,
+              ),
             ),
             Text(
               service.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).hintColor,
+                fontSize: 12,
+              ),
             ),
             const Spacer(),
             Text(
               '\$${service.price.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.titleLarge?.color,
+              ),
             ),
           ],
         ),
@@ -233,10 +262,10 @@ class _ServiceListItem extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       elevation: 0,
-      color: Colors.white.withAlpha(13),
+      color: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Colors.white12),
+        side: BorderSide(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -302,9 +331,10 @@ class _ServiceListItem extends StatelessWidget {
                     Expanded(
                       child: Text(
                         service.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                     ),
@@ -323,17 +353,21 @@ class _ServiceListItem extends StatelessWidget {
                   service.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  style: TextStyle(
+                    color: Theme.of(context).hintColor,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     _buildBadge(
+                      context,
                       Icons.timer,
                       service.estimatedTime ?? '${service.durationHours}h',
                     ),
                     const SizedBox(width: 12),
-                    _buildBadge(Icons.category, service.category),
+                    _buildBadge(context, Icons.category, service.category),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -358,9 +392,9 @@ class _ServiceListItem extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Book Appointment',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Text(
+                      'bookAppointment'.tr(),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -372,12 +406,13 @@ class _ServiceListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge(IconData icon, String label) {
+  Widget _buildBadge(BuildContext context, IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(18),
+        color: Theme.of(context).cardColor.withAlpha(128),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -386,7 +421,7 @@ class _ServiceListItem extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.white70),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
           ),
         ],
       ),

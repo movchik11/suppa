@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supa/screens/user/create_order_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AssistantTab extends StatefulWidget {
   const AssistantTab({super.key});
@@ -12,63 +13,51 @@ class _AssistantTabState extends State<AssistantTab> {
   final List<Map<String, dynamic>> _messages = [
     {
       'isBot': true,
-      'text':
-          'Hello! I am your AI Auto Assistant. Is something wrong with your car?',
-      'options': ['Yes, help me diagnose', 'Just looking for tips'],
+      'text': 'aiHello'.tr(),
+      'options': ['optDiagnose', 'optTips'],
     },
   ];
 
   final Map<String, List<String>> _symptoms = {
-    'Yes, help me diagnose': [
-      'Engine Noises',
-      'Fluid Leaks',
-      'Warning Lights',
-      'Steering/Brakes',
-    ],
-    'Engine Noises': ['Squealing', 'Knocking', 'Hissing'],
-    'Fluid Leaks': ['Oil (Black/Brown)', 'Coolant (Green/Pink)', 'Water'],
-    'Warning Lights': ['Check Engine', 'Battery', 'Oil Pressure', 'ABS'],
+    'optDiagnose': ['diagNoises', 'diagLeaks', 'diagLights', 'diagSteering'],
+    'diagNoises': ['noiseSquealing', 'noiseKnocking', 'noiseHissing'],
+    'diagLeaks': ['leakOil', 'leakCoolant', 'leakWater'],
+    'diagLights': ['lightCheckEngine', 'lightBattery', 'lightOil', 'lightAbs'],
   };
 
   final Map<String, String> _results = {
-    'Squealing':
-        'Likely a worn fan belt or serpentine belt. Recommended: Belt Inspection.',
-    'Knocking':
-        'Could be engine bearings or low oil. CAUTION: Stop driving and check oil immediately.',
-    'Oil (Black/Brown)':
-        'An oil leak is detected. Frequent causes: Gaskets or Seals. Recommended: Oil Leak Repair.',
-    'Check Engine':
-        'Generic fault detected. Our experts can scan the OBD code for you. Recommended: Computer Diagnostics.',
+    'noiseSquealing': 'resSquealing'.tr(),
+    'noiseKnocking': 'resKnocking'.tr(),
+    'leakOil': 'resOilLeak'.tr(),
+    'lightCheckEngine': 'resCheckEngine'.tr(),
   };
 
   void _handleOption(String option) {
-    if (option == 'Start Over') {
+    if (option == 'optStartOver') {
       setState(() {
         _messages.clear();
         _messages.add({
           'isBot': true,
-          'text':
-              'Hello! I am your AI Auto Assistant. Is something wrong with your car?',
-          'options': ['Yes, help me diagnose', 'Just looking for tips'],
+          'text': 'aiHello'.tr(),
+          'options': ['optDiagnose', 'optTips'],
         });
       });
       return;
     }
 
-    if (option == 'Book Inspection') {
+    if (option == 'optBookInspection') {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const CreateOrderScreen(
-            preFillDescription: 'General Inspection requested via Assistant',
-          ),
+          builder: (context) =>
+              CreateOrderScreen(preFillDescription: 'aiUnderstand'.tr()),
         ),
       );
       return;
     }
 
     setState(() {
-      _messages.add({'isBot': false, 'text': option});
+      _messages.add({'isBot': false, 'text': option.tr()});
 
       final nextOptions = _symptoms[option];
       final result = _results[option];
@@ -78,21 +67,20 @@ class _AssistantTabState extends State<AssistantTab> {
       } else if (nextOptions != null) {
         _messages.add({
           'isBot': true,
-          'text': 'Can you be more specific about "$option"?',
+          'text': 'aiSpecific'.tr(args: [option.tr()]),
           'options': nextOptions,
         });
-      } else if (option == 'Just looking for tips') {
+      } else if (option == 'optTips') {
         _messages.add({
           'isBot': true,
-          'text':
-              'Keep an eye on tire pressure, check fluids every 2 weeks, and never ignore squeaking brakes! Would you like a professional inspection?',
-          'options': ['Book Inspection', 'Start Over'],
+          'text': 'aiTips'.tr(),
+          'options': ['optBookInspection', 'optStartOver'],
         });
       } else {
         _messages.add({
           'isBot': true,
-          'text': 'I understand. Would you like to book a general inspection?',
-          'options': ['Book Inspection', 'Start Over'],
+          'text': 'aiUnderstand'.tr(),
+          'options': ['optBookInspection', 'optStartOver'],
         });
       }
     });
@@ -136,8 +124,8 @@ class _AssistantTabState extends State<AssistantTab> {
               color: isBot
                   ? (isResult
                         ? Colors.orange.withAlpha(51)
-                        : Colors.blue.withAlpha(25))
-                  : Colors.grey.withAlpha(51),
+                        : Theme.of(context).primaryColor.withAlpha(25))
+                  : Theme.of(context).cardColor,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(20),
                 topRight: const Radius.circular(20),
@@ -146,14 +134,18 @@ class _AssistantTabState extends State<AssistantTab> {
               ),
               border: Border.all(
                 color: isBot
-                    ? (isResult ? Colors.orange : Colors.blue).withAlpha(51)
-                    : Colors.transparent,
+                    ? (isResult
+                              ? Colors.orange
+                              : Theme.of(context).primaryColor)
+                          .withAlpha(51)
+                    : Theme.of(context).dividerColor,
               ),
             ),
             child: Text(
               msg['text'],
               style: TextStyle(
                 fontWeight: isResult ? FontWeight.bold : FontWeight.normal,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
@@ -164,10 +156,16 @@ class _AssistantTabState extends State<AssistantTab> {
               runSpacing: 8,
               children: (msg['options'] as List<String>).map((opt) {
                 return ActionChip(
-                  label: Text(opt),
+                  label: Text(opt.tr()),
                   onPressed: () => _handleOption(opt),
-                  backgroundColor: Colors.blue.withAlpha(25),
-                  labelStyle: const TextStyle(color: Colors.blue, fontSize: 12),
+                  backgroundColor: Theme.of(context).primaryColor.withAlpha(25),
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                    fontSize: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 );
               }).toList(),
             ),
@@ -193,7 +191,7 @@ class _AssistantTabState extends State<AssistantTab> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Book Suggested Service'),
+              child: Text('bookSuggested'.tr()),
             ),
           ],
         ],

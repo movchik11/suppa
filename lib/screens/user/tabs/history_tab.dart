@@ -7,6 +7,8 @@ import 'package:supa/components/app_loading_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:supa/screens/user/chat_screen.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 class HistoryTab extends StatelessWidget {
   const HistoryTab({super.key});
 
@@ -25,11 +27,14 @@ class HistoryTab extends StatelessWidget {
                   Lottie.asset(
                     'assets/animations/scanning_docs.json',
                     height: 200,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.inbox, size: 80, color: Colors.grey),
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.inbox,
+                      size: 80,
+                      color: Theme.of(context).disabledColor,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('No orders yet'),
+                  Text('noHistory'.tr()),
                 ],
               ),
             );
@@ -54,9 +59,9 @@ class HistoryTab extends StatelessWidget {
                 const Icon(Icons.error, size: 80, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  'Failed to load history: ${state.message}',
+                  '${'error'.tr()}: ${state.message}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Theme.of(context).hintColor),
                 ),
               ],
             ),
@@ -74,6 +79,7 @@ class _OrderHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final statusSteps = ['pending', 'confirmed', 'in_progress', 'completed'];
     final currentStep = statusSteps.indexOf(order.status);
     final isCancelled = order.status == 'cancelled';
@@ -103,7 +109,10 @@ class _OrderHistoryCard extends StatelessWidget {
                       DateFormat(
                         'MMM dd, yyyy • HH:mm',
                       ).format(order.createdAt),
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -113,7 +122,7 @@ class _OrderHistoryCard extends StatelessWidget {
                       // Repeat order logic (navigates to create order with same details)
                     },
                     icon: const Icon(Icons.replay_outlined, size: 16),
-                    label: const Text('Repeat'),
+                    label: Text('repeat'.tr()),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.blue,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -123,10 +132,10 @@ class _OrderHistoryCard extends StatelessWidget {
             ),
             const Divider(height: 32),
             if (isCancelled)
-              const Center(
+              Center(
                 child: Text(
-                  'ORDER CANCELLED',
-                  style: TextStyle(
+                  'orderCancelled'.tr(),
+                  style: const TextStyle(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
@@ -134,7 +143,7 @@ class _OrderHistoryCard extends StatelessWidget {
                 ),
               )
             else
-              _buildProgressIndicator(currentStep),
+              _buildProgressIndicator(context, currentStep),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -144,13 +153,15 @@ class _OrderHistoryCard extends StatelessWidget {
                     order.issueDescription,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black45,
+                    ),
                   ),
                 ),
                 Text(
                   'ID: ${order.id.substring(0, 8).toUpperCase()}',
                   style: TextStyle(
-                    color: Colors.blue.withAlpha(153),
+                    color: Colors.blue.withAlpha(isDark ? 153 : 200),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -174,7 +185,7 @@ class _OrderHistoryCard extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Chat with Master'),
+                  label: Text('chatWithMaster'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.blue,
                     side: BorderSide(color: Colors.blue.withAlpha(77)),
@@ -191,8 +202,14 @@ class _OrderHistoryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressIndicator(int currentStep) {
-    final steps = ['Auth', 'Conf', 'Work', 'Done'];
+  Widget _buildProgressIndicator(BuildContext context, int currentStep) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final steps = [
+      'stepAuth'.tr(),
+      'stepConf'.tr(),
+      'stepWork'.tr(),
+      'stepDone'.tr(),
+    ];
     return Row(
       children: List.generate(steps.length, (index) {
         final isActive = index <= currentStep;
@@ -207,16 +224,24 @@ class _OrderHistoryCard extends StatelessWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: isActive ? Colors.blue : Colors.white12,
+                      color: isActive
+                          ? Colors.blue
+                          : (isDark
+                                ? Colors.white12
+                                : Colors.black.withAlpha(20)),
                       shape: BoxShape.circle,
                       border: isActive
                           ? null
-                          : Border.all(color: Colors.white24),
+                          : Border.all(
+                              color: isDark ? Colors.white24 : Colors.black12,
+                            ),
                     ),
                     child: Icon(
                       isActive ? Icons.check : Icons.circle,
                       size: 14,
-                      color: isActive ? Colors.white : Colors.white24,
+                      color: isActive
+                          ? Colors.white
+                          : (isDark ? Colors.white24 : Colors.black12),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -224,7 +249,9 @@ class _OrderHistoryCard extends StatelessWidget {
                     steps[index],
                     style: TextStyle(
                       fontSize: 10,
-                      color: isActive ? Colors.blue : Colors.grey,
+                      color: isActive
+                          ? Colors.blue
+                          : (isDark ? Colors.grey : Colors.black45),
                       fontWeight: isActive
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -237,7 +264,11 @@ class _OrderHistoryCard extends StatelessWidget {
                   child: Container(
                     height: 2,
                     margin: const EdgeInsets.only(bottom: 14),
-                    color: index < currentStep ? Colors.blue : Colors.white12,
+                    color: index < currentStep
+                        ? Colors.blue
+                        : (isDark
+                              ? Colors.white12
+                              : Colors.black.withAlpha(20)),
                   ),
                 ),
             ],

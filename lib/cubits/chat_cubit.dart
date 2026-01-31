@@ -48,9 +48,14 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   Future<void> sendMessage({String? text, XFile? image}) async {
+    if (text == null && image == null) return;
+
     try {
       final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        emit(ChatError('You must be logged in to send messages'));
+        return;
+      }
 
       String? imageUrl;
       if (image != null) {
@@ -70,7 +75,7 @@ class ChatCubit extends Cubit<ChatState> {
         'image_url': imageUrl,
       });
     } catch (e) {
-      // In a real app, you might want a specific error state for sending
+      emit(ChatError('Failed to send message: ${e.toString()}'));
       print('Error sending message: $e');
     }
   }

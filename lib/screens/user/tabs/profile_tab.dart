@@ -9,18 +9,20 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supa/screens/user/locations_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BlocConsumer<ProfileCubit, ProfileState>(
       listener: (context, state) {
         if (state is ProfileActionSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('profileUpdated'.tr())));
         } else if (state is ProfileError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -74,30 +76,31 @@ class ProfileTab extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(profile.email, style: const TextStyle(color: Colors.grey)),
+                Text(
+                  profile.email,
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // --- LOYALTY CARD ---
-                _buildLoyaltyCard(profile),
-                const SizedBox(height: 24),
-
-                // --- REFERRAL SECTION ---
-                _buildInviteSection(profile),
+                _buildLoyaltyCard(context, profile),
                 const SizedBox(height: 24),
 
                 // --- PERSONAL INFO ---
-                _buildSectionHeader('Personal Info'),
+                _buildSectionHeader(context, 'personalInfo'.tr()),
                 Card(
                   child: Column(
                     children: [
                       ListTile(
                         leading: const Icon(Icons.badge, color: Colors.blue),
-                        title: const Text('Name'),
-                        subtitle: Text(profile.displayName ?? 'Not set'),
+                        title: Text('name'.tr()),
+                        subtitle: Text(profile.displayName ?? 'notSet'.tr()),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _showEditDialog(
                           context,
-                          'Name',
+                          'name'.tr(),
                           profile.displayName,
                           (val) {
                             context.read<ProfileCubit>().updateProfile(
@@ -111,12 +114,12 @@ class ProfileTab extends StatelessWidget {
                       const Divider(height: 1),
                       ListTile(
                         leading: const Icon(Icons.phone, color: Colors.blue),
-                        title: const Text('Phone'),
-                        subtitle: Text(profile.phoneNumber ?? 'Not set'),
+                        title: Text('phone'.tr()),
+                        subtitle: Text(profile.phoneNumber ?? 'notSet'.tr()),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _showEditDialog(
                           context,
-                          'Phone',
+                          'phone'.tr(),
                           profile.phoneNumber,
                           (val) {
                             context.read<ProfileCubit>().updateProfile(
@@ -134,7 +137,7 @@ class ProfileTab extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // --- SETTINGS ---
-                _buildSectionHeader('Settings'),
+                _buildSectionHeader(context, 'settings'.tr()),
                 Card(
                   child: Column(
                     children: [
@@ -143,7 +146,7 @@ class ProfileTab extends StatelessWidget {
                           Icons.contact_mail,
                           color: Colors.blue,
                         ),
-                        title: const Text('Preferred Contact'),
+                        title: Text('preferredContact'.tr()),
                         subtitle: Text(profile.preferredContact),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _showContactPicker(context, profile),
@@ -154,8 +157,8 @@ class ProfileTab extends StatelessWidget {
                           Icons.notifications,
                           color: Colors.blue,
                         ),
-                        title: const Text('Notifications'),
-                        subtitle: const Text('Get alerts for your orders'),
+                        title: Text('notifications'.tr()),
+                        subtitle: Text('getAlertsForOrders'.tr()),
                         value: profile.notificationsEnabled,
                         onChanged: (val) {
                           context.read<ProfileCubit>().updateProfile(
@@ -169,16 +172,16 @@ class ProfileTab extends StatelessWidget {
                       const Divider(height: 1),
                       ListTile(
                         leading: const Icon(Icons.language, color: Colors.blue),
-                        title: const Text('Language'),
-                        subtitle: const Text('English'),
+                        title: Text('language'.tr()),
+                        subtitle: Text(
+                          context.locale.languageCode == 'en'
+                              ? 'English'
+                              : context.locale.languageCode == 'ru'
+                              ? 'Русский'
+                              : 'Türkmençe',
+                        ),
                         trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Language switcher coming soon!'),
-                            ),
-                          );
-                        },
+                        onTap: () => _showLanguagePicker(context),
                       ),
                       const Divider(height: 1),
                       ListTile(
@@ -186,8 +189,8 @@ class ProfileTab extends StatelessWidget {
                           Icons.location_on,
                           color: Colors.blue,
                         ),
-                        title: const Text('Our Branches'),
-                        subtitle: const Text('Find and navigate to us'),
+                        title: Text('ourBranches'.tr()),
+                        subtitle: Text('findAndNavigateToUs'.tr()),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
                           Navigator.push(
@@ -205,7 +208,7 @@ class ProfileTab extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // --- APPEARANCE ---
-                _buildSectionHeader('Appearance'),
+                _buildSectionHeader(context, 'appearance'.tr()),
                 _buildAppThemesSection(context),
 
                 const SizedBox(height: 32),
@@ -231,7 +234,7 @@ class ProfileTab extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.logout),
-                    label: const Text('Logout Account'),
+                    label: Text('logout'.tr()),
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -251,7 +254,7 @@ class ProfileTab extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => context.read<ProfileCubit>().fetchProfile(),
-                  child: const Text('Retry'),
+                  child: Text('retry'.tr()),
                 ),
               ],
             ),
@@ -265,17 +268,17 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 8),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           title.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.grey,
+            color: Theme.of(context).hintColor,
             letterSpacing: 1.2,
           ),
         ),
@@ -283,7 +286,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildLoyaltyCard(Profile profile) {
+  Widget _buildLoyaltyCard(BuildContext context, Profile profile) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -310,7 +313,7 @@ class ProfileTab extends StatelessWidget {
             children: [
               const Icon(Icons.auto_awesome, color: Colors.white, size: 30),
               Text(
-                'GOLD MEMBER',
+                'goldMember'.tr(),
                 style: TextStyle(
                   color: Colors.white.withAlpha(179),
                   fontWeight: FontWeight.bold,
@@ -320,9 +323,9 @@ class ProfileTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 30),
-          const Text(
-            'LOYALTY POINTS',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+          Text(
+            'loyaltyPoints'.tr(),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
           Text(
             '${profile.loyaltyPoints} PTS',
@@ -344,7 +347,9 @@ class ProfileTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${1000 - (profile.loyaltyPoints % 1000)} points to next bonus',
+            'pointsToNextBonus'.tr(
+              args: [(1000 - (profile.loyaltyPoints % 1000)).toString()],
+            ),
             style: const TextStyle(color: Colors.white54, fontSize: 11),
           ),
         ],
@@ -360,8 +365,8 @@ class ProfileTab extends StatelessWidget {
           isLightMode ? Icons.light_mode : Icons.dark_mode,
           color: Colors.orange,
         ),
-        title: const Text('Theme Settings'),
-        subtitle: Text(isLightMode ? 'Light Appearance' : 'Dark Appearance'),
+        title: Text('themeSettings'.tr()),
+        subtitle: Text(isLightMode ? 'lightMode'.tr() : 'darkMode'.tr()),
         trailing: Switch(
           value: isLightMode,
           onChanged: (val) => context.read<ThemeCubit>().toggleTheme(),
@@ -370,82 +375,54 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildInviteSection(Profile profile) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.green.withAlpha(25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green.withAlpha(51)),
+  void _showLanguagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Row(
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Invite Friends',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Get 50 points for every friend!',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white12,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    profile.referralCode ?? 'AUTO-REF',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'language'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(width: 16),
-          _buildQRPlaceholder(),
+          ListTile(
+            title: const Text('English'),
+            trailing: context.locale.languageCode == 'en'
+                ? const Icon(Icons.check, color: Colors.blue)
+                : null,
+            onTap: () {
+              context.setLocale(const Locale('en'));
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('Русский'),
+            trailing: context.locale.languageCode == 'ru'
+                ? const Icon(Icons.check, color: Colors.blue)
+                : null,
+            onTap: () {
+              context.setLocale(const Locale('ru'));
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('Türkmençe'),
+            trailing: context.locale.languageCode == 'tm'
+                ? const Icon(Icons.check, color: Colors.blue)
+                : null,
+            onTap: () {
+              context.setLocale(const Locale('tm'));
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 20),
         ],
-      ),
-    );
-  }
-
-  Widget _buildQRPlaceholder() {
-    return Container(
-      width: 80,
-      height: 80,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-          mainAxisSpacing: 2,
-          crossAxisSpacing: 2,
-        ),
-        itemCount: 25,
-        itemBuilder: (context, index) {
-          return Container(
-            color: (index % 3 == 0 || index % 7 == 2)
-                ? Colors.black
-                : Colors.transparent,
-          );
-        },
       ),
     );
   }
@@ -453,23 +430,26 @@ class ProfileTab extends StatelessWidget {
   void _showContactPicker(BuildContext context, Profile profile) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Padding(
-            padding: EdgeInsets.all(20),
+          Padding(
+            padding: const EdgeInsets.all(20),
             child: Text(
-              'Preferred Contact Method',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'preferredContact'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           ...['Phone', 'WhatsApp', 'Telegram', 'Email'].map(
             (method) => ListTile(
-              title: Text(method),
+              title: Text(
+                method.toLowerCase().tr() != method.toLowerCase()
+                    ? method.toLowerCase().tr()
+                    : method,
+              ),
               trailing: profile.preferredContact == method
                   ? const Icon(Icons.check, color: Colors.blue)
                   : null,
@@ -500,7 +480,7 @@ class ProfileTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Edit $title'),
+        title: Text(title),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(labelText: title),
@@ -508,14 +488,14 @@ class ProfileTab extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () {
               onSave(controller.text);
               Navigator.pop(dialogContext);
             },
-            child: const Text('Save'),
+            child: Text('save'.tr()),
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ChatScreen extends StatefulWidget {
   final String orderId;
@@ -36,7 +37,7 @@ class _ChatScreenState extends State<ChatScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Chat with Master', style: TextStyle(fontSize: 18)),
+              Text('chatWithMaster'.tr(), style: const TextStyle(fontSize: 18)),
               Text(
                 widget.serviceName,
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -66,9 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (state is ChatLoaded) {
                       final messages = state.messages;
                       if (messages.isEmpty) {
-                        return const Center(
-                          child: Text('Start a conversation...'),
-                        );
+                        return Center(child: Text('startConversation'.tr()));
                       }
 
                       // Auto scroll to bottom
@@ -141,12 +140,23 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(height: 8),
             ],
             if (msg.text != null && msg.text!.isNotEmpty)
-              Text(msg.text!, style: const TextStyle(color: Colors.white)),
+              Text(
+                msg.text!,
+                style: TextStyle(
+                  color: isMe
+                      ? Colors.white
+                      : Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
             const SizedBox(height: 4),
             Text(
               DateFormat('HH:mm').format(msg.createdAt),
               style: TextStyle(
-                color: Colors.white.withAlpha(150),
+                color:
+                    (isMe
+                            ? Colors.white
+                            : Theme.of(context).textTheme.bodySmall?.color)
+                        ?.withAlpha(150),
                 fontSize: 10,
               ),
             ),
@@ -183,8 +193,8 @@ class _ChatScreenState extends State<ChatScreen> {
             child: TextField(
               controller: _msgController,
               decoration: InputDecoration(
-                hintText: 'Type a message...',
-                fillColor: Colors.white.withAlpha(10),
+                hintText: 'typeMessage'.tr(),
+                fillColor: Theme.of(context).cardColor.withAlpha(153),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,

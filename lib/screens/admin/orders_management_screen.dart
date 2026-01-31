@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/models/order_model.dart';
+import 'package:supa/screens/user/chat_screen.dart';
 
 class OrdersManagementScreen extends StatelessWidget {
   const OrdersManagementScreen({super.key});
@@ -127,13 +128,32 @@ class _OrderCard extends StatelessWidget {
           _formatDate(order.createdAt),
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
-        trailing: Chip(
-          label: Text(
-            order.status.toUpperCase(),
-            style: const TextStyle(fontSize: 10),
-          ),
-          backgroundColor: _getStatusColor().withAlpha(51),
-          labelStyle: TextStyle(color: _getStatusColor()),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline, color: Colors.blue),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      orderId: order.id,
+                      serviceName: order.carModel,
+                    ),
+                  ),
+                );
+              },
+            ),
+            Chip(
+              label: Text(
+                order.status.toUpperCase(),
+                style: const TextStyle(fontSize: 10),
+              ),
+              backgroundColor: _getStatusColor().withAlpha(51),
+              labelStyle: TextStyle(color: _getStatusColor()),
+            ),
+          ],
         ),
         children: [
           Padding(
