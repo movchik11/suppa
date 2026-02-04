@@ -155,8 +155,24 @@ class OrderCubit extends Cubit<OrderState> {
 
       // Refresh the list
       await fetchAllOrders();
+      await fetchAllOrders();
     } catch (e) {
       emit(OrderError('Failed to update status: ${e.toString()}'));
+    }
+  }
+
+  // Cancel order (user)
+  Future<void> cancelOrder(String orderId) async {
+    try {
+      await supabase
+          .from('orders')
+          .update({'status': 'cancelled'})
+          .eq('id', orderId);
+
+      // Refresh to show updated status
+      await fetchMyOrders();
+    } catch (e) {
+      emit(OrderError('Failed to cancel order: ${e.toString()}'));
     }
   }
 

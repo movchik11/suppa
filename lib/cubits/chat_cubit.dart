@@ -36,12 +36,17 @@ class ChatCubit extends Cubit<ChatState> {
           .stream(primaryKey: ['id'])
           .eq('order_id', orderId)
           .order('created_at', ascending: true)
-          .listen((data) {
-            final messages = (data as List)
-                .map((map) => ChatMessage.fromMap(map))
-                .toList();
-            emit(ChatLoaded(messages));
-          });
+          .listen(
+            (data) {
+              final messages = (data as List)
+                  .map((map) => ChatMessage.fromMap(map))
+                  .toList();
+              emit(ChatLoaded(messages));
+            },
+            onError: (error) {
+              emit(ChatError('Stream error: $error'));
+            },
+          );
     } catch (e) {
       emit(ChatError(e.toString()));
     }
@@ -76,7 +81,6 @@ class ChatCubit extends Cubit<ChatState> {
       });
     } catch (e) {
       emit(ChatError('Failed to send message: ${e.toString()}'));
-      print('Error sending message: $e');
     }
   }
 

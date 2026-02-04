@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supa/cubits/auth_cubit.dart';
+import 'package:supa/utils/tm_material_delegate.dart';
 import 'package:supa/cubits/garage_cubit.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/service_cubit.dart';
@@ -22,7 +24,7 @@ void main() async {
   );
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('ru'), Locale('tm')],
+      supportedLocales: const [Locale('en'), Locale('ru'), Locale('tk')],
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
       child: const MainApp(),
@@ -54,7 +56,13 @@ class MainApp extends StatelessWidget {
             themeMode: isLightMode ? ThemeMode.light : ThemeMode.dark,
             theme: _buildTheme(Brightness.light),
             darkTheme: _buildTheme(Brightness.dark),
-            localizationsDelegates: context.localizationDelegates,
+            localizationsDelegates: [
+              const TmMaterialLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              ...context.localizationDelegates,
+            ],
             supportedLocales: context.supportedLocales,
             locale: context.locale,
             home: const SplashScreen(),

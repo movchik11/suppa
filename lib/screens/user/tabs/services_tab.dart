@@ -16,17 +16,36 @@ class ServicesTab extends StatefulWidget {
 }
 
 class _ServicesTabState extends State<ServicesTab> {
-  String selectedCategory = 'All';
+  String selectedCategory = 'all';
+
+  final Map<String, List<String>> _subServices = {
+    'catMaintenance': ['oilFluidChange', 'filterReplacement', 'sparkPlugCheck'],
+    'catDiagElectronics': [
+      'computerDiagnostics',
+      'chassisDiagnostics',
+      'electricalRepair',
+    ],
+    'catCoreRepair': [
+      'engineRepair',
+      'transmissionRepair',
+      'suspensionSteering',
+      'brakingSystem',
+    ],
+    'catChassisWheels': ['tireFitting', 'wheelAlignment'],
+    'catBodyVisual': ['bodyWork', 'paintPolishing', 'glassRepair'],
+    'catAdditional': ['airConditioning', 'tuningEquipment', 'preSalePrep'],
+  };
 
   @override
   Widget build(BuildContext context) {
     final List<String> categories = [
       'all',
-      'general',
-      'engine',
-      'body',
-      'diagnostics',
-      'tires',
+      'catMaintenance',
+      'catDiagElectronics',
+      'catCoreRepair',
+      'catChassisWheels',
+      'catBodyVisual',
+      'catAdditional',
     ];
 
     String getCategoryLabel(String cat) {
@@ -70,6 +89,55 @@ class _ServicesTabState extends State<ServicesTab> {
                         const SizedBox(height: 24),
                         _buildSectionHeader(context, 'allServices'.tr()),
                         const SizedBox(height: 12),
+                      ] else ...[
+                        // --- SUGGESTIONS FOR CATEGORY ---
+                        if (_subServices[selectedCategory] != null) ...[
+                          _buildSectionHeader(context, 'ourServices'.tr()),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 44,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _subServices[selectedCategory]!.length,
+                              itemBuilder: (context, index) {
+                                final sKey =
+                                    _subServices[selectedCategory]![index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ActionChip(
+                                    label: Text(
+                                      sKey.tr(),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.blue.withAlpha(20),
+                                    side: const BorderSide(color: Colors.blue),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CreateOrderScreen(
+                                                suggestedServiceTitle: sKey
+                                                    .tr(),
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildSectionHeader(
+                            context,
+                            'availableAppointments'.tr(),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ],
 
                       if (filteredServices.isEmpty)
@@ -134,17 +202,17 @@ class _ServicesTabState extends State<ServicesTab> {
           final isSelected = selectedCategory == category;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              selected: isSelected,
+            child: ChoiceChip(
               label: Text(getLabel(category)),
+              selected: isSelected,
               onSelected: (val) {
                 setState(() => selectedCategory = category);
               },
               backgroundColor: Theme.of(context).cardColor,
-              selectedColor: Colors.blue.withAlpha(51),
-              checkmarkColor: Colors.blue,
+              selectedColor:
+                  Colors.blue, // FLUTTER-FIX: Explicit blue for visibility
               labelStyle: TextStyle(
-                color: isSelected ? Colors.blue : Theme.of(context).hintColor,
+                color: isSelected ? Colors.white : Theme.of(context).hintColor,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               shape: RoundedRectangleBorder(
@@ -367,7 +435,7 @@ class _ServiceListItem extends StatelessWidget {
                       service.estimatedTime ?? '${service.durationHours}h',
                     ),
                     const SizedBox(width: 12),
-                    _buildBadge(context, Icons.category, service.category),
+                    _buildBadge(context, Icons.category, service.category.tr()),
                   ],
                 ),
                 const SizedBox(height: 20),

@@ -4,7 +4,6 @@ import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:supa/components/app_loading_indicator.dart';
-import 'package:intl/intl.dart';
 import 'package:supa/screens/user/chat_screen.dart';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -80,201 +79,217 @@ class _OrderHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final statusSteps = ['pending', 'confirmed', 'in_progress', 'completed'];
-    final currentStep = statusSteps.indexOf(order.status);
-    final isCancelled = order.status == 'cancelled';
+
+    Color statusColor;
+    String statusText;
+
+    switch (order.status) {
+      case 'completed':
+        statusColor = Colors.green;
+        statusText = 'completed'.tr();
+        break;
+      case 'in_progress':
+        statusColor = Colors.blue;
+        statusText = 'inProgress'.tr();
+        break;
+      case 'cancelled':
+        statusColor = Colors.red;
+        statusText = 'cancelled'.tr();
+        break;
+      default:
+        statusColor = Colors.orange;
+        statusText = 'pending'.tr();
+    }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order.carModel,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    Text(
-                      DateFormat(
-                        'MMM dd, yyyy • HH:mm',
-                      ).format(order.createdAt),
-                      style: TextStyle(
-                        color: isDark ? Colors.white70 : Colors.black54,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                if (order.status == 'completed')
-                  TextButton.icon(
-                    onPressed: () {
-                      // Repeat order logic (navigates to create order with same details)
-                    },
-                    icon: const Icon(Icons.replay_outlined, size: 16),
-                    label: Text('repeat'.tr()),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                  ),
-              ],
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 4,
+      shadowColor: isDark ? Colors.transparent : Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ChatScreen(orderId: order.id, serviceName: order.carModel),
             ),
-            const Divider(height: 32),
-            if (isCancelled)
-              Center(
-                child: Text(
-                  'orderCancelled'.tr(),
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              )
-            else
-              _buildProgressIndicator(context, currentStep),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    order.issueDescription,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black45,
-                    ),
-                  ),
-                ),
-                Text(
-                  'ID: ${order.id.substring(0, 8).toUpperCase()}',
-                  style: TextStyle(
-                    color: Colors.blue.withAlpha(isDark ? 153 : 200),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            if (!isCancelled) ...[
-              const Divider(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          orderId: order.id,
-                          serviceName: order.carModel,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: Text('chatWithMaster'.tr()),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.blue,
-                    side: BorderSide(color: Colors.blue.withAlpha(77)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressIndicator(BuildContext context, int currentStep) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final steps = [
-      'stepAuth'.tr(),
-      'stepConf'.tr(),
-      'stepWork'.tr(),
-      'stepDone'.tr(),
-    ];
-    return Row(
-      children: List.generate(steps.length, (index) {
-        final isActive = index <= currentStep;
-        final isLast = index == steps.length - 1;
-
-        return Expanded(
-          child: Row(
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? Colors.blue
-                          : (isDark
-                                ? Colors.white12
-                                : Colors.black.withAlpha(20)),
-                      shape: BoxShape.circle,
-                      border: isActive
-                          ? null
-                          : Border.all(
-                              color: isDark ? Colors.white24 : Colors.black12,
-                            ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
                     ),
-                    child: Icon(
-                      isActive ? Icons.check : Icons.circle,
-                      size: 14,
-                      color: isActive
-                          ? Colors.white
-                          : (isDark ? Colors.white24 : Colors.black12),
+                    decoration: BoxDecoration(
+                      color: statusColor.withAlpha(51),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: statusColor.withAlpha(100)),
+                    ),
+                    child: Text(
+                      statusText.toUpperCase(),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    steps[index],
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isActive
-                          ? Colors.blue
-                          : (isDark ? Colors.grey : Colors.black45),
-                      fontWeight: isActive
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        order.scheduledAt != null
+                            ? 'Booked: ${DateFormat('MMM dd • HH:mm').format(order.scheduledAt!)}'
+                            : 'Created: ${DateFormat('MMM dd').format(order.createdAt)}',
+                        style: TextStyle(
+                          color: Theme.of(context).hintColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withAlpha(25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.directions_car,
+                      color: Theme.of(context).primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          order.carModel,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          order.issueDescription,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Theme.of(context).hintColor,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    color: index < currentStep
-                        ? Colors.blue
-                        : (isDark
-                              ? Colors.white12
-                              : Colors.black.withAlpha(20)),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'ID: #${order.id.substring(0, 6).toUpperCase()}',
+                    style: TextStyle(
+                      color: Theme.of(context).disabledColor,
+                      fontSize: 11,
+                      fontFamily: 'Courier',
+                    ),
                   ),
-                ),
+                  if (order.status == 'completed')
+                    TextButton.icon(
+                      onPressed: () {
+                        // Repeat logic would go here
+                      },
+                      icon: const Icon(Icons.refresh, size: 14),
+                      label: Text(
+                        'repeat'.tr(),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 0,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  if (order.status == 'pending' ||
+                      order.status == 'in_progress')
+                    TextButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (bgContext) => AlertDialog(
+                            title: Text('cancelOrder'.tr()),
+                            content: Text('confirmCancelOrder'.tr()),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(bgContext),
+                                child: Text('no'.tr()),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(bgContext);
+                                  context.read<OrderCubit>().cancelOrder(
+                                    order.id,
+                                  );
+                                },
+                                child: Text(
+                                  'yes'.tr(),
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.cancel_outlined,
+                        size: 14,
+                        color: Colors.red,
+                      ),
+                      label: Text(
+                        'cancel'.tr(),
+                        style: const TextStyle(fontSize: 12, color: Colors.red),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 0,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }

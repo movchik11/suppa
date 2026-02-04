@@ -84,8 +84,6 @@ class ProfileTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // --- LOYALTY CARD ---
-                _buildLoyaltyCard(context, profile),
                 const SizedBox(height: 24),
 
                 // --- PERSONAL INFO ---
@@ -158,7 +156,6 @@ class ProfileTab extends StatelessWidget {
                           color: Colors.blue,
                         ),
                         title: Text('notifications'.tr()),
-                        subtitle: Text('getAlertsForOrders'.tr()),
                         value: profile.notificationsEnabled,
                         onChanged: (val) {
                           context.read<ProfileCubit>().updateProfile(
@@ -190,7 +187,6 @@ class ProfileTab extends StatelessWidget {
                           color: Colors.blue,
                         ),
                         title: Text('ourBranches'.tr()),
-                        subtitle: Text('findAndNavigateToUs'.tr()),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
                           Navigator.push(
@@ -282,77 +278,6 @@ class ProfileTab extends StatelessWidget {
             letterSpacing: 1.2,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoyaltyCard(BuildContext context, Profile profile) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF673AB7), Color(0xFF512DA8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF673AB7).withAlpha(77),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(Icons.auto_awesome, color: Colors.white, size: 30),
-              Text(
-                'goldMember'.tr(),
-                style: TextStyle(
-                  color: Colors.white.withAlpha(179),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 30),
-          Text(
-            'loyaltyPoints'.tr(),
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          Text(
-            '${profile.loyaltyPoints} PTS',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: (profile.loyaltyPoints % 1000) / 1000,
-              backgroundColor: Colors.black26,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'pointsToNextBonus'.tr(
-              args: [(1000 - (profile.loyaltyPoints % 1000)).toString()],
-            ),
-            style: const TextStyle(color: Colors.white54, fontSize: 11),
-          ),
-        ],
       ),
     );
   }

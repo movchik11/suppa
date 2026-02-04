@@ -7,7 +7,6 @@ import 'package:supa/models/document_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -22,9 +21,9 @@ class GarageTab extends StatelessWidget {
       listener: (context, state) {
         if (state is VehicleActionSuccess) {
           HapticFeedback.mediumImpact();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Garage updated successfully!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('garageUpdated'.tr())));
         } else if (state is GarageError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
@@ -145,7 +144,7 @@ class GarageTab extends StatelessWidget {
               backgroundColor: Colors.white12,
               child: Icon(Icons.receipt_long, size: 20, color: Colors.blue),
             ),
-            title: Text(e.category),
+            title: Text((e.category as String? ?? 'other').toLowerCase().tr()),
             subtitle: Text('${vehicle.brand} ${vehicle.model}'),
             trailing: Text(
               '-\$${e.amount.toStringAsFixed(2)}',
@@ -225,9 +224,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
     super.initState();
     if (widget.initialVehicle != null) {
       _selectedBrand = _brands.firstWhere(
-        (b) =>
-            b.toLowerCase() ==
-            (widget.initialVehicle!.brand ?? '').toLowerCase(),
+        (b) => b.toLowerCase() == widget.initialVehicle!.brand.toLowerCase(),
         orElse: () => 'Other',
       );
       _modelController.text = widget.initialVehicle!.model;
@@ -269,22 +266,42 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
-                  image: _image != null
-                      ? DecorationImage(
-                          image: FileImage(File(_image!.path)),
-                          fit: BoxFit.cover,
-                        )
-                      : (widget.initialVehicle?.imageUrl != null
-                            ? DecorationImage(
-                                image: CachedNetworkImageProvider(
-                                  widget.initialVehicle!.imageUrl!,
-                                ),
-                                fit: BoxFit.cover,
-                              )
-                            : null),
                 ),
-                child: _image == null && widget.initialVehicle?.imageUrl == null
-                    ? Column(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (_image != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(_image!.path),
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else if (widget.initialVehicle?.imageUrl != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: widget.initialVehicle!.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) => const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error, color: Colors.red),
+                              SizedBox(height: 4),
+                              Text(
+                                'Image Error',
+                                style: TextStyle(fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (_image == null &&
+                        widget.initialVehicle?.imageUrl == null)
+                      Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
@@ -301,37 +318,69 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                             ),
                           ),
                         ],
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedBrand,
-              decoration: InputDecoration(labelText: 'brand'.tr()),
-              items: _brands
-                  .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedBrand = val),
+            const SizedBox(height: 16),
+            Text(
+              'brand'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+            SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _brands.length,
+                itemBuilder: (context, index) {
+                  final brand = _brands[index];
+                  final isSelected = _selectedBrand == brand;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(brand),
+                      selected: isSelected,
+                      onSelected: (val) =>
+                          setState(() => _selectedBrand = brand),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _modelController,
               decoration: InputDecoration(labelText: 'model'.tr()),
             ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              value: _selectedYear,
-              decoration: InputDecoration(labelText: 'year'.tr()),
-              items: _years
-                  .map(
-                    (y) =>
-                        DropdownMenuItem(value: y, child: Text(y.toString())),
-                  )
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedYear = val),
+            const SizedBox(height: 16),
+            Text(
+              'year'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+            SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _years.length,
+                itemBuilder: (context, index) {
+                  final year = _years[index];
+                  final isSelected = _selectedYear == year;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(year.toString()),
+                      selected: isSelected,
+                      onSelected: (val) => setState(() => _selectedYear = year),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _plateController,
               decoration: InputDecoration(
@@ -348,17 +397,22 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                 return null;
               },
             ),
+            const SizedBox(height: 16),
+            Text(
+              'color'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _selectedColor,
-              decoration: InputDecoration(labelText: 'color'.tr()),
-              items: _colors.map((c) {
-                String colorName = c;
-                if (lCode == 'tk' && c == 'White') colorName = 'Ak';
-                if (lCode == 'ru' && c == 'White') colorName = 'Белый';
-                return DropdownMenuItem(value: c, child: Text(colorName));
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _colors.map((c) {
+                return ChoiceChip(
+                  label: Text(c.toLowerCase().tr()),
+                  selected: _selectedColor == c,
+                  onSelected: (val) => setState(() => _selectedColor = c),
+                );
               }).toList(),
-              onChanged: (val) => setState(() => _selectedColor = val),
             ),
           ],
         ),
@@ -582,27 +636,27 @@ class _VehicleCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Expense'),
+        title: Text('addExpense'.tr()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: amountController,
-              decoration: const InputDecoration(labelText: 'Amount (\$)'),
+              decoration: InputDecoration(labelText: '${'amount'.tr()} (\$)'),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: selectedCategory,
-              decoration: const InputDecoration(labelText: 'Category'),
-              items: [
-                'Fuel',
-                'Repair',
-                'Service',
-                'Wash',
-                'Insurance',
-                'Other',
-              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+              decoration: InputDecoration(labelText: 'category'.tr()),
+              items: ['Fuel', 'Repair', 'Service', 'Wash', 'Insurance', 'Other']
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(e.toLowerCase().tr()),
+                    ),
+                  )
+                  .toList(),
               onChanged: (val) => selectedCategory = val!,
             ),
           ],
@@ -610,7 +664,7 @@ class _VehicleCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -624,7 +678,7 @@ class _VehicleCard extends StatelessWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Add'),
+            child: Text('add'.tr()),
           ),
         ],
       ),
@@ -646,6 +700,12 @@ class _VehicleCard extends StatelessWidget {
         itemCount: docs.length,
         itemBuilder: (context, index) {
           final doc = docs[index];
+          String typeStr = doc.type.toString();
+          String typeLabel = typeStr;
+          if (typeStr == 'Insurance') typeLabel = 'docInsurance'.tr();
+          if (typeStr == 'TechPass') typeLabel = 'docTechPass'.tr();
+          if (typeStr == 'License') typeLabel = 'docLicense'.tr();
+
           return Container(
             margin: const EdgeInsets.only(right: 6),
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -659,7 +719,7 @@ class _VehicleCard extends StatelessWidget {
                 const Icon(Icons.description, size: 12, color: Colors.green),
                 const SizedBox(width: 4),
                 Text(
-                  doc.type,
+                  typeLabel,
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -683,16 +743,31 @@ class _VehicleCard extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Upload Document'),
+          title: Text('uploadDoc'.tr()),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
                 value: selectedType,
-                decoration: const InputDecoration(labelText: 'Document Type'),
-                items: ['Insurance', 'TechPass', 'License', 'Other']
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
+                decoration: InputDecoration(labelText: 'docType'.tr()),
+                items: [
+                  DropdownMenuItem(
+                    value: 'Insurance',
+                    child: Text('docInsurance'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'TechPass',
+                    child: Text('docTechPass'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'License',
+                    child: Text('docLicense'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Other',
+                    child: Text('docOther'.tr()),
+                  ),
+                ],
                 onChanged: (val) => selectedType = val!,
               ),
               const SizedBox(height: 16),
@@ -718,14 +793,14 @@ class _VehicleCard extends StatelessWidget {
                         : null,
                   ),
                   child: selectedImage == null
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo, size: 40),
-                            SizedBox(height: 8),
+                            const Icon(Icons.add_a_photo, size: 40),
+                            const SizedBox(height: 8),
                             Text(
-                              'Select Photo',
-                              style: TextStyle(fontSize: 12),
+                              'selectPhoto'.tr(),
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ],
                         )
@@ -737,7 +812,7 @@ class _VehicleCard extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -750,7 +825,7 @@ class _VehicleCard extends StatelessWidget {
                   Navigator.pop(dialogContext);
                 }
               },
-              child: const Text('Upload'),
+              child: Text('add'.tr()),
             ),
           ],
         ),

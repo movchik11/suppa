@@ -7,6 +7,8 @@ import 'package:supa/screens/admin/admin_dashboard_screen.dart';
 import 'package:supa/screens/admin/orders_management_screen.dart';
 import 'package:supa/screens/admin/services_management_screen.dart';
 import 'package:supa/screens/auth/login_screen.dart';
+import 'package:supa/cubits/theme_cubit.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -17,8 +19,38 @@ class AdminHomeScreen extends StatelessWidget {
       create: (context) => AdminCubit(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Admin Panel'),
+          title: Text(
+            'adminPanel'.tr().isEmpty ? 'Admin Panel' : 'adminPanel'.tr(),
+          ),
           actions: [
+            PopupMenuButton<Locale>(
+              icon: const Icon(Icons.language),
+              onSelected: (locale) {
+                context.setLocale(locale);
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: Locale('en'),
+                  child: Text('English'),
+                ),
+                const PopupMenuItem(
+                  value: Locale('ru'),
+                  child: Text('Русский'),
+                ),
+                const PopupMenuItem(
+                  value: Locale('tk'),
+                  child: Text('Türkmençe'),
+                ),
+              ],
+            ),
+            BlocBuilder<ThemeCubit, bool>(
+              builder: (context, isLight) {
+                return IconButton(
+                  icon: Icon(isLight ? Icons.dark_mode : Icons.light_mode),
+                  onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.dashboard),
               tooltip: 'Dashboard',

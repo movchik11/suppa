@@ -4,7 +4,6 @@ import 'package:supa/cubits/chat_cubit.dart';
 import 'package:supa/models/chat_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';

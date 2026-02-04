@@ -32,9 +32,14 @@ class _AssistantTabState extends State<AssistantTab> {
     'lightCheckEngine': 'resCheckEngine'.tr(),
   };
 
+  List<String> _selectionPath = [];
+  String? _suggestedService;
+
   void _handleOption(String option) {
     if (option == 'optStartOver') {
       setState(() {
+        _selectionPath.clear();
+        _suggestedService = null;
         _messages.clear();
         _messages.add({
           'isBot': true,
@@ -49,20 +54,24 @@ class _AssistantTabState extends State<AssistantTab> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              CreateOrderScreen(preFillDescription: 'aiUnderstand'.tr()),
+          builder: (context) => CreateOrderScreen(
+            preFillDescription: null,
+            suggestedServiceTitle: 'optBookInspection'.tr(),
+          ),
         ),
       );
       return;
     }
 
     setState(() {
+      _selectionPath.add(option.tr());
       _messages.add({'isBot': false, 'text': option.tr()});
 
       final nextOptions = _symptoms[option];
       final result = _results[option];
 
       if (result != null) {
+        _suggestedService = option.tr();
         _messages.add({'isBot': true, 'text': result, 'isResult': true});
       } else if (nextOptions != null) {
         _messages.add({
@@ -88,6 +97,7 @@ class _AssistantTabState extends State<AssistantTab> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Expanded(
@@ -96,7 +106,7 @@ class _AssistantTabState extends State<AssistantTab> {
             itemCount: _messages.length,
             itemBuilder: (context, index) {
               final msg = _messages[index];
-              return _buildChatBubble(msg);
+              return _buildChatBubble(msg, isDark);
             },
           ),
         ),
@@ -104,7 +114,7 @@ class _AssistantTabState extends State<AssistantTab> {
     );
   }
 
-  Widget _buildChatBubble(Map<String, dynamic> msg) {
+  Widget _buildChatBubble(Map<String, dynamic> msg, bool isDark) {
     final isBot = msg['isBot'] as bool;
     final isResult = msg['isResult'] ?? false;
 
@@ -123,9 +133,13 @@ class _AssistantTabState extends State<AssistantTab> {
             decoration: BoxDecoration(
               color: isBot
                   ? (isResult
-                        ? Colors.orange.withAlpha(51)
-                        : Theme.of(context).primaryColor.withAlpha(25))
-                  : Theme.of(context).cardColor,
+                        ? Colors.orange.withAlpha(isDark ? 80 : 51)
+                        : Theme.of(
+                            context,
+                          ).primaryColor.withAlpha(isDark ? 60 : 25))
+                  : (isDark
+                        ? Colors.blue.withAlpha(80)
+                        : Theme.of(context).cardColor),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(20),
                 topRight: const Radius.circular(20),
@@ -137,15 +151,18 @@ class _AssistantTabState extends State<AssistantTab> {
                     ? (isResult
                               ? Colors.orange
                               : Theme.of(context).primaryColor)
-                          .withAlpha(51)
-                    : Theme.of(context).dividerColor,
+                          .withAlpha(isDark ? 100 : 51)
+                    : (isDark ? Colors.blue : Theme.of(context).dividerColor)
+                          .withAlpha(100),
               ),
             ),
             child: Text(
               msg['text'],
               style: TextStyle(
                 fontWeight: isResult ? FontWeight.bold : FontWeight.normal,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
+                color: isDark
+                    ? Colors.white
+                    : Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
@@ -158,10 +175,20 @@ class _AssistantTabState extends State<AssistantTab> {
                 return ActionChip(
                   label: Text(opt.tr()),
                   onPressed: () => _handleOption(opt),
-                  backgroundColor: Theme.of(context).primaryColor.withAlpha(25),
+                  backgroundColor: isDark
+                      ? Colors.white.withAlpha(30)
+                      : Theme.of(context).primaryColor.withAlpha(25),
                   labelStyle: TextStyle(
-                    color: Theme.of(context).primaryColor,
+                    color: isDark
+                        ? Colors.white
+                        : Theme.of(context).primaryColor,
                     fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  side: BorderSide(
+                    color: isDark
+                        ? Colors.white38
+                        : Theme.of(context).primaryColor.withAlpha(50),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -177,9 +204,8 @@ class _AssistantTabState extends State<AssistantTab> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CreateOrderScreen(
-                      preFillDescription: 'Diagnosis: ${msg['text']}',
-                    ),
+                    builder: (context) =>
+                        CreateOrderScreen(preFillDescription: null),
                   ),
                 );
               },

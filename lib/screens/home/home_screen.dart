@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supa/screens/user/tabs/services_tab.dart';
 import 'package:supa/screens/user/tabs/garage_tab.dart';
+import 'package:supa/cubits/service_cubit.dart';
+import 'package:supa/utils/service_search_delegate.dart';
 import 'package:supa/screens/user/tabs/history_tab.dart';
 import 'package:supa/screens/user/tabs/profile_tab.dart';
 import 'package:supa/screens/user/tabs/assistant_tab.dart';
-import 'package:supa/screens/user/create_order_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/profile_cubit.dart';
+import 'package:supa/cubits/theme_cubit.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -44,16 +46,66 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         title: Text(titles[_selectedIndex]),
         actions: [
+          PopupMenuButton<Locale>(
+            icon: const Icon(Icons.language),
+            onSelected: (locale) {
+              context.setLocale(locale);
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: Locale('en'), child: Text('English')),
+              const PopupMenuItem(value: Locale('ru'), child: Text('Русский')),
+              const PopupMenuItem(
+                value: Locale('tk'),
+                child: Text('Türkmençe'),
+              ),
+            ],
+          ),
           if (_selectedIndex == 0) ...[
             IconButton(
-              icon: const Icon(Icons.add_shopping_cart, color: Colors.blue),
-              tooltip: 'Book Service',
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateOrderScreen(),
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                final state = context.read<ServiceCubit>().state;
+                if (state is ServicesLoaded) {
+                  showSearch(
+                    context: context,
+                    delegate: ServiceSearchDelegate(state.services),
+                  );
+                }
+              },
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.sort),
+              onSelected: (val) =>
+                  context.read<ServiceCubit>().sortServices(val),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'price_asc',
+                  child: Text('Price: Low to High'),
                 ),
+                PopupMenuItem(
+                  value: 'price_desc',
+                  child: Text('Price: High to Low'),
+                ),
+                PopupMenuItem(
+                  value: 'duration_asc',
+                  child: Text('Duration: Short to Long'),
+                ),
+                PopupMenuItem(
+                  value: 'duration_desc',
+                  child: Text('Duration: Long to Short'),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: Icon(
+                context.watch<ThemeCubit>().state
+                    ? Icons.dark_mode
+                    : Icons.light_mode,
+                color: Colors.orange,
               ),
+              tooltip: 'Toggle Theme',
+              onPressed: () => context.read<ThemeCubit>().toggleTheme(),
             ),
             const SizedBox(width: 4),
             GestureDetector(
@@ -61,8 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: BlocBuilder<ProfileCubit, ProfileState>(
                 builder: (context, state) {
                   String? avatarUrl;
-                  if (state is ProfileLoaded)
+                  if (state is ProfileLoaded) {
                     avatarUrl = state.profile.avatarUrl;
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(right: 16),
                     child: CircleAvatar(
@@ -208,12 +261,12 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).primaryColor,
+        selectedItemColor: Colors.blue,
         unselectedItemColor: Theme.of(context).hintColor,
-        backgroundColor: Theme.of(context).cardColor,
+        showUnselectedLabels: true,
         items: [
           BottomNavigationBarItem(
-            icon: const Icon(Icons.room_service),
+            icon: const Icon(Icons.home_repair_service),
             label: 'services'.tr(),
           ),
           BottomNavigationBarItem(
@@ -221,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'assistant'.tr(),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.directions_car),
+            icon: const Icon(Icons.garage),
             label: 'garage'.tr(),
           ),
           BottomNavigationBarItem(

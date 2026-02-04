@@ -53,6 +53,7 @@ class ServiceCubit extends Cubit<ServiceState> {
     required String description,
     required double durationHours,
     required double price,
+    required String category,
     XFile? image,
   }) async {
     emit(ServiceLoading());
@@ -81,6 +82,7 @@ class ServiceCubit extends Cubit<ServiceState> {
         'description': description,
         'duration_hours': durationHours,
         'price': price,
+        'category': category,
         'image_url': imageUrl,
       });
 
@@ -98,6 +100,7 @@ class ServiceCubit extends Cubit<ServiceState> {
     required String description,
     required double durationHours,
     required double price,
+    required String category,
     XFile? newImage,
     String? existingImageUrl,
   }) async {
@@ -125,7 +128,8 @@ class ServiceCubit extends Cubit<ServiceState> {
             'description': description,
             'duration_hours': durationHours,
             'price': price,
-            'imageUrl': imageUrl,
+            'category': category,
+            'image_url': imageUrl,
           })
           .eq('id', serviceId);
 
@@ -143,5 +147,25 @@ class ServiceCubit extends Cubit<ServiceState> {
     } catch (e) {
       emit(ServiceError('Failed to delete service: ${e.toString()}'));
     }
+  }
+
+  // Sort services
+  void sortServices(String sortBy) {
+    if (state is! ServicesLoaded) return;
+
+    final currentServices = (state as ServicesLoaded).services;
+    final List<Service> sorted = List.from(currentServices);
+
+    if (sortBy == 'price_asc') {
+      sorted.sort((a, b) => a.price.compareTo(b.price));
+    } else if (sortBy == 'price_desc') {
+      sorted.sort((a, b) => b.price.compareTo(a.price));
+    } else if (sortBy == 'duration_asc') {
+      sorted.sort((a, b) => a.durationHours.compareTo(b.durationHours));
+    } else if (sortBy == 'duration_desc') {
+      sorted.sort((a, b) => b.durationHours.compareTo(a.durationHours));
+    }
+
+    emit(ServicesLoaded(sorted));
   }
 }

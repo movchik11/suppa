@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/order_cubit.dart';
+import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:supa/screens/user/chat_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class OrdersManagementScreen extends StatelessWidget {
   const OrdersManagementScreen({super.key});
@@ -14,8 +16,36 @@ class OrdersManagementScreen extends StatelessWidget {
       create: (context) => OrderCubit()..fetchAllOrders(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Manage Orders'),
+          title: Text('manageOrders'.tr()),
           actions: [
+            PopupMenuButton<Locale>(
+              icon: const Icon(Icons.language),
+              onSelected: (locale) {
+                context.setLocale(locale);
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: Locale('en'),
+                  child: Text('English'),
+                ),
+                const PopupMenuItem(
+                  value: Locale('ru'),
+                  child: Text('Русский'),
+                ),
+                const PopupMenuItem(
+                  value: Locale('tk'),
+                  child: Text('Türkmençe'),
+                ),
+              ],
+            ),
+            BlocBuilder<ThemeCubit, bool>(
+              builder: (context, isLight) {
+                return IconButton(
+                  icon: Icon(isLight ? Icons.dark_mode : Icons.light_mode),
+                  onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () => context.read<OrderCubit>().fetchAllOrders(),

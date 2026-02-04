@@ -3,20 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/garage_cubit.dart';
+import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:supa/components/glass_container.dart';
-import 'package:intl/intl.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class CreateOrderScreen extends StatefulWidget {
   final Service? preSelectedService;
   final String? preFillDescription;
+  final String? suggestedServiceTitle;
 
   const CreateOrderScreen({
     super.key,
     this.preSelectedService,
     this.preFillDescription,
+    this.suggestedServiceTitle,
   });
 
   @override
@@ -28,6 +30,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   final _carModelController = TextEditingController();
   final _issueController = TextEditingController();
   String? _selectedVehicleId;
+  String? _selectedServiceId; // New state for dropdown
   DateTime? _scheduledAt;
   String? _selectedBranch;
   String _selectedUrgency = 'normal';
@@ -38,7 +41,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-filling removed as per user request to allow manual input.
+    // Ensure services are loaded
+    context.read<ServiceCubit>().fetchServices();
+    if (widget.preFillDescription != null) {
+      _issueController.text = widget.preFillDescription!;
+    }
   }
 
   @override
@@ -79,7 +86,13 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('bookService'.tr())),
+      appBar: AppBar(
+        title: Text(
+          widget.preSelectedService != null
+              ? widget.preSelectedService!.name
+              : (widget.suggestedServiceTitle ?? 'bookService'.tr()),
+        ),
+      ),
       body: BlocConsumer<OrderCubit, OrderState>(
         listener: (context, state) {
           if (state is OrderCreated) {
@@ -148,6 +161,118 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           ),
                           const SizedBox(height: 32),
 
+                          // --- SERVICE SELECTION (If not pre-selected) ---
+                          if (widget.preSelectedService == null) ...[
+                            _buildLabel('selectService'.tr()),
+                            BlocBuilder<ServiceCubit, ServiceState>(
+                              builder: (context, serviceState) {
+                                if (serviceState is ServicesLoaded) {
+                                  // Ensure selected ID is valid
+                                  if (_selectedServiceId != null &&
+                                      !serviceState.services.any(
+                                        (s) => s.id == _selectedServiceId,
+                                      )) {
+                                    _selectedServiceId = null;
+                                  }
+
+                                  return DropdownButtonFormField<String>(
+                                    value: _selectedServiceId,
+                                    dropdownColor: const Color(0xFF1E1E2E),
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: InputDecoration(
+                                      prefixIcon: const Icon(
+                                        Icons.build,
+                                        color: Colors.blue,
+                                      ),
+                                      // ignore: use_build_context_synchronously
+                                      hintText: 'chooseFromCatalog'.tr(),
+                                      hintStyle: TextStyle(
+                                        color: Theme.of(context).hintColor,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    items: serviceState.services
+                                        .map(
+                                          (s) => DropdownMenuItem(
+                                            value: s.id,
+                                            child: Text(s.name),
+                                          ),
+                                        )
+                                        .toList(),
+                                    validator: (v) => v == null
+                                        ? 'selectionRequired'.tr()
+                                        : null,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _selectedServiceId = val;
+                                      });
+                                    },
+                                  );
+                                }
+                                return const Center(
+                                  child: LinearProgressIndicator(),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // --- PRE-SELECTED SERVICE (User Feedback) ---
+                          if (widget.preSelectedService != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              margin: const EdgeInsets.only(bottom: 24),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withAlpha(25),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.blue.withAlpha(100),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.blue,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'selectedService'.tr(),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.blue.shade200,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          widget.preSelectedService!.name,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          '\$${widget.preSelectedService!.price.toStringAsFixed(2)} • ${widget.preSelectedService!.durationHours}h',
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
                           // --- VEHICLE SELECTION ---
                           _buildLabel('yourVehicle'.tr()),
                           BlocBuilder<GarageCubit, GarageState>(
@@ -162,7 +287,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   );
                                 }
                                 return DropdownButtonFormField<String>(
-                                  value: _selectedVehicleId,
+                                  initialValue: _selectedVehicleId,
                                   dropdownColor: const Color(0xFF1E1E2E),
                                   style: const TextStyle(color: Colors.white),
                                   decoration: InputDecoration(
@@ -212,7 +337,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           // --- BRANCH SELECTION ---
                           _buildLabel('serviceCenter'.tr()),
                           DropdownButtonFormField<String>(
-                            value: _selectedBranch,
+                            initialValue: _selectedBranch,
                             dropdownColor: const Color(0xFF1E1E2E),
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
@@ -252,7 +377,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   children: [
                                     _buildLabel('urgency'.tr()),
                                     DropdownButtonFormField<String>(
-                                      value: _selectedUrgency,
+                                      initialValue: _selectedUrgency,
                                       dropdownColor: const Color(0xFF1E1E2E),
                                       style: const TextStyle(
                                         color: Colors.white,
@@ -370,8 +495,25 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   );
                                   return;
                                 }
+                                String? serviceName =
+                                    widget.preSelectedService?.name;
+                                if (serviceName == null &&
+                                    _selectedServiceId != null) {
+                                  final serviceState = context
+                                      .read<ServiceCubit>()
+                                      .state;
+                                  if (serviceState is ServicesLoaded) {
+                                    final s = serviceState.services.firstWhere(
+                                      (s) => s.id == _selectedServiceId,
+                                    );
+                                    serviceName = s.name;
+                                  }
+                                }
+
                                 context.read<OrderCubit>().createOrder(
-                                  _carModelController.text,
+                                  serviceName ??
+                                      widget.suggestedServiceTitle ??
+                                      'General Service',
                                   _issueController.text,
                                   vehicleId: _selectedVehicleId,
                                   scheduledAt: _scheduledAt,
@@ -473,7 +615,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: sBrand,
+                    initialValue: sBrand,
                     dropdownColor: const Color(0xFF1E1E2E),
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -492,7 +634,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     decoration: InputDecoration(labelText: 'model'.tr()),
                   ),
                   DropdownButtonFormField<int>(
-                    value: sYear,
+                    initialValue: sYear,
                     dropdownColor: const Color(0xFF1E1E2E),
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -530,7 +672,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                     },
                   ),
                   DropdownButtonFormField<String>(
-                    value: sColor,
+                    initialValue: sColor,
                     dropdownColor: const Color(0xFF1E1E2E),
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
