@@ -176,7 +176,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   }
 
                                   return DropdownButtonFormField<String>(
-                                    value: _selectedServiceId,
+                                    initialValue: _selectedServiceId,
                                     dropdownColor: const Color(0xFF1E1E2E),
                                     style: const TextStyle(color: Colors.white),
                                     decoration: InputDecoration(
@@ -260,7 +260,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '\$${widget.preSelectedService!.price.toStringAsFixed(2)} • ${widget.preSelectedService!.durationHours}h',
+                                          '${widget.preSelectedService!.price.toStringAsFixed(2)} TMT • ${widget.preSelectedService!.durationHours}h',
                                           style: const TextStyle(
                                             color: Colors.white70,
                                           ),

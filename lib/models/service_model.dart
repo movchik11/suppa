@@ -7,8 +7,6 @@ class Service {
   final String? imageUrl;
   final String category;
   final String? estimatedTime;
-  final double rating;
-  final bool isCombo;
 
   Service({
     required this.id,
@@ -18,9 +16,7 @@ class Service {
     required this.category,
     required this.durationHours,
     this.imageUrl,
-    this.rating = 5.0,
     this.estimatedTime,
-    this.isCombo = false,
   });
 
   factory Service.fromMap(Map<String, dynamic> map) {
@@ -33,8 +29,6 @@ class Service {
       imageUrl: map['image_url'],
       category: map['category'] ?? 'General',
       estimatedTime: map['estimated_time'],
-      rating: (map['rating'] ?? 5.0).toDouble(),
-      isCombo: map['is_combo'] ?? false,
     );
   }
 
@@ -47,7 +41,6 @@ class Service {
       'image_url': imageUrl,
       'category': category,
       'estimated_time': estimatedTime,
-      'rating': rating,
     };
   }
 }

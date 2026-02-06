@@ -47,7 +47,21 @@ class AdminCubit extends Cubit<AdminState> {
 
   Future<void> deleteUser(String userId) async {
     try {
-      await supabase.from('profiles').delete().eq('id', userId);
+      final response = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId)
+          .select();
+
+      if ((response as List).isEmpty) {
+        emit(
+          AdminError(
+            'Failed to delete user: No matching user found or permission denied',
+          ),
+        );
+        return;
+      }
+
       // Refresh the list after deletion
       await fetchProfiles();
     } catch (e) {
@@ -57,10 +71,21 @@ class AdminCubit extends Cubit<AdminState> {
 
   Future<void> updateUserRole(String userId, String newRole) async {
     try {
-      await supabase
+      final response = await supabase
           .from('profiles')
           .update({'role': newRole})
-          .eq('id', userId);
+          .eq('id', userId)
+          .select();
+
+      if ((response as List).isEmpty) {
+        emit(
+          AdminError(
+            'Failed to update role: No matching user found or permission denied',
+          ),
+        );
+        return;
+      }
+
       // Refresh the list after update
       await fetchProfiles();
     } catch (e) {

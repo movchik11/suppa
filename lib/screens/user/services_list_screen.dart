@@ -132,7 +132,7 @@ class _ServiceListItem extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      '\$${service.price.toStringAsFixed(2)}',
+                      '${service.price.toStringAsFixed(2)} TMT',
                       style: TextStyle(
                         color: Colors.green[700],
                         fontWeight: FontWeight.bold,

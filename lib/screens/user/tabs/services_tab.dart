@@ -78,15 +78,7 @@ class _ServicesTabState extends State<ServicesTab> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      // --- COMBO PACKS SECTION ---
                       if (selectedCategory == 'all') ...[
-                        _buildSectionHeader(context, 'specialComboPacks'.tr()),
-                        const SizedBox(height: 12),
-                        _buildComboPacks(
-                          context,
-                          state.services.where((s) => s.isCombo).toList(),
-                        ),
-                        const SizedBox(height: 24),
                         _buildSectionHeader(context, 'allServices'.tr()),
                         const SizedBox(height: 12),
                       ] else ...[
@@ -124,7 +116,13 @@ class _ServicesTabState extends State<ServicesTab> {
                                                     .tr(),
                                               ),
                                         ),
-                                      );
+                                      ).then((value) {
+                                        if (value == true) {
+                                          context
+                                              .read<ServiceCubit>()
+                                              .fetchServices();
+                                        }
+                                      });
                                     },
                                   ),
                                 );
@@ -190,131 +188,29 @@ class _ServicesTabState extends State<ServicesTab> {
     List<String> categories,
     String Function(String) getLabel,
   ) {
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = selectedCategory == category;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(getLabel(category)),
-              selected: isSelected,
-              onSelected: (val) {
-                setState(() => selectedCategory = category);
-              },
-              backgroundColor: Theme.of(context).cardColor,
-              selectedColor:
-                  Colors.blue, // FLUTTER-FIX: Explicit blue for visibility
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Theme.of(context).hintColor,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? Colors.blue : Colors.transparent,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildComboPacks(BuildContext context, List<Service> combos) {
-    if (combos.isEmpty) {
-      return Center(child: Text('noPromoPacks'.tr()));
-    }
-    return SizedBox(
-      height: 160,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: combos.length,
-        itemBuilder: (context, index) {
-          final service = combos[index];
-          return _buildComboCard(context, service);
-        },
-      ),
-    );
-  }
-
-  Widget _buildComboCard(BuildContext context, Service service) {
-    final color = Colors.blue;
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                CreateOrderScreen(preSelectedService: service),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        initialValue: selectedCategory,
+        decoration: InputDecoration(
+          labelText: 'category'.tr(),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
           ),
-        );
-      },
-      child: Container(
-        width: 260,
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: color.withAlpha(51),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withAlpha(77)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'promoPack'.tr(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              service.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.titleLarge?.color,
-              ),
-            ),
-            Text(
-              service.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
-                fontSize: 12,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '\$${service.price.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.titleLarge?.color,
-              ),
-            ),
-          ],
-        ),
+        items: categories.map((category) {
+          return DropdownMenuItem<String>(
+            value: category,
+            child: Text(getLabel(category)),
+          );
+        }).toList(),
+        onChanged: (val) {
+          if (val != null) {
+            setState(() => selectedCategory = val);
+          }
+        },
       ),
     );
   }
@@ -341,51 +237,18 @@ class _ServiceListItem extends StatelessWidget {
           if (service.imageUrl != null)
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: service.imageUrl!,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          Container(color: Colors.white12),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
-                    ),
-                  ),
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            service.rating.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl: service.imageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      Container(color: Colors.white12),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
               ),
             ),
           Padding(
@@ -407,7 +270,7 @@ class _ServiceListItem extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '\$${service.price.toStringAsFixed(2)}',
+                      '${service.price.toStringAsFixed(2)} TMT',
                       style: const TextStyle(
                         color: Colors.blue,
                         fontWeight: FontWeight.bold,
@@ -449,7 +312,12 @@ class _ServiceListItem extends StatelessWidget {
                           builder: (context) =>
                               CreateOrderScreen(preSelectedService: service),
                         ),
-                      );
+                      ).then((value) {
+                        if (value == true) {
+                          // Refresh services if order was created
+                          context.read<ServiceCubit>().fetchServices();
+                        }
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,

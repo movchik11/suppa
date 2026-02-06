@@ -53,7 +53,7 @@ class ServiceSearchDelegate extends SearchDelegate<Service?> {
         final service = results[index];
         return ListTile(
           title: Text(service.name),
-          subtitle: Text('\$${service.price.toStringAsFixed(2)}'),
+          subtitle: Text('${service.price.toStringAsFixed(2)} TMT'),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () {
             close(context, service);

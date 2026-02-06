@@ -62,8 +62,13 @@ class ServiceCubit extends Cubit<ServiceState> {
 
       // Upload image if provided
       if (image != null) {
+        // Sanitize filename to avoid "Invalid key" errors
+        final sanitizedName = image.name.replaceAll(
+          RegExp(r'[^a-zA-Z0-9._-]'),
+          '_',
+        );
         final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+            '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
         final bytes = await image.readAsBytes();
 
         await supabase.storage
@@ -107,15 +112,22 @@ class ServiceCubit extends Cubit<ServiceState> {
     try {
       String? imageUrl = existingImageUrl;
 
-      // Upload new image if provided
+      // Upload image if provided
       if (newImage != null) {
+        // Sanitize filename to avoid "Invalid key" errors
+        final sanitizedName = newImage.name.replaceAll(
+          RegExp(r'[^a-zA-Z0-9._-]'),
+          '_',
+        );
         final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}_${newImage.name}';
+            '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
         final bytes = await newImage.readAsBytes();
 
         await supabase.storage
             .from('service-images')
             .uploadBinary(fileName, bytes);
+
+        // Get public URL
         imageUrl = supabase.storage
             .from('service-images')
             .getPublicUrl(fileName);

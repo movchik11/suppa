@@ -164,10 +164,24 @@ class OrderCubit extends Cubit<OrderState> {
   // Cancel order (user)
   Future<void> cancelOrder(String orderId) async {
     try {
-      await supabase
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        emit(OrderError('User not authenticated'));
+        return;
+      }
+
+      final response = await supabase
           .from('orders')
           .update({'status': 'cancelled'})
-          .eq('id', orderId);
+          .eq('id', orderId)
+          .eq('user_id', userId) // Enforce ownership for RLS
+          .select();
+
+      if ((response as List).isEmpty) {
+        throw Exception(
+          'Cannot cancel order. Check permissions or order status.',
+        );
+      }
 
       // Refresh to show updated status
       await fetchMyOrders();

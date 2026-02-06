@@ -38,203 +38,214 @@ class ProfileTab extends StatelessWidget {
           final profile = (state is ProfileLoaded)
               ? state.profile
               : (context.read<ProfileCubit>().state as ProfileLoaded).profile;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(
-                      source: ImageSource.gallery,
-                    );
-                    if (image != null && context.mounted) {
-                      context.read<ProfileCubit>().updateProfile(
-                        displayName: profile.displayName,
-                        phoneNumber: profile.phoneNumber,
-                        avatar: image,
-                        existingAvatarUrl: profile.avatarUrl,
+          return RefreshIndicator(
+            onRefresh: () => context.read<ProfileCubit>().fetchProfile(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(
+                        source: ImageSource.gallery,
                       );
-                    }
-                  },
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blue.withAlpha(51),
-                    backgroundImage: profile.avatarUrl != null
-                        ? CachedNetworkImageProvider(profile.avatarUrl!)
-                        : null,
-                    child: profile.avatarUrl == null
-                        ? const Icon(Icons.person, size: 60, color: Colors.blue)
-                        : null,
+                      if (image != null && context.mounted) {
+                        context.read<ProfileCubit>().updateProfile(
+                          displayName: profile.displayName,
+                          phoneNumber: profile.phoneNumber,
+                          avatar: image,
+                          existingAvatarUrl: profile.avatarUrl,
+                        );
+                      }
+                    },
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.blue.withAlpha(51),
+                      backgroundImage: profile.avatarUrl != null
+                          ? CachedNetworkImageProvider(profile.avatarUrl!)
+                          : null,
+                      child: profile.avatarUrl == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.blue,
+                            )
+                          : null,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  profile.displayName ?? 'New User',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  Text(
+                    profile.displayName ?? 'New User',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  profile.email,
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.black54,
+                  Text(
+                    profile.email,
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // --- PERSONAL INFO ---
-                _buildSectionHeader(context, 'personalInfo'.tr()),
-                Card(
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.badge, color: Colors.blue),
-                        title: Text('name'.tr()),
-                        subtitle: Text(profile.displayName ?? 'notSet'.tr()),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _showEditDialog(
-                          context,
-                          'name'.tr(),
-                          profile.displayName,
-                          (val) {
+                  // --- PERSONAL INFO ---
+                  _buildSectionHeader(context, 'personalInfo'.tr()),
+                  Card(
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.badge, color: Colors.blue),
+                          title: Text('name'.tr()),
+                          subtitle: Text(profile.displayName ?? 'notSet'.tr()),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _showEditDialog(
+                            context,
+                            'name'.tr(),
+                            profile.displayName,
+                            (val) {
+                              context.read<ProfileCubit>().updateProfile(
+                                displayName: val,
+                                phoneNumber: profile.phoneNumber,
+                                existingAvatarUrl: profile.avatarUrl,
+                              );
+                            },
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(Icons.phone, color: Colors.blue),
+                          title: Text('phone'.tr()),
+                          subtitle: Text(profile.phoneNumber ?? 'notSet'.tr()),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _showEditDialog(
+                            context,
+                            'phone'.tr(),
+                            profile.phoneNumber,
+                            (val) {
+                              context.read<ProfileCubit>().updateProfile(
+                                displayName: profile.displayName,
+                                phoneNumber: val,
+                                existingAvatarUrl: profile.avatarUrl,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // --- SETTINGS ---
+                  _buildSectionHeader(context, 'settings'.tr()),
+                  Card(
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(
+                            Icons.contact_mail,
+                            color: Colors.blue,
+                          ),
+                          title: Text('preferredContact'.tr()),
+                          subtitle: Text(profile.preferredContact),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _showContactPicker(context, profile),
+                        ),
+                        const Divider(height: 1),
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.notifications,
+                            color: Colors.blue,
+                          ),
+                          title: Text('notifications'.tr()),
+                          value: profile.notificationsEnabled,
+                          onChanged: (val) {
                             context.read<ProfileCubit>().updateProfile(
-                              displayName: val,
+                              notificationsEnabled: val,
+                              displayName: profile.displayName,
                               phoneNumber: profile.phoneNumber,
                               existingAvatarUrl: profile.avatarUrl,
                             );
                           },
                         ),
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.phone, color: Colors.blue),
-                        title: Text('phone'.tr()),
-                        subtitle: Text(profile.phoneNumber ?? 'notSet'.tr()),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _showEditDialog(
-                          context,
-                          'phone'.tr(),
-                          profile.phoneNumber,
-                          (val) {
-                            context.read<ProfileCubit>().updateProfile(
-                              displayName: profile.displayName,
-                              phoneNumber: val,
-                              existingAvatarUrl: profile.avatarUrl,
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(
+                            Icons.language,
+                            color: Colors.blue,
+                          ),
+                          title: Text('language'.tr()),
+                          subtitle: Text(
+                            context.locale.languageCode == 'en'
+                                ? 'English'
+                                : context.locale.languageCode == 'ru'
+                                ? 'Русский'
+                                : 'Türkmençe',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _showLanguagePicker(context),
+                        ),
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(
+                            Icons.location_on,
+                            color: Colors.blue,
+                          ),
+                          title: Text('ourBranches'.tr()),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LocationsScreen(),
+                              ),
                             );
                           },
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // --- SETTINGS ---
-                _buildSectionHeader(context, 'settings'.tr()),
-                Card(
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(
-                          Icons.contact_mail,
-                          color: Colors.blue,
-                        ),
-                        title: Text('preferredContact'.tr()),
-                        subtitle: Text(profile.preferredContact),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _showContactPicker(context, profile),
-                      ),
-                      const Divider(height: 1),
-                      SwitchListTile(
-                        secondary: const Icon(
-                          Icons.notifications,
-                          color: Colors.blue,
-                        ),
-                        title: Text('notifications'.tr()),
-                        value: profile.notificationsEnabled,
-                        onChanged: (val) {
-                          context.read<ProfileCubit>().updateProfile(
-                            notificationsEnabled: val,
-                            displayName: profile.displayName,
-                            phoneNumber: profile.phoneNumber,
-                            existingAvatarUrl: profile.avatarUrl,
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.language, color: Colors.blue),
-                        title: Text('language'.tr()),
-                        subtitle: Text(
-                          context.locale.languageCode == 'en'
-                              ? 'English'
-                              : context.locale.languageCode == 'ru'
-                              ? 'Русский'
-                              : 'Türkmençe',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _showLanguagePicker(context),
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(
-                          Icons.location_on,
-                          color: Colors.blue,
-                        ),
-                        title: Text('ourBranches'.tr()),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LocationsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // --- APPEARANCE ---
-                _buildSectionHeader(context, 'appearance'.tr()),
-                _buildAppThemesSection(context),
-
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.withAlpha(30),
-                      foregroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      ],
                     ),
-                    onPressed: () {
-                      context.read<AuthCubit>().logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: Text('logout'.tr()),
                   ),
-                ),
-                const SizedBox(height: 40),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  // --- APPEARANCE ---
+                  _buildSectionHeader(context, 'appearance'.tr()),
+                  _buildAppThemesSection(context),
+
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.withAlpha(30),
+                        foregroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      onPressed: () {
+                        context.read<AuthCubit>().logout();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      icon: const Icon(Icons.logout),
+                      label: Text('logout'.tr()),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           );
         }
@@ -338,11 +349,11 @@ class ProfileTab extends StatelessWidget {
           ),
           ListTile(
             title: const Text('Türkmençe'),
-            trailing: context.locale.languageCode == 'tm'
+            trailing: context.locale.languageCode == 'tk'
                 ? const Icon(Icons.check, color: Colors.blue)
                 : null,
             onTap: () {
-              context.setLocale(const Locale('tm'));
+              context.setLocale(const Locale('tk'));
               Navigator.pop(context);
             },
           ),

@@ -16,26 +16,6 @@ class AdminDashboardScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text('dashboard'.tr()),
           actions: [
-            PopupMenuButton<Locale>(
-              icon: const Icon(Icons.language),
-              onSelected: (locale) {
-                context.setLocale(locale);
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: Locale('en'),
-                  child: Text('English'),
-                ),
-                const PopupMenuItem(
-                  value: Locale('ru'),
-                  child: Text('Русский'),
-                ),
-                const PopupMenuItem(
-                  value: Locale('tk'),
-                  child: Text('Türkmençe'),
-                ),
-              ],
-            ),
             BlocBuilder<ThemeCubit, bool>(
               builder: (context, isLight) {
                 return IconButton(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/garage_cubit.dart';
@@ -147,7 +148,7 @@ class GarageTab extends StatelessWidget {
             title: Text((e.category as String? ?? 'other').toLowerCase().tr()),
             subtitle: Text('${vehicle.brand} ${vehicle.model}'),
             trailing: Text(
-              '-\$${e.amount.toStringAsFixed(2)}',
+              '-${e.amount.toStringAsFixed(2)} TMT',
               style: const TextStyle(
                 color: Colors.redAccent,
                 fontWeight: FontWeight.bold,
@@ -250,8 +251,6 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.initialVehicle != null;
-    final lCode = context.locale.languageCode;
-
     return AlertDialog(
       title: Text(isEditing ? 'edit'.tr() : 'addVehicle'.tr()),
       content: SingleChildScrollView(
@@ -273,10 +272,9 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                     if (_image != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(_image!.path),
-                          fit: BoxFit.cover,
-                        ),
+                        child: kIsWeb
+                            ? Image.network(_image!.path, fit: BoxFit.cover)
+                            : Image.file(File(_image!.path), fit: BoxFit.cover),
                       )
                     else if (widget.initialVehicle?.imageUrl != null)
                       ClipRRect(
@@ -325,7 +323,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedBrand,
+              initialValue: _selectedBrand,
               decoration: InputDecoration(
                 labelText: 'brand'.tr(),
                 border: const OutlineInputBorder(),
@@ -342,7 +340,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
-              value: _selectedYear,
+              initialValue: _selectedYear,
               decoration: InputDecoration(
                 labelText: 'year'.tr(),
                 border: const OutlineInputBorder(),
@@ -374,7 +372,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedColor,
+              initialValue: _selectedColor,
               decoration: InputDecoration(
                 labelText: 'color'.tr(),
                 border: const OutlineInputBorder(),
@@ -491,19 +489,21 @@ class _VehicleCard extends StatelessWidget {
                     if (vehicle.nextServiceMileage != null)
                       _buildReminderBadge(
                         Icons.settings_suggest,
-                        'Service at ${vehicle.nextServiceMileage} km',
+                        'serviceAt'.tr(
+                          args: [vehicle.nextServiceMileage.toString()],
+                        ),
                         Colors.orange,
                       ),
                     if (vehicle.insuranceExpiry != null)
                       _buildReminderBadge(
                         Icons.security,
-                        'Ins: ${DateFormat('MMM yyyy').format(vehicle.insuranceExpiry!)}',
+                        '${'insAbbrev'.tr()}: ${DateFormat('MMM yyyy').format(vehicle.insuranceExpiry!)}',
                         Colors.blue,
                       ),
                     if (vehicle.nextServiceMileage == null &&
                         vehicle.insuranceExpiry == null)
                       Text(
-                        'Plate: ${vehicle.licensePlate ?? 'N/A'}',
+                        '${'plate'.tr()}: ${vehicle.licensePlate ?? 'na'.tr()}',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 13,
@@ -615,12 +615,12 @@ class _VehicleCard extends StatelessWidget {
           children: [
             TextField(
               controller: amountController,
-              decoration: InputDecoration(labelText: '${'amount'.tr()} (\$)'),
+              decoration: InputDecoration(labelText: '${'amount'.tr()} (TMT)'),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: selectedCategory,
+              initialValue: selectedCategory,
               decoration: InputDecoration(labelText: 'category'.tr()),
               items: ['Fuel', 'Repair', 'Service', 'Wash', 'Insurance', 'Other']
                   .map(
@@ -721,7 +721,7 @@ class _VehicleCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value: selectedType,
+                initialValue: selectedType,
                 decoration: InputDecoration(labelText: 'docType'.tr()),
                 items: [
                   DropdownMenuItem(

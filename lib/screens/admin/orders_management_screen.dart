@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/order_model.dart';
-import 'package:supa/screens/user/chat_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class OrdersManagementScreen extends StatelessWidget {
@@ -153,20 +152,6 @@ class _OrderCard extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Colors.blue),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      orderId: order.id,
-                      serviceName: order.carModel,
-                    ),
-                  ),
-                );
-              },
-            ),
             Chip(
               label: Text(
                 order.status.toUpperCase(),

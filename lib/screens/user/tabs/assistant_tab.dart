@@ -32,14 +32,12 @@ class _AssistantTabState extends State<AssistantTab> {
     'lightCheckEngine': 'resCheckEngine'.tr(),
   };
 
-  List<String> _selectionPath = [];
-  String? _suggestedService;
+  final List<String> _selectionPath = [];
 
   void _handleOption(String option) {
     if (option == 'optStartOver') {
       setState(() {
         _selectionPath.clear();
-        _suggestedService = null;
         _messages.clear();
         _messages.add({
           'isBot': true,
@@ -71,7 +69,6 @@ class _AssistantTabState extends State<AssistantTab> {
       final result = _results[option];
 
       if (result != null) {
-        _suggestedService = option.tr();
         _messages.add({'isBot': true, 'text': result, 'isResult': true});
       } else if (nextOptions != null) {
         _messages.add({
@@ -197,29 +194,31 @@ class _AssistantTabState extends State<AssistantTab> {
               }).toList(),
             ),
           ],
-          if (isResult) ...[
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        CreateOrderScreen(preFillDescription: null),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(200, 45),
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+          if (isResult)
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.green.withAlpha(50),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green),
               ),
-              child: Text('bookSuggested'.tr()),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'diagnosisComplete'.tr(),
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
         ],
       ),
     );
