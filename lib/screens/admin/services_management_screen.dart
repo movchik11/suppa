@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/service_model.dart';
@@ -80,14 +79,7 @@ class ServicesManagementScreen extends StatelessWidget {
             },
             builder: (context, state) {
               if (state is ServiceLoading) {
-                return Center(
-                  child: Lottie.asset(
-                    'assets/animations/loading.json',
-                    height: 200,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const CircularProgressIndicator(),
-                  ),
-                );
+                return const Center(child: CircularProgressIndicator());
               } else if (state is ServicesLoaded) {
                 if (state.services.isEmpty) {
                   return Center(
@@ -484,56 +476,16 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
               ),
               const SizedBox(height: 24),
               // Category Selection First (moved up for better flow)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'category'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: 'category'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
-              ),
-              const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                ),
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
-                  final cat = _categories[index];
-                  final isSelected = _selectedCategory == cat;
-                  return InkWell(
-                    onTap: () => setState(() => _selectedCategory = cat),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.blue.withAlpha(51)
-                            : Colors.grey.withAlpha(20),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSelected ? Colors.blue : Colors.grey,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        cat.tr(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected ? Colors.blue : null,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                items: _categories.map((cat) {
+                  return DropdownMenuItem(value: cat, child: Text(cat.tr()));
+                }).toList(),
+                onChanged: (val) => setState(() => _selectedCategory = val!),
               ),
               const SizedBox(height: 24),
               // Sub-service templates

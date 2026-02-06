@@ -1,7 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -54,14 +53,7 @@ class AdminDashboardScreen extends StatelessWidget {
         body: BlocBuilder<OrderCubit, OrderState>(
           builder: (context, state) {
             if (state is OrderLoading) {
-              return Center(
-                child: Lottie.asset(
-                  'assets/animations/loading.json',
-                  height: 200,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const CircularProgressIndicator(),
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             } else if (state is OrdersLoaded) {
               // Calculate statistics
               final total = state.orders.length;

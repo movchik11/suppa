@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:supa/components/app_loading_indicator.dart';
@@ -23,14 +22,10 @@ class HistoryTab extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Lottie.asset(
-                    'assets/animations/scanning_docs.json',
-                    height: 200,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.inbox,
-                      size: 80,
-                      color: Theme.of(context).disabledColor,
-                    ),
+                  Icon(
+                    Icons.inbox,
+                    size: 80,
+                    color: Theme.of(context).disabledColor,
                   ),
                   const SizedBox(height: 16),
                   Text('noHistory'.tr()),

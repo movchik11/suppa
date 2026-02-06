@@ -324,31 +324,16 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            const SizedBox(height: 16),
-            Text(
-              'brand'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _brands.length,
-                itemBuilder: (context, index) {
-                  final brand = _brands[index];
-                  final isSelected = _selectedBrand == brand;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(brand),
-                      selected: isSelected,
-                      onSelected: (val) =>
-                          setState(() => _selectedBrand = brand),
-                    ),
-                  );
-                },
+            DropdownButtonFormField<String>(
+              value: _selectedBrand,
+              decoration: InputDecoration(
+                labelText: 'brand'.tr(),
+                border: const OutlineInputBorder(),
               ),
+              items: _brands.map((brand) {
+                return DropdownMenuItem(value: brand, child: Text(brand));
+              }).toList(),
+              onChanged: (val) => setState(() => _selectedBrand = val),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -356,29 +341,19 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
               decoration: InputDecoration(labelText: 'model'.tr()),
             ),
             const SizedBox(height: 16),
-            Text(
-              'year'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _years.length,
-                itemBuilder: (context, index) {
-                  final year = _years[index];
-                  final isSelected = _selectedYear == year;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(year.toString()),
-                      selected: isSelected,
-                      onSelected: (val) => setState(() => _selectedYear = year),
-                    ),
-                  );
-                },
+            DropdownButtonFormField<int>(
+              value: _selectedYear,
+              decoration: InputDecoration(
+                labelText: 'year'.tr(),
+                border: const OutlineInputBorder(),
               ),
+              items: _years.map((year) {
+                return DropdownMenuItem(
+                  value: year,
+                  child: Text(year.toString()),
+                );
+              }).toList(),
+              onChanged: (val) => setState(() => _selectedYear = val),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -398,21 +373,19 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
               },
             ),
             const SizedBox(height: 16),
-            Text(
-              'color'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _colors.map((c) {
-                return ChoiceChip(
-                  label: Text(c.toLowerCase().tr()),
-                  selected: _selectedColor == c,
-                  onSelected: (val) => setState(() => _selectedColor = c),
+            DropdownButtonFormField<String>(
+              value: _selectedColor,
+              decoration: InputDecoration(
+                labelText: 'color'.tr(),
+                border: const OutlineInputBorder(),
+              ),
+              items: _colors.map((c) {
+                return DropdownMenuItem(
+                  value: c,
+                  child: Text(c.toLowerCase().tr()),
                 );
               }).toList(),
+              onChanged: (val) => setState(() => _selectedColor = val),
             ),
           ],
         ),

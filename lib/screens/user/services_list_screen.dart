@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -17,14 +16,7 @@ class ServicesListScreen extends StatelessWidget {
         body: BlocBuilder<ServiceCubit, ServiceState>(
           builder: (context, state) {
             if (state is ServiceLoading) {
-              return Center(
-                child: Lottie.asset(
-                  'assets/animations/loading.json',
-                  height: 200,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const CircularProgressIndicator(),
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             } else if (state is ServicesLoaded) {
               if (state.services.isEmpty) {
                 return Center(

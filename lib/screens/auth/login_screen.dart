@@ -1,7 +1,6 @@
 import 'package:supa/screens/admin/admin_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/components/glass_container.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/auth/register_screen.dart';
@@ -72,16 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Lottie.asset(
-                              'assets/animations/car_repair.json',
-                              height: 150,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.car_repair,
-                                  color: Colors.white,
-                                  size: 100,
-                                );
-                              },
+                            const Icon(
+                              Icons.car_repair,
+                              color: Colors.white,
+                              size: 100,
                             ),
                             const SizedBox(height: 20),
                             Text(

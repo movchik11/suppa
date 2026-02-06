@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 import 'package:supa/cubits/admin_cubit.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/admin/admin_dashboard_screen.dart';
@@ -103,14 +102,7 @@ class AdminHomeScreen extends StatelessWidget {
         body: BlocBuilder<AdminCubit, AdminState>(
           builder: (context, state) {
             if (state is AdminLoading) {
-              return Center(
-                child: Lottie.asset(
-                  'assets/animations/loading.json',
-                  height: 200,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const CircularProgressIndicator(),
-                ),
-              );
+              return const Center(child: CircularProgressIndicator());
             } else if (state is AdminLoaded) {
               if (state.profiles.isEmpty) {
                 return const Center(child: Text("No users found."));

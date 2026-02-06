@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class AppLoadingIndicator extends StatelessWidget {
   final double size;
@@ -13,17 +12,12 @@ class AppLoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Lottie.asset(
-            'assets/animations/loading.json',
-            height: size,
-            width: size,
-            errorBuilder: (context, error, stackTrace) => const SizedBox(
-              height: 40,
-              width: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF673AB7)),
-              ),
+          SizedBox(
+            height: size * 0.4,
+            width: size * 0.4,
+            child: const CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF673AB7)),
             ),
           ),
           if (message != null) ...[
