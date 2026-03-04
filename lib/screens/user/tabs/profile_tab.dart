@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/cubits/profile_cubit.dart';
-import 'package:supa/cubits/theme_cubit.dart';
-import 'package:supa/models/profile_model.dart';
-import 'package:supa/screens/auth/login_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:supa/screens/user/locations_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supa/utils/input_formatters.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -42,7 +38,7 @@ class ProfileTab extends StatelessWidget {
             onRefresh: () => context.read<ProfileCubit>().fetchProfile(),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Column(
                 children: [
                   GestureDetector(
@@ -138,112 +134,7 @@ class ProfileTab extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // --- SETTINGS ---
-                  _buildSectionHeader(context, 'settings'.tr()),
-                  Card(
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: const Icon(
-                            Icons.contact_mail,
-                            color: Colors.blue,
-                          ),
-                          title: Text('preferredContact'.tr()),
-                          subtitle: Text(profile.preferredContact),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => _showContactPicker(context, profile),
-                        ),
-                        const Divider(height: 1),
-                        SwitchListTile(
-                          secondary: const Icon(
-                            Icons.notifications,
-                            color: Colors.blue,
-                          ),
-                          title: Text('notifications'.tr()),
-                          value: profile.notificationsEnabled,
-                          onChanged: (val) {
-                            context.read<ProfileCubit>().updateProfile(
-                              notificationsEnabled: val,
-                              displayName: profile.displayName,
-                              phoneNumber: profile.phoneNumber,
-                              existingAvatarUrl: profile.avatarUrl,
-                            );
-                          },
-                        ),
-                        const Divider(height: 1),
-                        ListTile(
-                          leading: const Icon(
-                            Icons.language,
-                            color: Colors.blue,
-                          ),
-                          title: Text('language'.tr()),
-                          subtitle: Text(
-                            context.locale.languageCode == 'en'
-                                ? 'English'
-                                : context.locale.languageCode == 'ru'
-                                ? 'Русский'
-                                : 'Türkmençe',
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => _showLanguagePicker(context),
-                        ),
-                        const Divider(height: 1),
-                        ListTile(
-                          leading: const Icon(
-                            Icons.location_on,
-                            color: Colors.blue,
-                          ),
-                          title: Text('ourBranches'.tr()),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LocationsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // --- APPEARANCE ---
-                  _buildSectionHeader(context, 'appearance'.tr()),
-                  _buildAppThemesSection(context),
-
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.withAlpha(30),
-                        foregroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      onPressed: () {
-                        context.read<AuthCubit>().logout();
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.logout),
-                      label: Text('logout'.tr()),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -293,119 +184,6 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAppThemesSection(BuildContext context) {
-    final isLightMode = context.watch<ThemeCubit>().state;
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          isLightMode ? Icons.light_mode : Icons.dark_mode,
-          color: Colors.orange,
-        ),
-        title: Text('themeSettings'.tr()),
-        subtitle: Text(isLightMode ? 'lightMode'.tr() : 'darkMode'.tr()),
-        trailing: Switch(
-          value: isLightMode,
-          onChanged: (val) => context.read<ThemeCubit>().toggleTheme(),
-        ),
-      ),
-    );
-  }
-
-  void _showLanguagePicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              'language'.tr(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ListTile(
-            title: const Text('English'),
-            trailing: context.locale.languageCode == 'en'
-                ? const Icon(Icons.check, color: Colors.blue)
-                : null,
-            onTap: () {
-              context.setLocale(const Locale('en'));
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            title: const Text('Русский'),
-            trailing: context.locale.languageCode == 'ru'
-                ? const Icon(Icons.check, color: Colors.blue)
-                : null,
-            onTap: () {
-              context.setLocale(const Locale('ru'));
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            title: const Text('Türkmençe'),
-            trailing: context.locale.languageCode == 'tk'
-                ? const Icon(Icons.check, color: Colors.blue)
-                : null,
-            onTap: () {
-              context.setLocale(const Locale('tk'));
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  void _showContactPicker(BuildContext context, Profile profile) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              'preferredContact'.tr(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ...['Phone', 'WhatsApp', 'Telegram', 'Email'].map(
-            (method) => ListTile(
-              title: Text(
-                method.toLowerCase().tr() != method.toLowerCase()
-                    ? method.toLowerCase().tr()
-                    : method,
-              ),
-              trailing: profile.preferredContact == method
-                  ? const Icon(Icons.check, color: Colors.blue)
-                  : null,
-              onTap: () {
-                context.read<ProfileCubit>().updateProfile(
-                  preferredContact: method,
-                  displayName: profile.displayName,
-                  phoneNumber: profile.phoneNumber,
-                  existingAvatarUrl: profile.avatarUrl,
-                );
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
   void _showEditDialog(
     BuildContext context,
     String title,
@@ -420,6 +198,10 @@ class ProfileTab extends StatelessWidget {
         content: TextField(
           controller: controller,
           decoration: InputDecoration(labelText: title),
+          keyboardType: title == 'phone'.tr() ? TextInputType.phone : null,
+          inputFormatters: title == 'phone'.tr()
+              ? [PhoneNumberFormatter()]
+              : null,
         ),
         actions: [
           TextButton(

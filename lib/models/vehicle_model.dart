@@ -1,16 +1,34 @@
+import 'package:hive/hive.dart';
+
+part 'vehicle_model.g.dart';
+
+@HiveType(typeId: 1)
 class Vehicle {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String userId;
+  @HiveField(2)
   final String brand;
+  @HiveField(3)
   final String model;
+  @HiveField(4)
   final int? year;
+  @HiveField(5)
   final String? licensePlate;
+  @HiveField(6)
   final String? color;
+  @HiveField(7)
   final String? imageUrl;
+  @HiveField(8)
   final DateTime? lastServiceDate;
+  @HiveField(9)
   final int? nextServiceMileage;
+  @HiveField(10)
   final DateTime? insuranceExpiry;
+  @HiveField(11)
   final DateTime createdAt;
+  @HiveField(12)
   final DateTime updatedAt;
 
   Vehicle({

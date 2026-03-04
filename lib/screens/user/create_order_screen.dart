@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/garage_cubit.dart';
@@ -8,6 +7,9 @@ import 'package:supa/components/app_loading_indicator.dart';
 import 'package:supa/components/glass_container.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supa/utils/haptics.dart';
+import 'package:supa/components/ui/skeleton_wrapper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CreateOrderScreen extends StatefulWidget {
   final Service? preSelectedService;
@@ -96,7 +98,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       body: BlocConsumer<OrderCubit, OrderState>(
         listener: (context, state) {
           if (state is OrderCreated) {
-            HapticFeedback.mediumImpact();
+            AppHaptics.success();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('orderSuccess'.tr()),
@@ -131,22 +133,41 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
             ),
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 24,
+                ),
                 child: GlassContainer(
                   borderRadius: BorderRadius.circular(24),
                   blur: 15,
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(
-                            Icons.car_repair_outlined,
-                            size: 60,
-                            color: Colors.white70,
-                          ),
+                          if (widget.preSelectedService?.imageUrl != null)
+                            Hero(
+                              tag:
+                                  'service_image_${widget.preSelectedService!.id}',
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: CachedNetworkImage(
+                                  imageUrl:
+                                      widget.preSelectedService!.imageUrl!,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            )
+                          else
+                            const Icon(
+                              Icons.car_repair_outlined,
+                              size: 60,
+                              color: Colors.white70,
+                            ),
                           const SizedBox(height: 16),
                           Text(
                             'premiumBooking'.tr(),
@@ -166,16 +187,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                             _buildLabel('selectService'.tr()),
                             BlocBuilder<ServiceCubit, ServiceState>(
                               builder: (context, serviceState) {
-                                if (serviceState is ServicesLoaded) {
-                                  // Ensure selected ID is valid
-                                  if (_selectedServiceId != null &&
-                                      !serviceState.services.any(
-                                        (s) => s.id == _selectedServiceId,
-                                      )) {
-                                    _selectedServiceId = null;
-                                  }
-
-                                  return DropdownButtonFormField<String>(
+                                return SkeletonWrapper(
+                                  isLoading: serviceState is ServiceLoading,
+                                  child: DropdownButtonFormField<String>(
                                     initialValue: _selectedServiceId,
                                     dropdownColor: const Color(0xFF1E1E2E),
                                     style: const TextStyle(color: Colors.white),
@@ -193,26 +207,33 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    items: serviceState.services
-                                        .map(
-                                          (s) => DropdownMenuItem(
-                                            value: s.id,
-                                            child: Text(s.name),
-                                          ),
-                                        )
-                                        .toList(),
+                                    items: (serviceState is ServicesLoaded)
+                                        ? serviceState.services
+                                              .map(
+                                                (s) => DropdownMenuItem(
+                                                  value: s.id,
+                                                  child: Text(s.name),
+                                                ),
+                                              )
+                                              .toList()
+                                        : [
+                                            const DropdownMenuItem(
+                                              value: null,
+                                              child: Text(
+                                                'Loading services...',
+                                              ),
+                                            ),
+                                          ],
                                     validator: (v) => v == null
                                         ? 'selectionRequired'.tr()
                                         : null,
                                     onChanged: (val) {
+                                      AppHaptics.selection();
                                       setState(() {
                                         _selectedServiceId = val;
                                       });
                                     },
-                                  );
-                                }
-                                return const Center(
-                                  child: LinearProgressIndicator(),
+                                  ),
                                 );
                               },
                             ),
@@ -317,6 +338,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                       ? 'selectionRequired'.tr()
                                       : null,
                                   onChanged: (val) {
+                                    AppHaptics.selection();
                                     setState(() {
                                       _selectedVehicleId = val;
                                       final vehicle = garageState.vehicles
@@ -363,8 +385,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 .toList(),
                             validator: (v) =>
                                 v == null ? 'locationRequired'.tr() : null,
-                            onChanged: (val) =>
-                                setState(() => _selectedBranch = val),
+                            onChanged: (val) {
+                              AppHaptics.selection();
+                              setState(() => _selectedBranch = val);
+                            },
                           ),
                           const SizedBox(height: 20),
 
@@ -397,9 +421,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                             ),
                                           )
                                           .toList(),
-                                      onChanged: (val) => setState(
-                                        () => _selectedUrgency = val!,
-                                      ),
+                                      onChanged: (val) {
+                                        AppHaptics.selection();
+                                        setState(() => _selectedUrgency = val!);
+                                      },
                                     ),
                                   ],
                                 ),
@@ -411,7 +436,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   children: [
                                     _buildLabel('dateTime'.tr()),
                                     GestureDetector(
-                                      onTap: () => _pickDateTime(context),
+                                      onTap: () {
+                                        AppHaptics.light();
+                                        _pickDateTime(context);
+                                      },
                                       child: Container(
                                         height: 56,
                                         padding: const EdgeInsets.symmetric(
@@ -432,7 +460,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                               size: 18,
                                               color: Colors.blue,
                                             ),
-                                            const SizedBox(width: 6),
+                                            const SizedBox(width: 4),
                                             Text(
                                               _scheduledAt == null
                                                   ? 'select'.tr()
@@ -440,7 +468,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                                       'MM/dd HH:mm',
                                                     ).format(_scheduledAt!),
                                               style: TextStyle(
-                                                fontSize: 12,
+                                                fontSize: 11,
                                                 color: Theme.of(
                                                   context,
                                                 ).textTheme.bodyLarge?.color,
@@ -486,6 +514,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
 
                           ElevatedButton(
                             onPressed: () {
+                              AppHaptics.medium();
                               if (_formKey.currentState!.validate()) {
                                 if (_scheduledAt == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -519,6 +548,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   scheduledAt: _scheduledAt,
                                   branchName: _selectedBranch,
                                   urgencyLevel: _selectedUrgency,
+                                  serviceId:
+                                      _selectedServiceId ??
+                                      widget.preSelectedService?.id,
                                 );
                               }
                             },
@@ -660,14 +692,16 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                       hintText: 'e.g. AG-1234-LB',
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return 'plateRequired'.tr();
+                      }
                       final reg = RegExp(r'^[A-Z]{2}-\d{4}-[A-Z]{2}$');
                       if (!reg.hasMatch(value)) return 'Format: XX-XXXX-XX';
                       final suffix = value.substring(value.length - 2);
                       final allowed = ['AG', 'LB', 'MR', 'DZ', 'AH', 'AK'];
-                      if (!allowed.contains(suffix))
+                      if (!allowed.contains(suffix)) {
                         return 'Invalid regional code';
+                      }
                       return null;
                     },
                   ),

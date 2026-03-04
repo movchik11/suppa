@@ -1,15 +1,42 @@
+import 'package:supa/models/profile_model.dart';
+import 'package:supa/models/vehicle_model.dart';
+
+import 'package:hive/hive.dart';
+
+part 'order_model.g.dart';
+
+@HiveType(typeId: 2)
 class Order {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String userId;
+  @HiveField(2)
   final String? vehicleId;
+  @HiveField(3)
   final String carModel;
+  @HiveField(4)
   final String issueDescription;
+  @HiveField(5)
   final String status;
+  @HiveField(6)
   final DateTime? scheduledAt;
+  @HiveField(7)
   final DateTime createdAt;
+  @HiveField(8)
   final DateTime updatedAt;
+  @HiveField(9)
   final String? branchName;
+  @HiveField(10)
   final String urgencyLevel;
+  @HiveField(11)
+  final String? serviceId;
+  @HiveField(12)
+  final Profile? user;
+  @HiveField(13)
+  final Vehicle? vehicle;
+  @HiveField(14)
+  final double? totalPrice;
 
   Order({
     required this.id,
@@ -23,6 +50,10 @@ class Order {
     required this.updatedAt,
     this.branchName,
     this.urgencyLevel = 'Normal',
+    this.serviceId,
+    this.user,
+    this.vehicle,
+    this.totalPrice,
   });
 
   factory Order.fromMap(Map<String, dynamic> map) {
@@ -40,6 +71,12 @@ class Order {
       updatedAt: DateTime.parse(map['updated_at']),
       branchName: map['branch_name'],
       urgencyLevel: map['urgency_level'] ?? 'Normal',
+      serviceId: map['service_id'],
+      user: map['user'] != null ? Profile.fromMap(map['user']) : null,
+      vehicle: map['vehicle'] != null ? Vehicle.fromMap(map['vehicle']) : null,
+      totalPrice: map['total_price'] != null
+          ? (map['total_price'] as num).toDouble()
+          : null,
     );
   }
 
@@ -53,6 +90,8 @@ class Order {
       'scheduled_at': scheduledAt?.toIso8601String(),
       'branch_name': branchName,
       'urgency_level': urgencyLevel,
+      'service_id': serviceId,
+      'total_price': totalPrice,
     };
   }
 }

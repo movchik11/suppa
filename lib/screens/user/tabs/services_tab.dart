@@ -7,6 +7,8 @@ import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lottie/lottie.dart';
+import 'package:supa/components/ui/bouncy_button.dart';
 
 class ServicesTab extends StatefulWidget {
   const ServicesTab({super.key});
@@ -76,7 +78,7 @@ class _ServicesTabState extends State<ServicesTab> {
                 child: RefreshIndicator(
                   onRefresh: () => context.read<ServiceCubit>().fetchServices(),
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     children: [
                       if (selectedCategory == 'all') ...[
                         _buildSectionHeader(context, 'allServices'.tr()),
@@ -117,7 +119,7 @@ class _ServicesTabState extends State<ServicesTab> {
                                               ),
                                         ),
                                       ).then((value) {
-                                        if (value == true) {
+                                        if (value == true && context.mounted) {
                                           context
                                               .read<ServiceCubit>()
                                               .fetchServices();
@@ -142,7 +144,17 @@ class _ServicesTabState extends State<ServicesTab> {
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 40),
-                            child: Text('noServicesInCategory'.tr()),
+                            child: Column(
+                              children: [
+                                Lottie.asset(
+                                  'assets/animations/car_repair.json',
+                                  height: 150,
+                                  repeat: true,
+                                ),
+                                const SizedBox(height: 16),
+                                Text('noServicesInCategory'.tr()),
+                              ],
+                            ),
                           ),
                         )
                       else
@@ -223,6 +235,19 @@ class _ServiceListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void navigateToBooking() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreateOrderScreen(preSelectedService: service),
+        ),
+      ).then((value) {
+        if (value == true && context.mounted) {
+          context.read<ServiceCubit>().fetchServices();
+        }
+      });
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       elevation: 0,
@@ -231,113 +256,112 @@ class _ServiceListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: Theme.of(context).dividerColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (service.imageUrl != null)
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: service.imageUrl!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      Container(color: Colors.white12),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: navigateToBooking,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (service.imageUrl != null)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Hero(
+                  tag: 'service_image_${service.id}',
+                  child: CachedNetworkImage(
+                    imageUrl: service.imageUrl!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) =>
+                        Container(color: Colors.white12),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
                 ),
               ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        service.name,
-                        style: TextStyle(
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          service.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.color,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${service.price.toStringAsFixed(2)} TMT',
+                        style: const TextStyle(
+                          color: Colors.blue,
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
-                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
-                    ),
-                    Text(
-                      '${service.price.toStringAsFixed(2)} TMT',
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  service.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Theme.of(context).hintColor,
-                    fontSize: 14,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _buildBadge(
-                      context,
-                      Icons.timer,
-                      service.estimatedTime ?? '${service.durationHours}h',
+                  const SizedBox(height: 8),
+                  Text(
+                    service.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Theme.of(context).hintColor,
+                      fontSize: 14,
                     ),
-                    const SizedBox(width: 12),
-                    _buildBadge(context, Icons.category, service.category.tr()),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _buildBadge(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              CreateOrderScreen(preSelectedService: service),
-                        ),
-                      ).then((value) {
-                        if (value == true) {
-                          // Refresh services if order was created
-                          context.read<ServiceCubit>().fetchServices();
-                        }
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        Icons.timer,
+                        service.estimatedTime ?? '${service.durationHours}h',
                       ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'bookAppointment'.tr(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      const SizedBox(width: 12),
+                      _buildBadge(
+                        context,
+                        Icons.category,
+                        service.category.tr(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: BouncyButton(
+                      onPressed: navigateToBooking,
+                      child: ElevatedButton(
+                        onPressed: navigateToBooking,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'bookAppointment'.tr(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -5,13 +5,29 @@ import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-class OrdersManagementScreen extends StatelessWidget {
+class OrdersManagementScreen extends StatefulWidget {
   const OrdersManagementScreen({super.key});
+
+  @override
+  State<OrdersManagementScreen> createState() => _OrdersManagementScreenState();
+}
+
+class _OrdersManagementScreenState extends State<OrdersManagementScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedStatusFilter = 'all';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => OrderCubit()..fetchAllOrders(),
+      create: (context) => OrderCubit()
+        ..fetchAllOrders()
+        ..subscribeToAllOrders(),
       child: Scaffold(
         appBar: AppBar(
           title: Text('manageOrders'.tr()),
@@ -50,51 +66,169 @@ class OrdersManagementScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: BlocBuilder<OrderCubit, OrderState>(
-          builder: (context, state) {
-            if (state is OrderLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is OrdersLoaded) {
-              if (state.orders.isEmpty) {
-                return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox, size: 80, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('No orders yet'),
-                    ],
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: 'searchHint'.tr(),
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                );
-              }
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _FilterChip(
+                          label: 'all'.tr(),
+                          value: 'all',
+                          selectedValue: _selectedStatusFilter,
+                          onSelected: (v) =>
+                              setState(() => _selectedStatusFilter = v),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'pending'.tr(),
+                          value: 'pending',
+                          selectedValue: _selectedStatusFilter,
+                          onSelected: (v) =>
+                              setState(() => _selectedStatusFilter = v),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'inProgress'.tr(),
+                          value: 'in_progress',
+                          selectedValue: _selectedStatusFilter,
+                          onSelected: (v) =>
+                              setState(() => _selectedStatusFilter = v),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'completed'.tr(),
+                          value: 'completed',
+                          selectedValue: _selectedStatusFilter,
+                          onSelected: (v) =>
+                              setState(() => _selectedStatusFilter = v),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: BlocBuilder<OrderCubit, OrderState>(
+                builder: (context, state) {
+                  if (state is OrderLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is OrdersLoaded) {
+                    var filteredOrders = state.orders;
 
-              return RefreshIndicator(
-                onRefresh: () => context.read<OrderCubit>().fetchAllOrders(),
-                child: ListView.builder(
-                  itemCount: state.orders.length,
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    final order = state.orders[index];
-                    return _OrderCard(order: order);
-                  },
-                ),
-              );
-            } else if (state is OrderError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error, size: 80, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(state.message),
-                  ],
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
+                    // Apply Status Filter
+                    if (_selectedStatusFilter != 'all') {
+                      filteredOrders = filteredOrders
+                          .where((o) => o.status == _selectedStatusFilter)
+                          .toList();
+                    }
+
+                    // Apply Search
+                    final query = _searchController.text.toLowerCase();
+                    if (query.isNotEmpty) {
+                      filteredOrders = filteredOrders.where((o) {
+                        final userName =
+                            o.user?.displayName?.toLowerCase() ?? '';
+                        final plate =
+                            o.vehicle?.licensePlate?.toLowerCase() ?? '';
+                        final service = o.carModel.toLowerCase();
+                        final orderId = o.id.toLowerCase();
+                        return userName.contains(query) ||
+                            plate.contains(query) ||
+                            service.contains(query) ||
+                            orderId.contains(query);
+                      }).toList();
+                    }
+
+                    if (filteredOrders.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.search_off,
+                              size: 80,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text('noMatchingOrders'.tr()),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () =>
+                          context.read<OrderCubit>().fetchAllOrders(),
+                      child: ListView.builder(
+                        itemCount: filteredOrders.length,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemBuilder: (context, index) {
+                          final order = filteredOrders[index];
+                          return _OrderCard(order: order);
+                        },
+                      ),
+                    );
+                  } else if (state is OrderError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error, size: 80, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text(state.message),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final String selectedValue;
+  final Function(String) onSelected;
+
+  const _FilterChip({
+    required this.label,
+    required this.value,
+    required this.selectedValue,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selectedValue == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onSelected(value),
     );
   }
 }
@@ -160,6 +294,44 @@ class _OrderCard extends StatelessWidget {
               backgroundColor: _getStatusColor().withAlpha(51),
               labelStyle: TextStyle(color: _getStatusColor()),
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (bgContext) => AlertDialog(
+                    title: Text('deleteOrder'.tr()),
+                    content: Text('confirmDeleteOrder'.tr()),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(bgContext, false),
+                        child: Text('no'.tr()),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(bgContext, true),
+                        child: Text(
+                          'yes'.tr(),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true && context.mounted) {
+                  context.read<OrderCubit>().deleteOrder(
+                    order.id,
+                    isAdmin: true,
+                  );
+                }
+              },
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 20,
+              ),
+              tooltip: 'deleteOrder'.tr(),
+            ),
           ],
         ),
         children: [
@@ -168,41 +340,74 @@ class _OrderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Issue Description:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                if (order.user != null) ...[
+                  Text(
+                    'userDetails'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    Icons.person,
+                    order.user!.displayName ?? 'N/A',
+                  ),
+                  _buildDetailRow(Icons.email, order.user!.email),
+                  if (order.user!.phoneNumber != null)
+                    _buildDetailRow(Icons.phone, order.user!.phoneNumber!),
+                  const SizedBox(height: 16),
+                ],
+                if (order.vehicle != null) ...[
+                  Text(
+                    'vehicleDetails'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    Icons.directions_car,
+                    '${order.vehicle!.brand} ${order.vehicle!.model} (${order.vehicle!.year})',
+                  ),
+                  if (order.vehicle!.licensePlate != null)
+                    _buildDetailRow(Icons.pin, order.vehicle!.licensePlate!),
+                  const SizedBox(height: 16),
+                ],
+                Text(
+                  'serviceIssue'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
+                Text(
+                  order.carModel, // Service title
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
                 Text(order.issueDescription),
                 const SizedBox(height: 16),
-                const Text(
-                  'Change Status:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  'changeStatus'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: [
                     _StatusButton(
-                      label: 'Pending',
+                      label: 'pending'.tr(),
                       status: 'pending',
                       orderId: order.id,
                       currentStatus: order.status,
                     ),
                     _StatusButton(
-                      label: 'In Progress',
+                      label: 'inProgress'.tr(),
                       status: 'in_progress',
                       orderId: order.id,
                       currentStatus: order.status,
                     ),
                     _StatusButton(
-                      label: 'Completed',
+                      label: 'completed'.tr(),
                       status: 'completed',
                       orderId: order.id,
                       currentStatus: order.status,
                     ),
                     _StatusButton(
-                      label: 'Cancelled',
+                      label: 'cancelled'.tr(),
                       status: 'cancelled',
                       orderId: order.id,
                       currentStatus: order.status,
@@ -212,6 +417,19 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
         ],
       ),
     );

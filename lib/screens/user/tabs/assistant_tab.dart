@@ -95,19 +95,33 @@ class _AssistantTabState extends State<AssistantTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              final msg = _messages[index];
-              return _buildChatBubble(msg, isDark);
-            },
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          _selectionPath.clear();
+          _messages.clear();
+          _messages.add({
+            'isBot': true,
+            'text': 'aiHello'.tr(),
+            'options': ['optDiagnose', 'optTips'],
+          });
+        });
+      },
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                return _buildChatBubble(msg, isDark);
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

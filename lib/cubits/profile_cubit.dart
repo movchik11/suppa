@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supa/services/cache_service.dart';
 
 // States
 abstract class ProfileState {}
@@ -29,11 +30,18 @@ class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : supabase = Supabase.instance.client, super(ProfileInitial());
 
   Future<void> fetchProfile() async {
-    emit(ProfileLoading());
+    // 1. Load from cache first
+    final cachedProfile = CacheService.getCachedProfile();
+    if (cachedProfile != null) {
+      emit(ProfileLoaded(cachedProfile));
+    } else {
+      emit(ProfileLoading());
+    }
+
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) {
-        emit(ProfileError('User not authenticated'));
+        if (cachedProfile == null) emit(ProfileError('User not authenticated'));
         return;
       }
 
@@ -43,9 +51,16 @@ class ProfileCubit extends Cubit<ProfileState> {
           .eq('id', userId)
           .single();
 
-      emit(ProfileLoaded(Profile.fromMap(data)));
+      final profile = Profile.fromMap(data);
+
+      // 2. Update cache
+      await CacheService.cacheProfile(profile);
+
+      emit(ProfileLoaded(profile));
     } catch (e) {
-      emit(ProfileError('Failed to fetch profile: ${e.toString()}'));
+      if (CacheService.getCachedProfile() == null) {
+        emit(ProfileError('Failed to fetch profile: ${e.toString()}'));
+      }
     }
   }
 
@@ -92,5 +107,9 @@ class ProfileCubit extends Cubit<ProfileState> {
     } catch (e) {
       emit(ProfileError('Failed to update profile: ${e.toString()}'));
     }
+  }
+
+  void clear() {
+    emit(ProfileInitial());
   }
 }

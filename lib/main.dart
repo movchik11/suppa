@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/utils/tm_material_delegate.dart';
+import 'package:supa/utils/tm_cupertino_delegate.dart';
 import 'package:supa/cubits/garage_cubit.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/service_cubit.dart';
@@ -13,15 +14,30 @@ import 'package:supa/screens/splash/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supa/components/ui/connectivity_barrier.dart';
+import 'package:supa/services/cache_service.dart';
+import 'package:supa/services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+
+  // Run independent initializations in parallel
+  await Future.wait([
+    EasyLocalization.ensureInitialized(),
+    dotenv.load(fileName: ".env"),
+    CacheService.init(),
+    SharedPreferences.getInstance(),
+  ]);
+
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  // Initialize Notifications (can also be parallelized if needed)
+  await NotificationService().init();
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('ru'), Locale('tk')],
@@ -48,33 +64,48 @@ class MainApp extends StatelessWidget {
           create: (context) => ThemeCubit(context.read<ProfileCubit>()),
         ),
       ],
-      child: BlocBuilder<ThemeCubit, bool>(
-        builder: (context, isLightMode) {
-          return MaterialApp(
-            title: 'AutoService',
-            debugShowCheckedModeBanner: false,
-            themeMode: isLightMode ? ThemeMode.light : ThemeMode.dark,
-            theme: _buildTheme(Brightness.light),
-            darkTheme: _buildTheme(Brightness.dark),
-            localizationsDelegates: [
-              const TmMaterialLocalizationsDelegate(),
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-              ...context.localizationDelegates,
-            ],
-            supportedLocales: context.supportedLocales,
-            locale: context.locale,
-            home: const SplashScreen(),
-          );
+      child: BlocListener<AuthCubit, AuthCubitState>(
+        listener: (context, state) {
+          if (state is AuthUnauthenticated) {
+            CacheService.clearAll();
+            context.read<GarageCubit>().clear();
+            context.read<OrderCubit>().clear();
+            context.read<ProfileCubit>().clear();
+            context.read<ServiceCubit>().clear();
+          }
         },
+        child: BlocBuilder<ThemeCubit, bool>(
+          builder: (context, isLightMode) {
+            return MaterialApp(
+              title: 'AutoService',
+              debugShowCheckedModeBanner: false,
+              themeMode: isLightMode ? ThemeMode.light : ThemeMode.dark,
+              theme: _buildTheme(Brightness.light),
+              darkTheme: _buildTheme(Brightness.dark),
+              builder: (context, child) {
+                return ConnectivityBarrier(child: child!);
+              },
+              localizationsDelegates: [
+                const TmMaterialLocalizationsDelegate(),
+                const TmCupertinoLocalizationsDelegate(),
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+                ...context.localizationDelegates,
+              ],
+              supportedLocales: context.supportedLocales,
+              locale: context.locale,
+              home: const SplashScreen(),
+            );
+          },
+        ),
       ),
     );
   }
 
   ThemeData _buildTheme(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final primaryColor = const Color(0xFF673AB7);
+    const primaryColor = Color(0xFF673AB7);
     final scaffoldBg = isDark
         ? const Color(0xFF0F0F1E)
         : const Color(0xFFF8F9FE);
@@ -162,6 +193,12 @@ class MainApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
   }

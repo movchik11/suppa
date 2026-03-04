@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supa/services/cache_service.dart';
 
 // States
 abstract class ServiceState {}
@@ -30,8 +31,18 @@ class ServiceCubit extends Cubit<ServiceState> {
 
   // Fetch all services
   Future<void> fetchServices() async {
-    emit(ServiceLoading());
+    // 1. Load from cache first
+    final cachedServices = CacheService.getCachedData<Service>(
+      CacheService.servicesBox,
+    );
+    if (cachedServices.isNotEmpty) {
+      emit(ServicesLoaded(cachedServices));
+    } else {
+      emit(ServiceLoading());
+    }
+
     try {
+      // 2. Fetch from network
       final data = await supabase
           .from('services')
           .select()
@@ -41,9 +52,17 @@ class ServiceCubit extends Cubit<ServiceState> {
           .map((item) => Service.fromMap(item))
           .toList();
 
+      // 3. Update cache
+      await CacheService.cacheData<Service>(CacheService.servicesBox, services);
+
       emit(ServicesLoaded(services));
     } catch (e) {
-      emit(ServiceError('Failed to load services: ${e.toString()}'));
+      // If network fails and we have no cache, show error
+      if (CacheService.getCachedData<Service>(
+        CacheService.servicesBox,
+      ).isEmpty) {
+        emit(ServiceError('Failed to load services: ${e.toString()}'));
+      }
     }
   }
 
@@ -60,9 +79,7 @@ class ServiceCubit extends Cubit<ServiceState> {
     try {
       String? imageUrl;
 
-      // Upload image if provided
       if (image != null) {
-        // Sanitize filename to avoid "Invalid key" errors
         final sanitizedName = image.name.replaceAll(
           RegExp(r'[^a-zA-Z0-9._-]'),
           '_',
@@ -74,14 +91,11 @@ class ServiceCubit extends Cubit<ServiceState> {
         await supabase.storage
             .from('service-images')
             .uploadBinary(fileName, bytes);
-
-        // Get public URL
         imageUrl = supabase.storage
             .from('service-images')
             .getPublicUrl(fileName);
       }
 
-      // Insert service
       await supabase.from('services').insert({
         'name': name,
         'description': description,
@@ -92,7 +106,7 @@ class ServiceCubit extends Cubit<ServiceState> {
       });
 
       emit(ServiceCreated());
-      await fetchServices(); // Refresh list
+      await fetchServices();
     } catch (e) {
       emit(ServiceError('Failed to create service: ${e.toString()}'));
     }
@@ -112,9 +126,7 @@ class ServiceCubit extends Cubit<ServiceState> {
     try {
       String? imageUrl = existingImageUrl;
 
-      // Upload image if provided
       if (newImage != null) {
-        // Sanitize filename to avoid "Invalid key" errors
         final sanitizedName = newImage.name.replaceAll(
           RegExp(r'[^a-zA-Z0-9._-]'),
           '_',
@@ -126,8 +138,6 @@ class ServiceCubit extends Cubit<ServiceState> {
         await supabase.storage
             .from('service-images')
             .uploadBinary(fileName, bytes);
-
-        // Get public URL
         imageUrl = supabase.storage
             .from('service-images')
             .getPublicUrl(fileName);
@@ -145,7 +155,7 @@ class ServiceCubit extends Cubit<ServiceState> {
           })
           .eq('id', serviceId);
 
-      await fetchServices(); // Refresh list
+      await fetchServices();
     } catch (e) {
       emit(ServiceError('Failed to update service: ${e.toString()}'));
     }
@@ -155,7 +165,7 @@ class ServiceCubit extends Cubit<ServiceState> {
   Future<void> deleteService(String serviceId) async {
     try {
       await supabase.from('services').delete().eq('id', serviceId);
-      await fetchServices(); // Refresh list
+      await fetchServices();
     } catch (e) {
       emit(ServiceError('Failed to delete service: ${e.toString()}'));
     }
@@ -179,5 +189,9 @@ class ServiceCubit extends Cubit<ServiceState> {
     }
 
     emit(ServicesLoaded(sorted));
+  }
+
+  void clear() {
+    emit(ServiceInitial());
   }
 }

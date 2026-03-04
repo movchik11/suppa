@@ -12,7 +12,10 @@ import 'package:supa/cubits/profile_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/cubits/auth_cubit.dart';
+import 'package:supa/cubits/order_cubit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supa/components/glass_container.dart';
+import 'package:supa/screens/user/tabs/settings_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +26,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderCubit>().subscribeToOrders();
+    });
+  }
 
   final List<Widget> _tabs = [
     const ServicesTab(),
@@ -40,9 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
       'garage'.tr(),
       'history'.tr(),
       'profile'.tr(),
+      'settings'.tr(),
     ];
 
-    return BlocListener<AuthCubit, AuthState>(
+    return BlocListener<AuthCubit, AuthCubitState>(
       listener: (context, state) {
         if (state is AuthInitial || state is AuthUnauthenticated) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -52,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       child: Scaffold(
+        extendBody: true,
         appBar: AppBar(
           centerTitle: true,
           title: Text(titles[_selectedIndex]),
@@ -105,11 +118,27 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 8),
             ],
+            if (_selectedIndex == 4) ...[
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'settings'.tr(),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsTab(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ],
         ),
         drawer: Drawer(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          child: Column(
+          child: ListView(
+            padding: EdgeInsets.zero,
             children: [
               DrawerHeader(
                 decoration: BoxDecoration(
@@ -171,7 +200,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.room_service),
+                leading: const Icon(
+                  Icons.home_repair_service,
+                  color: Colors.blue,
+                ),
                 title: Text('services'.tr()),
                 onTap: () {
                   setState(() => _selectedIndex = 0);
@@ -179,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.smart_toy),
+                leading: const Icon(Icons.smart_toy, color: Colors.purple),
                 title: Text('assistant'.tr()),
                 onTap: () {
                   setState(() => _selectedIndex = 1);
@@ -187,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.directions_car),
+                leading: const Icon(Icons.garage, color: Colors.orange),
                 title: Text('garage'.tr()),
                 onTap: () {
                   setState(() => _selectedIndex = 2);
@@ -195,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.history),
+                leading: const Icon(Icons.history, color: Colors.green),
                 title: Text('history'.tr()),
                 onTap: () {
                   setState(() => _selectedIndex = 3);
@@ -203,11 +235,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.person),
+                leading: const Icon(Icons.person, color: Colors.teal),
                 title: Text('profile'.tr()),
                 onTap: () {
                   setState(() => _selectedIndex = 4);
                   Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings, color: Colors.blueGrey),
+                title: Text('settings'.tr()),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsTab(),
+                    ),
+                  );
                 },
               ),
               const Divider(),
@@ -229,35 +274,66 @@ class _HomeScreenState extends State<HomeScreen> {
                 onNavigateToServices: () => setState(() => _selectedIndex = 0),
               )
             : _tabs[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.blue,
-          unselectedItemColor: Theme.of(context).hintColor,
-          showUnselectedLabels: true,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_repair_service),
-              label: 'services'.tr(),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: GlassContainer(
+              borderRadius: BorderRadius.circular(24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BottomNavigationBar(
+                  currentIndex: _selectedIndex,
+                  onTap: (index) => setState(() => _selectedIndex = index),
+                  type: BottomNavigationBarType.fixed,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  selectedItemColor: Colors.blue,
+                  unselectedItemColor: Theme.of(context).hintColor,
+                  showUnselectedLabels: true,
+                  selectedFontSize: 10,
+                  unselectedFontSize: 10,
+                  iconSize: 22,
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Icon(Icons.home_repair_service),
+                      ),
+                      label: 'services'.tr(),
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Icon(Icons.smart_toy),
+                      ),
+                      label: 'assistant'.tr(),
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Icon(Icons.garage),
+                      ),
+                      label: 'garage'.tr(),
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Icon(Icons.history),
+                      ),
+                      label: 'history'.tr(),
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Padding(
+                        padding: EdgeInsets.only(bottom: 2),
+                        child: Icon(Icons.person),
+                      ),
+                      label: 'profile'.tr(),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.smart_toy),
-              label: 'assistant'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.garage),
-              label: 'garage'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.history),
-              label: 'history'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person),
-              label: 'profile'.tr(),
-            ),
-          ],
+          ),
         ),
       ),
     );

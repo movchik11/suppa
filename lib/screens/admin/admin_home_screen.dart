@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/admin_cubit.dart';
+import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/admin/admin_dashboard_screen.dart';
 import 'package:supa/screens/admin/orders_management_screen.dart';
@@ -14,6 +15,9 @@ class AdminHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ensuring admin notifications are active
+    context.read<OrderCubit>().subscribeToAllOrders();
+
     return BlocProvider(
       create: (context) => AdminCubit(),
       child: Scaffold(
@@ -32,7 +36,7 @@ class AdminHomeScreen extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.dashboard),
-              tooltip: 'Dashboard',
+              tooltip: 'dashboard'.tr(),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -44,7 +48,7 @@ class AdminHomeScreen extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.build),
-              tooltip: 'Manage Services',
+              tooltip: 'manageServices'.tr(),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -56,7 +60,7 @@ class AdminHomeScreen extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.assignment),
-              tooltip: 'Manage Orders',
+              tooltip: 'manageOrders'.tr(),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -85,7 +89,7 @@ class AdminHomeScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             } else if (state is AdminLoaded) {
               if (state.profiles.isEmpty) {
-                return const Center(child: Text("No users found."));
+                return Center(child: Text("noUsersFound".tr()));
               }
               return RefreshIndicator(
                 onRefresh: () => context.read<AdminCubit>().fetchProfiles(),
@@ -94,7 +98,9 @@ class AdminHomeScreen extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        "Total Users: ${state.profiles.length}",
+                        "totalUsers".tr(
+                          args: [state.profiles.length.toString()],
+                        ),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
@@ -113,7 +119,9 @@ class AdminHomeScreen extends StatelessWidget {
                                 child: Text(profile.email[0].toUpperCase()),
                               ),
                               title: Text(profile.email),
-                              subtitle: Text('Role: ${profile.role}'),
+                              subtitle: Text(
+                                'roleLabel'.tr(args: [profile.role]),
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -123,7 +131,7 @@ class AdminHomeScreen extends StatelessWidget {
                                       Icons.swap_horiz,
                                       color: Colors.blue,
                                     ),
-                                    tooltip: 'Change Role',
+                                    tooltip: 'changeRole'.tr(),
                                     onPressed: () => _showRoleDialog(
                                       context,
                                       profile.id,
@@ -136,7 +144,7 @@ class AdminHomeScreen extends StatelessWidget {
                                       Icons.delete,
                                       color: Colors.red,
                                     ),
-                                    tooltip: 'Delete User',
+                                    tooltip: 'deleteUser'.tr(),
                                     onPressed: () => _showDeleteDialog(
                                       context,
                                       profile.id,
@@ -156,7 +164,7 @@ class AdminHomeScreen extends StatelessWidget {
             } else if (state is AdminError) {
               return Center(child: Text('Error: ${state.message}'));
             }
-            return const Center(child: Text('Welcome, Admin!'));
+            return Center(child: Text('welcomeAdmin'.tr()));
           },
         ),
       ),
@@ -171,29 +179,45 @@ class AdminHomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Change User Role'),
+        title: Text('changeUserRole'.tr()),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RadioListTile<String>(
-              title: const Text('User'),
-              value: 'user',
-              groupValue: currentRole,
-              onChanged: (value) {
-                if (value != null) {
+            ListTile(
+              title: Text('userRole'.tr()),
+              leading: Radio<String>(
+                value: 'user',
+                groupValue: currentRole,
+                onChanged: (value) {
+                  if (value != null && context.mounted) {
+                    Navigator.pop(dialogContext);
+                    context.read<AdminCubit>().updateUserRole(userId, value);
+                  }
+                },
+              ),
+              onTap: () {
+                if (context.mounted) {
                   Navigator.pop(dialogContext);
-                  context.read<AdminCubit>().updateUserRole(userId, value);
+                  context.read<AdminCubit>().updateUserRole(userId, 'user');
                 }
               },
             ),
-            RadioListTile<String>(
-              title: const Text('Admin'),
-              value: 'admin',
-              groupValue: currentRole,
-              onChanged: (value) {
-                if (value != null) {
+            ListTile(
+              title: Text('adminRole'.tr()),
+              leading: Radio<String>(
+                value: 'admin',
+                groupValue: currentRole,
+                onChanged: (value) {
+                  if (value != null && context.mounted) {
+                    Navigator.pop(dialogContext);
+                    context.read<AdminCubit>().updateUserRole(userId, value);
+                  }
+                },
+              ),
+              onTap: () {
+                if (context.mounted) {
                   Navigator.pop(dialogContext);
-                  context.read<AdminCubit>().updateUserRole(userId, value);
+                  context.read<AdminCubit>().updateUserRole(userId, 'admin');
                 }
               },
             ),
@@ -207,12 +231,12 @@ class AdminHomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete User'),
-        content: Text('Are you sure you want to delete $email?'),
+        title: Text('deleteUser'.tr()),
+        content: Text('confirmDeleteUser'.tr(args: [email])),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr()),
           ),
           TextButton(
             onPressed: () {
@@ -220,7 +244,7 @@ class AdminHomeScreen extends StatelessWidget {
               context.read<AdminCubit>().deleteUser(userId);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text('delete'.tr()),
           ),
         ],
       ),

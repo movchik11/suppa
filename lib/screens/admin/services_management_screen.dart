@@ -91,12 +91,12 @@ class ServicesManagementScreen extends StatelessWidget {
                           size: 80,
                           color: Colors.grey,
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Text('noServicesYet'.tr()),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           'addFirstService'.tr(),
-                          style: TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -110,7 +110,7 @@ class ServicesManagementScreen extends StatelessWidget {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.75,
+                          childAspectRatio: 0.6,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
@@ -419,156 +419,173 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('addNewService'.tr()),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Image Picker
-              GestureDetector(
-                onTap: _pickImage,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  height: 150,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: _selectedImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: kIsWeb
-                              ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
-                              : Image.file(
-                                  File(_selectedImage!.path),
-                                  fit: BoxFit.cover,
-                                ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo,
-                              size: 50,
-                              color: Colors.blue[400],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'tapToAddPhoto'.tr(),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _pickImage,
-                icon: const Icon(Icons.photo_library),
-                label: Text('choosePhoto'.tr()),
-              ),
-              const SizedBox(height: 24),
-              // Category Selection First (moved up for better flow)
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: InputDecoration(
-                  labelText: 'category'.tr(),
-                  border: const OutlineInputBorder(),
-                ),
-                items: _categories.map((cat) {
-                  return DropdownMenuItem(value: cat, child: Text(cat.tr()));
-                }).toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val!),
-              ),
-              const SizedBox(height: 24),
-              // Sub-service templates
-              if (_subServices[_selectedCategory] != null) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'suggestions'.tr(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Image Picker
+                GestureDetector(
+                  onTap: _pickImage,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    height: 120, // Reduced from 150
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
+                    child: _selectedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: kIsWeb
+                                ? Image.memory(
+                                    _webImageBytes!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.file(
+                                    File(_selectedImage!.path),
+                                    fit: BoxFit.cover,
+                                  ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 50,
+                                color: Colors.blue[400],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'tapToAddPhoto'.tr(),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _subServices[_selectedCategory]!.map((s) {
-                    return ActionChip(
-                      label: Text(s.tr(), style: const TextStyle(fontSize: 11)),
-                      backgroundColor: Colors.blue.withAlpha(20),
-                      onPressed: () {
-                        setState(() {
-                          _nameController.text = s.tr();
-                        });
-                      },
-                    );
+                OutlinedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.photo_library),
+                  label: Text('choosePhoto'.tr()),
+                ),
+                const SizedBox(height: 24),
+                // Category Selection First (moved up for better flow)
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedCategory,
+                  decoration: InputDecoration(
+                    labelText: 'category'.tr(),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: _categories.map((cat) {
+                    return DropdownMenuItem(value: cat, child: Text(cat.tr()));
                   }).toList(),
+                  onChanged: (val) => setState(() => _selectedCategory = val!),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+                // Sub-service templates
+                if (_subServices[_selectedCategory] != null) ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'suggestions'.tr(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _subServices[_selectedCategory]!.map((s) {
+                      return ActionChip(
+                        label: Text(
+                          s.tr(),
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        backgroundColor: Colors.blue.withAlpha(20),
+                        onPressed: () {
+                          setState(() {
+                            _nameController.text = s.tr();
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'serviceName'.tr(),
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      value?.isEmpty ?? true ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'description'.tr(),
+                    border: const OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  validator: (value) =>
+                      value?.isEmpty ?? true ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _durationController,
+                  decoration: InputDecoration(
+                    labelText: 'durationHoursLabel'.tr(),
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) {
+                      return 'Required';
+                    }
+                    if (double.tryParse(value!) == null) {
+                      return 'Invalid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _priceController,
+                  decoration: InputDecoration(
+                    labelText: 'priceLabel'.tr(),
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value?.isEmpty ?? true) {
+                      return 'Required';
+                    }
+                    if (double.tryParse(value!) == null) {
+                      return 'Invalid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
               ],
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'serviceName'.tr(),
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'description'.tr(),
-                  border: const OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _durationController,
-                decoration: InputDecoration(
-                  labelText: 'durationHoursLabel'.tr(),
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Required';
-                  if (double.tryParse(value!) == null) return 'Invalid number';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _priceController,
-                decoration: InputDecoration(
-                  labelText: 'priceLabel'.tr(),
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Required';
-                  if (double.tryParse(value!) == null) return 'Invalid number';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
+            ),
           ),
         ),
       ),
@@ -592,7 +609,9 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                         _selectedCategory,
                         _selectedImage,
                       );
-                      if (mounted) Navigator.pop(context);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
                     } finally {
                       if (mounted) setState(() => _isLoading = false);
                     }

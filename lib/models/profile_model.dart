@@ -1,16 +1,34 @@
+import 'package:hive/hive.dart';
+
+part 'profile_model.g.dart';
+
+@HiveType(typeId: 3)
 class Profile {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String email;
+  @HiveField(2)
   final String role;
+  @HiveField(3)
   final String? displayName;
+  @HiveField(4)
   final String? phoneNumber;
+  @HiveField(5)
   final String? avatarUrl;
+  @HiveField(6)
   final int loyaltyPoints;
+  @HiveField(7)
   final String preferredContact;
+  @HiveField(8)
   final bool notificationsEnabled;
+  @HiveField(9)
   final String? referralCode;
+  @HiveField(10)
   final String? referredBy;
+  @HiveField(11)
   final bool isLightMode;
+  @HiveField(12)
   final DateTime createdAt;
 
   Profile({

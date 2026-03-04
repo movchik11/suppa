@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supa/components/ui/skeleton_wrapper.dart';
+import 'package:supa/utils/haptics.dart';
+import 'package:supa/screens/user/create_order_screen.dart';
 
 class ServicesListScreen extends StatelessWidget {
   const ServicesListScreen({super.key});
@@ -15,16 +18,21 @@ class ServicesListScreen extends StatelessWidget {
         appBar: AppBar(title: Text('ourServices'.tr())),
         body: BlocBuilder<ServiceCubit, ServiceState>(
           builder: (context, state) {
-            if (state is ServiceLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is ServicesLoaded) {
-              if (state.services.isEmpty) {
+            if (state is ServiceLoading || state is ServicesLoaded) {
+              final services = state is ServicesLoaded ? state.services : [];
+              final isLoading = state is ServiceLoading;
+
+              if (state is ServicesLoaded && services.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.construction, size: 80, color: Colors.grey),
-                      SizedBox(height: 16),
+                      const Icon(
+                        Icons.construction,
+                        size: 80,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 16),
                       Text('noServices'.tr()),
                     ],
                   ),
@@ -32,14 +40,30 @@ class ServicesListScreen extends StatelessWidget {
               }
 
               return RefreshIndicator(
-                onRefresh: () => context.read<ServiceCubit>().fetchServices(),
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.services.length,
-                  itemBuilder: (context, index) {
-                    final service = state.services[index];
-                    return _ServiceListItem(service: service);
-                  },
+                onRefresh: () async {
+                  AppHaptics.light();
+                  await context.read<ServiceCubit>().fetchServices();
+                },
+                child: SkeletonWrapper(
+                  isLoading: isLoading,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: isLoading ? 5 : services.length,
+                    itemBuilder: (context, index) {
+                      final service = isLoading
+                          ? Service(
+                              id: 'loading',
+                              name: 'Loading Service Name',
+                              description:
+                                  'Loading service description details...',
+                              price: 0.0,
+                              durationHours: 0,
+                              category: 'Loading...',
+                            )
+                          : services[index];
+                      return _ServiceListItem(service: service);
+                    },
+                  ),
                 ),
               );
             } else if (state is ServiceError) {
@@ -73,78 +97,91 @@ class _ServiceListItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Image
-          if (service.imageUrl != null)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              child: Image.network(
-                service.imageUrl!,
-                height: 180,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 180,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.car_repair, size: 60),
-                ),
-              ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          AppHaptics.medium();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  CreateOrderScreen(preSelectedService: service),
             ),
-          // Details
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  service.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image
+            if (service.imageUrl != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Image.network(
+                  service.imageUrl!,
+                  height: 180,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 180,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.car_repair, size: 60),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  service.description,
-                  style: const TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 18,
-                          color: Colors.blue,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'hoursArg'.tr(
-                            args: [service.durationHours.toString()],
+              ),
+            // Details
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    service.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    service.description,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time,
+                            size: 18,
+                            color: Colors.blue,
                           ),
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${service.price.toStringAsFixed(2)} TMT',
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                          const SizedBox(width: 4),
+                          Text(
+                            'hoursArg'.tr(
+                              args: [service.durationHours.toString()],
+                            ),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      Text(
+                        '${service.price.toStringAsFixed(2)} TMT',
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
+import 'package:supa/components/ui/skeleton_wrapper.dart';
+import 'package:supa/utils/haptics.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -20,210 +22,341 @@ class AdminDashboardScreen extends StatelessWidget {
               builder: (context, isLight) {
                 return IconButton(
                   icon: Icon(isLight ? Icons.dark_mode : Icons.light_mode),
-                  onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+                  onPressed: () {
+                    AppHaptics.selection();
+                    context.read<ThemeCubit>().toggleTheme();
+                  },
                 );
               },
             ),
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () => context.read<OrderCubit>().fetchAllOrders(),
+              onPressed: () {
+                AppHaptics.light();
+                context.read<OrderCubit>().fetchAllOrders();
+              },
             ),
           ],
         ),
         body: BlocBuilder<OrderCubit, OrderState>(
           builder: (context, state) {
-            if (state is OrderLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is OrdersLoaded) {
-              // Calculate statistics
-              final total = state.orders.length;
-              final pending = state.orders
-                  .where((o) => o.status == 'pending')
-                  .length;
-              final inProgress = state.orders
+            if (state is OrderLoading || state is OrdersLoaded) {
+              final orders = state is OrdersLoaded ? state.orders : [];
+              final isLoading = state is OrderLoading;
+
+              // Calculate statistics (with defaults for loading state)
+              final total = orders.length;
+              final pending = orders.where((o) => o.status == 'pending').length;
+              final inProgress = orders
                   .where((o) => o.status == 'in_progress')
                   .length;
-              final completed = state.orders
+              final completed = orders
                   .where((o) => o.status == 'completed')
                   .length;
-              final cancelled = state.orders
+              final cancelled = orders
                   .where((o) => o.status == 'cancelled')
                   .length;
 
-              return RefreshIndicator(
-                onRefresh: () => context.read<OrderCubit>().fetchAllOrders(),
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Statistics Cards
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              title: 'Total Orders',
-                              value: total.toString(),
-                              icon: Icons.receipt_long,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatCard(
-                              title: 'Pending',
-                              value: pending.toString(),
-                              icon: Icons.pending,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              title: 'In Progress',
-                              value: inProgress.toString(),
-                              icon: Icons.build,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatCard(
-                              title: 'Completed',
-                              value: completed.toString(),
-                              icon: Icons.check_circle,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
+              // Revenue calculation
+              final totalRevenue = orders
+                  .where((o) => o.status == 'completed' && o.totalPrice != null)
+                  .fold<double>(
+                    0,
+                    (sum, order) => sum + (order.totalPrice ?? 0),
+                  );
 
-                      // Pie Chart
-                      if (total > 0) ...[
-                        Text(
-                          'Order Status Distribution',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
+              // daily revenue for chart
+              final Map<String, double> dailyRevenue = {};
+              for (var order in orders.where((o) => o.status == 'completed')) {
+                final dateKey = DateFormat('MM/dd').format(order.createdAt);
+                dailyRevenue[dateKey] =
+                    (dailyRevenue[dateKey] ?? 0) + (order.totalPrice ?? 0);
+              }
+              final List<MapEntry<String, double>> chartData =
+                  dailyRevenue.entries.toList()
+                    ..sort((a, b) => a.key.compareTo(b.key));
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  AppHaptics.light();
+                  await context.read<OrderCubit>().fetchAllOrders();
+                },
+                child: SkeletonWrapper(
+                  isLoading: isLoading,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Statistics Cards
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                title: 'totalOrders'.tr(),
+                                value: isLoading ? '00' : total.toString(),
+                                icon: Icons.receipt_long,
+                                color: Colors.blue,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _StatCard(
+                                title: 'pending'.tr(),
+                                value: isLoading ? '00' : pending.toString(),
+                                icon: Icons.pending,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Card(
-                          elevation: 2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  height: 250,
-                                  child: PieChart(
-                                    PieChartData(
-                                      sectionsSpace: 2,
-                                      centerSpaceRadius: 60,
-                                      sections: [
-                                        if (pending > 0)
-                                          PieChartSectionData(
-                                            value: pending.toDouble(),
-                                            title: '$pending',
-                                            color: Colors.orange,
-                                            radius: 80,
-                                            titleStyle: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                title: 'inProgress'.tr(),
+                                value: isLoading ? '00' : inProgress.toString(),
+                                icon: Icons.build,
+                                color: Colors.blue,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _StatCard(
+                                title: 'completed'.tr(),
+                                value: isLoading ? '00' : completed.toString(),
+                                icon: Icons.check_circle,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _StatCard(
+                          title: 'totalRevenue'.tr(),
+                          value: isLoading
+                              ? '000.00 TMT'
+                              : '${totalRevenue.toStringAsFixed(2)} TMT',
+                          icon: Icons.monetization_on,
+                          color: Colors.teal,
+                        ),
+                        const SizedBox(height: 12),
+                        const SizedBox(height: 32),
+
+                        // Pie Chart
+                        if (isLoading || total > 0) ...[
+                          Text(
+                            'orderStatusDistribution'.tr(),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 16),
+                          Card(
+                            elevation: 2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    height: 250,
+                                    child: isLoading
+                                        ? const Center(
+                                            child: CircularProgressIndicator(),
+                                          )
+                                        : PieChart(
+                                            PieChartData(
+                                              sectionsSpace: 2,
+                                              centerSpaceRadius: 60,
+                                              sections: [
+                                                if (pending > 0)
+                                                  PieChartSectionData(
+                                                    value: pending.toDouble(),
+                                                    title: '$pending',
+                                                    color: Colors.orange,
+                                                    radius: 80,
+                                                    titleStyle: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                if (inProgress > 0)
+                                                  PieChartSectionData(
+                                                    value: inProgress
+                                                        .toDouble(),
+                                                    title: '$inProgress',
+                                                    color: Colors.blue,
+                                                    radius: 80,
+                                                    titleStyle: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                if (completed > 0)
+                                                  PieChartSectionData(
+                                                    value: completed.toDouble(),
+                                                    title: '$completed',
+                                                    color: Colors.green,
+                                                    radius: 80,
+                                                    titleStyle: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                if (cancelled > 0)
+                                                  PieChartSectionData(
+                                                    value: cancelled.toDouble(),
+                                                    title: '$cancelled',
+                                                    color: Colors.red,
+                                                    radius: 80,
+                                                    titleStyle: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                           ),
-                                        if (inProgress > 0)
-                                          PieChartSectionData(
-                                            value: inProgress.toDouble(),
-                                            title: '$inProgress',
-                                            color: Colors.blue,
-                                            radius: 80,
-                                            titleStyle: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        if (completed > 0)
-                                          PieChartSectionData(
-                                            value: completed.toDouble(),
-                                            title: '$completed',
-                                            color: Colors.green,
-                                            radius: 80,
-                                            titleStyle: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        if (cancelled > 0)
-                                          PieChartSectionData(
-                                            value: cancelled.toDouble(),
-                                            title: '$cancelled',
-                                            color: Colors.red,
-                                            radius: 80,
-                                            titleStyle: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 24),
-                                // Legend
-                                Wrap(
-                                  spacing: 16,
-                                  runSpacing: 8,
-                                  children: [
-                                    if (pending > 0)
-                                      _LegendItem(
-                                        color: Colors.orange,
-                                        label: 'Pending',
-                                        count: pending,
-                                      ),
-                                    if (inProgress > 0)
-                                      _LegendItem(
-                                        color: Colors.blue,
-                                        label: 'In Progress',
-                                        count: inProgress,
-                                      ),
-                                    if (completed > 0)
-                                      _LegendItem(
-                                        color: Colors.green,
-                                        label: 'Completed',
-                                        count: completed,
-                                      ),
-                                    if (cancelled > 0)
-                                      _LegendItem(
-                                        color: Colors.red,
-                                        label: 'Cancelled',
-                                        count: cancelled,
-                                      ),
-                                  ],
-                                ),
-                              ],
+                                  const SizedBox(height: 24),
+                                  // Legend
+                                  Wrap(
+                                    spacing: 16,
+                                    runSpacing: 8,
+                                    children: [
+                                      if (isLoading || pending > 0)
+                                        _LegendItem(
+                                          color: Colors.orange,
+                                          label: 'pending'.tr(),
+                                          count: pending,
+                                        ),
+                                      if (isLoading || inProgress > 0)
+                                        _LegendItem(
+                                          color: Colors.blue,
+                                          label: 'inProgress'.tr(),
+                                          count: inProgress,
+                                        ),
+                                      if (isLoading || completed > 0)
+                                        _LegendItem(
+                                          color: Colors.green,
+                                          label: 'completed'.tr(),
+                                          count: completed,
+                                        ),
+                                      if (isLoading || cancelled > 0)
+                                        _LegendItem(
+                                          color: Colors.red,
+                                          label: 'cancelled'.tr(),
+                                          count: cancelled,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ] else
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: Text(
-                              'No orders yet to display statistics',
-                              style: TextStyle(color: Colors.grey),
+                          const SizedBox(height: 32),
+                          // Revenue Line Chart
+                          if (isLoading || chartData.isNotEmpty) ...[
+                            Text(
+                              'revenueTrend'.tr(),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 16),
+                            Card(
+                              elevation: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: SizedBox(
+                                  height: 250,
+                                  child: isLoading
+                                      ? const Center(
+                                          child: CircularProgressIndicator(),
+                                        )
+                                      : LineChart(
+                                          LineChartData(
+                                            gridData: const FlGridData(
+                                              show: false,
+                                            ),
+                                            titlesData: FlTitlesData(
+                                              bottomTitles: AxisTitles(
+                                                sideTitles: SideTitles(
+                                                  showTitles: true,
+                                                  getTitlesWidget: (value, meta) {
+                                                    if (value.toInt() < 0 ||
+                                                        value.toInt() >=
+                                                            chartData.length) {
+                                                      return const SizedBox.shrink();
+                                                    }
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            top: 8.0,
+                                                          ),
+                                                      child: Text(
+                                                        chartData[value.toInt()]
+                                                            .key,
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                            borderData: FlBorderData(
+                                              show: false,
+                                            ),
+                                            lineBarsData: [
+                                              LineChartBarData(
+                                                spots: List.generate(
+                                                  chartData.length,
+                                                  (i) => FlSpot(
+                                                    i.toDouble(),
+                                                    chartData[i].value,
+                                                  ),
+                                                ),
+                                                isCurved: true,
+                                                color: Colors.teal,
+                                                dotData: const FlDotData(
+                                                  show: true,
+                                                ),
+                                                belowBarData: BarAreaData(
+                                                  show: true,
+                                                  color: Colors.teal.withAlpha(
+                                                    51,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ] else
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Text(
+                                'noOrdersToStatistics'.tr(),
+                                style: const TextStyle(color: Colors.grey),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

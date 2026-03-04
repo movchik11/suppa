@@ -4,6 +4,9 @@ import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/admin/admin_home_screen.dart';
 import 'package:supa/screens/auth/login_screen.dart';
 import 'package:supa/screens/home/home_screen.dart';
+import 'package:supa/screens/user/profile_setup_screen.dart';
+import 'package:supa/screens/user/initial_vehicle_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,6 +44,48 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthState();
+    });
+  }
+
+  Future<void> _checkAuthState() async {
+    if (!mounted) return;
+
+    final state = context.read<AuthCubit>().state;
+    _navigateBasedOnState(state);
+  }
+
+  void _navigateBasedOnState(AuthCubitState state) {
+    if (state is AuthAuthenticated) {
+      if (state.role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
+        );
+      } else if (state.needsProfileSetup) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileSetupScreen()),
+        );
+      } else if (state.needsVehicleSetup) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const InitialVehicleScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } else if (state is AuthUnauthenticated || state is AuthError) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -51,41 +96,17 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) async {
-        await Future.delayed(const Duration(milliseconds: 1500));
-        if (!context.mounted) return;
-
-        if (state is AuthAuthenticated) {
-          if (state.role == 'admin') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-          }
-        } else if (state is AuthUnauthenticated || state is AuthError) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-          );
-        }
+    return BlocListener<AuthCubit, AuthCubitState>(
+      listener: (context, state) {
+        _navigateBasedOnState(state);
       },
       child: Scaffold(
         body: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF673AB7),
-                const Color(0xFF512DA8),
-                const Color(0xFF311B92),
-              ],
+              colors: [Color(0xFF673AB7), Color(0xFF512DA8), Color(0xFF311B92)],
             ),
           ),
           child: Center(
@@ -100,11 +121,11 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withAlpha(51),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withAlpha(76),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
@@ -125,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     children: [
                       Text(
-                        'AwtoSerwis',
+                        'appTitle'.tr(),
                         style: TextStyle(
                           fontSize: 42,
                           fontWeight: FontWeight.bold,
@@ -133,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen>
                           letterSpacing: 2,
                           shadows: [
                             Shadow(
-                              color: Colors.black.withOpacity(0.5),
+                              color: Colors.black.withAlpha(127),
                               offset: const Offset(0, 4),
                               blurRadius: 10,
                             ),
@@ -142,10 +163,10 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Professional Car Service',
+                        'tagline'.tr(),
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withAlpha(230),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -161,7 +182,7 @@ class _SplashScreenState extends State<SplashScreen>
                     height: 40,
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withOpacity(0.8),
+                        Colors.white.withAlpha(204),
                       ),
                       strokeWidth: 3,
                     ),

@@ -5,6 +5,9 @@ import 'package:supa/components/glass_container.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/auth/register_screen.dart';
 import 'package:supa/screens/home/home_screen.dart';
+import 'package:supa/screens/user/profile_setup_screen.dart';
+import 'package:supa/screens/user/initial_vehicle_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthCubit, AuthState>(
+    return BlocConsumer<AuthCubit, AuthCubitState>(
       listener: (context, state) {
         if (state is AuthError) {
           ScaffoldMessenger.of(
@@ -32,17 +35,32 @@ class _LoginScreenState extends State<LoginScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
-              (context) => false,
+              (route) => false,
+            );
+          } else if (state.needsProfileSetup) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfileSetupScreen(),
+              ),
+              (route) => false,
+            );
+          } else if (state.needsVehicleSetup) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const InitialVehicleScreen(),
+              ),
+              (route) => false,
             );
           } else {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const HomeScreen()),
-              (context) => false,
+              (route) => false,
             );
           }
         }
-        // AuthUnauthenticated will just show the login UI (default state behavior)
       },
       builder: (context, state) {
         return Scaffold(
@@ -88,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'Welcome back! Please login to continue.',
+                              'welcomeBack'.tr(),
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(color: Colors.white70),
@@ -98,9 +116,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: email,
                               style: const TextStyle(color: Colors.white),
                               keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email_outlined),
+                              decoration: InputDecoration(
+                                labelText: 'emailLabel'.tr(),
+                                prefixIcon: const Icon(Icons.email_outlined),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -118,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               obscureText: !_isPasswordVisible,
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText: 'passwordLabel'.tr(),
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 suffixIcon: IconButton(
                                   icon: Icon(
@@ -160,15 +178,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                         );
                                       }
                                     },
-                                    child: const Text('Login'),
+                                    child: Text('login'.tr()),
                                   ),
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text(
-                                  "Don't have an account?",
-                                  style: TextStyle(color: Colors.white70),
+                                Text(
+                                  'dontHaveAccount'.tr(),
+                                  style: const TextStyle(color: Colors.white70),
                                 ),
                                 TextButton(
                                   onPressed: () {
@@ -180,15 +198,52 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     );
                                   },
-                                  child: const Text(
-                                    'Register',
-                                    style: TextStyle(
+                                  child: Text(
+                                    'register'.tr(),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 20),
+                            const Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.white38)),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    'OR',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: Colors.white38)),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                context.read<AuthCubit>().signInWithGoogle();
+                              },
+                              icon: Image.asset(
+                                'assets/icon/google.png',
+                                height: 24,
+                              ),
+                              label: const Text(
+                                'Sign in with Google',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white38),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ],
                         ),

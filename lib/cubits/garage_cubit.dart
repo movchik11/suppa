@@ -4,6 +4,8 @@ import 'package:supa/models/expense_model.dart';
 import 'package:supa/models/document_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supa/services/cache_service.dart';
+import 'package:supa/services/notification_service.dart';
 
 // States
 abstract class GarageState {}
@@ -38,11 +40,20 @@ class GarageCubit extends Cubit<GarageState> {
 
   // Fetch user's vehicles
   Future<void> fetchVehicles() async {
-    emit(GarageLoading());
+    // 1. Load from cache first
+    final cachedVehicles = CacheService.getCachedData<Vehicle>(
+      CacheService.vehiclesBox,
+    );
+    if (cachedVehicles.isNotEmpty) {
+      emit(VehiclesLoaded(cachedVehicles));
+    } else {
+      emit(GarageLoading());
+    }
+
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) {
-        emit(GarageError('User not logged in'));
+        if (cachedVehicles.isEmpty) emit(GarageError('User not logged in'));
         return;
       }
 
@@ -55,6 +66,22 @@ class GarageCubit extends Cubit<GarageState> {
       final List<Vehicle> vehicles = (data as List)
           .map((item) => Vehicle.fromMap(item))
           .toList();
+
+      // Check for upcoming insurance expiry
+      for (var vehicle in vehicles) {
+        if (vehicle.insuranceExpiry != null) {
+          final now = DateTime.now();
+          final daysToExpiry = vehicle.insuranceExpiry!.difference(now).inDays;
+          if (daysToExpiry >= 0 && daysToExpiry <= 30) {
+            NotificationService().showNotification(
+              id: vehicle.id.hashCode,
+              title: 'Insurance Reminder',
+              body:
+                  '${vehicle.brand} ${vehicle.model} insurance expires in $daysToExpiry days!',
+            );
+          }
+        }
+      }
 
       final expenseData = await supabase
           .from('vehicle_expenses')
@@ -75,10 +102,26 @@ class GarageCubit extends Cubit<GarageState> {
           .map((item) => VehicleDocument.fromMap(item))
           .toList();
 
+      // 2. Update cache
+      await CacheService.cacheData<Vehicle>(CacheService.vehiclesBox, vehicles);
+
       emit(VehiclesLoaded(vehicles, expenses: expenses, documents: documents));
     } catch (e) {
-      emit(GarageError('Failed to load garage: ${e.toString()}'));
+      // 3. Fallback to cache if network fails
+      final cached = CacheService.getCachedData<Vehicle>(
+        CacheService.vehiclesBox,
+      );
+      if (cached.isEmpty) {
+        emit(GarageError('Failed to load garage: ${e.toString()}'));
+      } else {
+        // If we have cache, keep showing it but maybe show a snackbar (outside cubit)
+        emit(VehiclesLoaded(cached));
+      }
     }
+  }
+
+  void clear() {
+    emit(GarageInitial());
   }
 
   // Add new vehicle with optional image
@@ -183,7 +226,6 @@ class GarageCubit extends Cubit<GarageState> {
     }
   }
 
-  // Delete vehicle
   // Delete vehicle
   Future<void> deleteVehicle(String vehicleId) async {
     try {

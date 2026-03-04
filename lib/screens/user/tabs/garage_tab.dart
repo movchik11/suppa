@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/garage_cubit.dart';
 import 'package:supa/models/vehicle_model.dart';
 import 'package:supa/models/document_model.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supa/components/app_loading_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
-
+import 'package:supa/utils/input_formatters.dart';
+import 'package:lottie/lottie.dart';
+import 'package:supa/components/ui/bouncy_button.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supa/screens/user/vehicle_service_history_screen.dart';
+import 'package:supa/utils/haptics.dart';
+import 'package:supa/components/ui/skeleton_wrapper.dart';
 
 class GarageTab extends StatelessWidget {
   final VoidCallback? onNavigateToServices;
@@ -21,7 +24,7 @@ class GarageTab extends StatelessWidget {
     return BlocConsumer<GarageCubit, GarageState>(
       listener: (context, state) {
         if (state is VehicleActionSuccess) {
-          HapticFeedback.mediumImpact();
+          AppHaptics.success();
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('garageUpdated'.tr())));
@@ -33,9 +36,15 @@ class GarageTab extends StatelessWidget {
       },
       builder: (context, state) {
         return Scaffold(
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showVehicleDialog(context),
-            child: const Icon(Icons.add),
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 80.0),
+            child: FloatingActionButton(
+              onPressed: () {
+                AppHaptics.medium();
+                _showVehicleDialog(context);
+              },
+              child: const Icon(Icons.add),
+            ),
           ),
           body: _buildBody(context, state),
         );
@@ -44,63 +53,90 @@ class GarageTab extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, GarageState state) {
-    if (state is GarageLoading) {
-      return const AppLoadingIndicator();
-    } else if (state is VehiclesLoaded) {
-      if (state.vehicles.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.directions_car_outlined,
-                size: 80,
-                color: Colors.grey,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'noVehicles'.tr(),
-                style: TextStyle(
-                  color: Theme.of(context).hintColor,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => _showVehicleDialog(context),
-                icon: const Icon(Icons.add),
-                label: Text('addVehicle'.tr()),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }
+    final isLoading = state is GarageLoading;
+    final vehicles = state is VehiclesLoaded ? state.vehicles : <Vehicle>[];
+    final expenses = state is VehiclesLoaded ? state.expenses : [];
 
-      return RefreshIndicator(
-        onRefresh: () => context.read<GarageCubit>().fetchVehicles(),
+    if (state is VehiclesLoaded && vehicles.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.asset(
+              'assets/animations/car_repair.json',
+              height: 150,
+              repeat: true,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.car_repair, size: 100, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'noVehicles'.tr(),
+              style: TextStyle(
+                color: Theme.of(context).hintColor,
+                fontSize: 16,
+              ),
+            ),
+            // ...
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                AppHaptics.medium();
+                _showVehicleDialog(context);
+              },
+              icon: const Icon(Icons.add),
+              label: Text('addVehicle'.tr()),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        AppHaptics.light();
+        await context.read<GarageCubit>().fetchVehicles();
+      },
+      child: SkeletonWrapper(
+        isLoading: isLoading,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             _buildSectionHeader(context, 'yourVehicles'.tr()),
             const SizedBox(height: 12),
-            ...state.vehicles.map((v) => _VehicleCard(vehicle: v)),
-
+            if (isLoading)
+              ...List.generate(
+                3,
+                (index) => _VehicleCard(
+                  vehicle: Vehicle(
+                    id: 'loading',
+                    userId: 'loading',
+                    brand: 'Loading',
+                    model: 'Car Model',
+                    year: 2024,
+                    licensePlate: 'XX-0000-XX',
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  ),
+                ),
+              )
+            else
+              ...vehicles.map((v) => _VehicleCard(vehicle: v)),
             const SizedBox(height: 24),
             _buildSectionHeader(context, 'recentExpenses'.tr()),
             const SizedBox(height: 12),
-            _buildExpenseLedger(context, state.expenses, state.vehicles),
-            const SizedBox(height: 80), // Space for FAB
+            _buildExpenseLedger(context, expenses, vehicles),
+            const SizedBox(height: 100), // Space for FAB and Glass Nav Bar
           ],
         ),
-      );
-    }
-    return const SizedBox.shrink();
+      ),
+    );
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
@@ -136,10 +172,14 @@ class GarageTab extends StatelessWidget {
     return Card(
       child: Column(
         children: expenses.take(5).map((e) {
-          final vehicle = vehicles.firstWhere(
-            (v) => v.id == e.vehicleId,
-            orElse: () => vehicles.first,
-          );
+          final vehicle = vehicles.isEmpty
+              ? null
+              : vehicles.firstWhere(
+                  (v) => v.id == e.vehicleId,
+                  orElse: () => vehicles.first,
+                );
+
+          if (vehicle == null) return const SizedBox.shrink();
           return ListTile(
             leading: const CircleAvatar(
               backgroundColor: Colors.white12,
@@ -356,6 +396,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _plateController,
+              inputFormatters: [LicensePlateFormatter()],
               decoration: InputDecoration(
                 labelText: '${'licensePlate'.tr()} (XX-XXXX-XX)',
                 hintText: 'e.g. AG-1234-LB',
@@ -364,9 +405,6 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                 if (value == null || value.isEmpty) return 'Plate is required';
                 final reg = RegExp(r'^[A-Z]{2}-\d{4}-[A-Z]{2}$');
                 if (!reg.hasMatch(value)) return 'Format: XX-XXXX-XX';
-                final suffix = value.substring(value.length - 2);
-                final allowed = ['AG', 'LB', 'MR', 'DZ', 'AH', 'AK'];
-                if (!allowed.contains(suffix)) return 'Invalid regional code';
                 return null;
               },
             ),
@@ -433,21 +471,21 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(15),
-        onTap: () {
-          // Open edit dialog
-          showDialog(
-            context: context,
-            builder: (dialogContext) => BlocProvider.value(
-              value: context.read<GarageCubit>(),
-              child: _VehicleFormDialog(initialVehicle: vehicle),
-            ),
-          );
-        },
+    return BouncyButton(
+      onPressed: () {
+        AppHaptics.medium();
+        // Open edit dialog
+        showDialog(
+          context: context,
+          builder: (dialogContext) => BlocProvider.value(
+            value: context.read<GarageCubit>(),
+            child: _VehicleFormDialog(initialVehicle: vehicle),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -523,11 +561,31 @@ class _VehicleCard extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(
+                      Icons.history,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      AppHaptics.medium();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              VehicleServiceHistoryScreen(vehicle: vehicle),
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
                       Icons.add_chart,
                       color: Colors.blue,
                       size: 20,
                     ),
-                    onPressed: () => _showExpenseDialog(context, vehicle.id),
+                    onPressed: () {
+                      AppHaptics.light();
+                      _showExpenseDialog(context, vehicle.id);
+                    },
                   ),
                   IconButton(
                     icon: const Icon(
@@ -535,11 +593,15 @@ class _VehicleCard extends StatelessWidget {
                       color: Colors.green,
                       size: 20,
                     ),
-                    onPressed: () => _showDocumentDialog(context, vehicle.id),
+                    onPressed: () {
+                      AppHaptics.light();
+                      _showDocumentDialog(context, vehicle.id);
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                     onPressed: () {
+                      AppHaptics.medium();
                       showDialog(
                         context: context,
                         builder: (dialogContext) => AlertDialog(
