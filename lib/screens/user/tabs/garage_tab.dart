@@ -726,8 +726,11 @@ class _VehicleCard extends StatelessWidget {
                     _buildDocumentVault(
                       context,
                       vehicle.id,
-                      (context.read<GarageCubit>().state as VehiclesLoaded)
-                          .documents,
+                      (context.read<GarageCubit>().state is VehiclesLoaded)
+                          ? (context.read<GarageCubit>().state
+                                    as VehiclesLoaded)
+                                .documents
+                          : [],
                     ),
                   ],
                 ),
