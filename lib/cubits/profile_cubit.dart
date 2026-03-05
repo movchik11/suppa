@@ -3,6 +3,9 @@ import 'package:supa/models/profile_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/services/cache_service.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 // States
 abstract class ProfileState {}
@@ -28,6 +31,19 @@ class ProfileCubit extends Cubit<ProfileState> {
   final SupabaseClient supabase;
 
   ProfileCubit() : supabase = Supabase.instance.client, super(ProfileInitial());
+
+  Future<Uint8List> _compressImage(XFile file) async {
+    final bytes = await file.readAsBytes();
+    if (bytes.length < 200 * 1024) return bytes; // Avatars can be smaller
+
+    final result = await FlutterImageCompress.compressWithList(
+      bytes,
+      minHeight: 512,
+      minWidth: 512,
+      quality: 80,
+    );
+    return result;
+  }
 
   Future<void> fetchProfile() async {
     // 1. Load from cache first
@@ -84,7 +100,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       if (avatar != null) {
         final fileName =
             'avatar_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final bytes = await avatar.readAsBytes();
+        final bytes = await _compressImage(avatar);
         await supabase.storage.from('avatars').uploadBinary(fileName, bytes);
         avatarUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
       }

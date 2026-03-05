@@ -19,6 +19,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/components/ui/connectivity_barrier.dart';
 import 'package:supa/services/cache_service.dart';
 import 'package:supa/services/notification_service.dart';
+import 'package:supa/services/monitoring_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -30,6 +31,7 @@ void main() async {
     dotenv.load(fileName: ".env"),
     CacheService.init(),
     SharedPreferences.getInstance(),
+    MonitoringService.init(),
   ]);
 
   await Supabase.initialize(

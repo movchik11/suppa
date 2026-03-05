@@ -1,10 +1,22 @@
+import 'package:hive/hive.dart';
+
+part 'review_model.g.dart';
+
+@HiveType(typeId: 7)
 class Review {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String orderId;
+  @HiveField(2)
   final String userId;
+  @HiveField(3)
   final String? serviceId;
+  @HiveField(4)
   final double rating;
+  @HiveField(5)
   final String comment;
+  @HiveField(6)
   final DateTime createdAt;
 
   Review({

@@ -1,8 +1,18 @@
+import 'package:hive/hive.dart';
+
+part 'document_model.g.dart';
+
+@HiveType(typeId: 6)
 class VehicleDocument {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String vehicleId;
+  @HiveField(2)
   final String type;
+  @HiveField(3)
   final String? imageUrl;
+  @HiveField(4)
   final DateTime? expiryDate;
 
   VehicleDocument({

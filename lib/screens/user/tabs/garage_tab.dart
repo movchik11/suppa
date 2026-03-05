@@ -17,6 +17,8 @@ import 'package:supa/components/ui/skeleton_wrapper.dart';
 import 'package:supa/services/brand_model_service.dart';
 import 'package:supa/screens/user/ai_assistant_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:supa/components/glass_container.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class GarageTab extends StatelessWidget {
   final VoidCallback? onNavigateToServices;
@@ -140,6 +142,7 @@ class GarageTab extends StatelessWidget {
         child: SkeletonWrapper(
           isLoading: isLoading,
           child: ListView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
               _buildSectionHeader(context, 'yourVehicles'.tr()),
@@ -646,6 +649,7 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BouncyButton(
       onPressed: () {
         AppHaptics.medium();
@@ -658,160 +662,210 @@ class _VehicleCard extends StatelessWidget {
           ),
         );
       },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.blue.withAlpha(51),
-                  borderRadius: BorderRadius.circular(12),
-                  image: vehicle.imageUrl != null
-                      ? DecorationImage(
-                          image: CachedNetworkImageProvider(vehicle.imageUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: vehicle.imageUrl == null
-                    ? const Icon(
-                        Icons.directions_car,
-                        color: Colors.blue,
-                        size: 40,
-                      )
-                    : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(isDark ? 80 : 30),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+            if (!isDark)
+              BoxShadow(
+                color: Colors.white.withAlpha(255),
+                blurRadius: 1,
+                offset: const Offset(-2, -2),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${vehicle.brand} ${vehicle.model}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+          ],
+        ),
+        child: GlassContainer(
+          borderRadius: BorderRadius.circular(24),
+          blur: 20,
+          opacity: isDark ? 0.08 : 0.6,
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: Row(
+              children: [
+                Hero(
+                  tag: 'vehicle_image_${vehicle.id}',
+                  child: Container(
+                    width: 75,
+                    height: 75,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withAlpha(40),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withAlpha(isDark ? 20 : 100),
+                        width: 1,
                       ),
+                      image: vehicle.imageUrl != null
+                          ? DecorationImage(
+                              image: CachedNetworkImageProvider(
+                                vehicle.imageUrl!,
+                              ),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(30),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    if (vehicle.nextServiceMileage != null)
-                      _buildReminderBadge(
-                        Icons.settings_suggest,
-                        'serviceAt'.tr(
-                          args: [vehicle.nextServiceMileage.toString()],
-                        ),
-                        Colors.orange,
-                      ),
-                    if (vehicle.insuranceExpiry != null)
-                      _buildReminderBadge(
-                        Icons.security,
-                        '${'insAbbrev'.tr()}: ${DateFormat('MMM yyyy').format(vehicle.insuranceExpiry!)}',
-                        Colors.blue,
-                      ),
-                    if (vehicle.nextServiceMileage == null &&
-                        vehicle.insuranceExpiry == null)
+                    child: vehicle.imageUrl == null
+                        ? Icon(
+                            Icons.directions_car,
+                            color: Colors.blue.shade300,
+                            size: 40,
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        '${'plate'.tr()}: ${vehicle.licensePlate ?? 'na'.tr()}',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
+                        '${vehicle.brand} ${vehicle.model}',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                    const SizedBox(height: 12),
-                    _buildDocumentVault(
-                      context,
-                      vehicle.id,
-                      (context.read<GarageCubit>().state is VehiclesLoaded)
-                          ? (context.read<GarageCubit>().state
-                                    as VehiclesLoaded)
-                                .documents
-                          : [],
+                      const SizedBox(height: 6),
+                      if (vehicle.nextServiceMileage != null)
+                        _buildReminderBadge(
+                          Icons.settings_suggest,
+                          'serviceAt'.tr(
+                            args: [vehicle.nextServiceMileage.toString()],
+                          ),
+                          Colors.orange.shade400,
+                        ),
+                      if (vehicle.insuranceExpiry != null)
+                        _buildReminderBadge(
+                          Icons.security,
+                          '${'insAbbrev'.tr()}: ${DateFormat('MMM yyyy').format(vehicle.insuranceExpiry!)}',
+                          Colors.blue.shade400,
+                        ),
+                      if (vehicle.nextServiceMileage == null &&
+                          vehicle.insuranceExpiry == null)
+                        Text(
+                          '${'plate'.tr()}: ${vehicle.licensePlate ?? 'na'.tr()}',
+                          style: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black45,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      _buildDocumentVault(
+                        context,
+                        vehicle.id,
+                        (context.read<GarageCubit>().state is VehiclesLoaded)
+                            ? (context.read<GarageCubit>().state
+                                      as VehiclesLoaded)
+                                  .documents
+                            : [],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  children: [
+                    _buildQuickAction(
+                      icon: Icons.history_rounded,
+                      color: Colors.orange,
+                      onTap: () {
+                        AppHaptics.medium();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                VehicleServiceHistoryScreen(vehicle: vehicle),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildQuickAction(
+                      icon: Icons.add_chart_rounded,
+                      color: Colors.blue,
+                      onTap: () {
+                        AppHaptics.light();
+                        _showExpenseDialog(context, vehicle.id);
+                      },
+                    ),
+                    _buildQuickAction(
+                      icon: Icons.file_copy_rounded,
+                      color: Colors.green,
+                      onTap: () {
+                        AppHaptics.light();
+                        _showDocumentDialog(context, vehicle.id);
+                      },
+                    ),
+                    _buildQuickAction(
+                      icon: Icons.delete_outline_rounded,
+                      color: Colors.red,
+                      onTap: () {
+                        AppHaptics.medium();
+                        _showDeleteConfirmation(context, vehicle);
+                      },
                     ),
                   ],
                 ),
-              ),
-              Column(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.history,
-                      color: Colors.orange,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      AppHaptics.medium();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              VehicleServiceHistoryScreen(vehicle: vehicle),
-                        ),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.add_chart,
-                      color: Colors.blue,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      AppHaptics.light();
-                      _showExpenseDialog(context, vehicle.id);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.file_copy,
-                      color: Colors.green,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      AppHaptics.light();
-                      _showDocumentDialog(context, vehicle.id);
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                    onPressed: () {
-                      AppHaptics.medium();
-                      showDialog(
-                        context: context,
-                        builder: (dialogContext) => AlertDialog(
-                          title: Text('deleteTitle'.tr()),
-                          content: Text('confirmDelete'.tr()),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dialogContext),
-                              child: Text('cancel'.tr()),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                context.read<GarageCubit>().deleteVehicle(
-                                  vehicle.id,
-                                );
-                                Navigator.pop(dialogContext);
-                              },
-                              child: Text(
-                                'delete'.tr(),
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1, end: 0);
+  }
+
+  Widget _buildQuickAction({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return IconButton(
+      icon: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      onPressed: onTap,
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, Vehicle vehicle) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('deleteTitle'.tr()),
+        content: Text('confirmDelete'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<GarageCubit>().deleteVehicle(vehicle.id);
+              Navigator.pop(dialogContext);
+            },
+            child: Text(
+              'delete'.tr(),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
       ),
     );
   }

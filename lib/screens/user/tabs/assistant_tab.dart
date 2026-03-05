@@ -111,7 +111,7 @@ class _AssistantTabState extends State<AssistantTab> {
         children: [
           Expanded(
             child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: _messages.length,
               itemBuilder: (context, index) {

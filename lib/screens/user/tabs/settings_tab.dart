@@ -33,9 +33,15 @@ class SettingsTab extends StatelessWidget {
         }
 
         if (state is ProfileLoaded || state is ProfileActionSuccess) {
-          final profile = (state is ProfileLoaded)
-              ? state.profile
-              : (context.read<ProfileCubit>().state as ProfileLoaded).profile;
+          // If state is Success, we tries to get the last loaded profile from state if it was there,
+          // but usually we should wait for the next Loaded state.
+          // To prevent crash, we use a fallback or check properly.
+          if (state is! ProfileLoaded) {
+            // If it's Success but not Loaded, we might be in a transition.
+            // Returning loading or empty to avoid crash.
+            return const AppLoadingIndicator();
+          }
+          final profile = state.profile;
 
           return Scaffold(
             appBar: AppBar(

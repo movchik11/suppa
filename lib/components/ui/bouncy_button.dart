@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class BouncyButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onPressed;
   final double scaleFactor;
   final Duration duration;
+  final bool useHaptics;
 
   const BouncyButton({
     super.key,
@@ -12,6 +14,7 @@ class BouncyButton extends StatefulWidget {
     required this.onPressed,
     this.scaleFactor = 0.95,
     this.duration = const Duration(milliseconds: 100),
+    this.useHaptics = true,
   });
 
   @override
@@ -22,6 +25,7 @@ class _BouncyButtonState extends State<BouncyButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -40,6 +44,7 @@ class _BouncyButtonState extends State<BouncyButton>
   }
 
   void _onTapDown(TapDownDetails details) {
+    if (widget.useHaptics) HapticFeedback.lightImpact();
     if (mounted) _controller.forward();
   }
 
@@ -54,12 +59,21 @@ class _BouncyButtonState extends State<BouncyButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.02 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
+        ),
+      ),
     );
   }
 }

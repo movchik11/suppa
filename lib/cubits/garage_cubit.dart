@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supa/services/cache_service.dart';
 import 'package:supa/services/notification_service.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 // States
 abstract class GarageState {}
@@ -37,6 +40,20 @@ class GarageCubit extends Cubit<GarageState> {
   final SupabaseClient supabase;
 
   GarageCubit() : supabase = Supabase.instance.client, super(GarageInitial());
+
+  Future<Uint8List> _compressImage(XFile file) async {
+    final bytes = await file.readAsBytes();
+    if (bytes.length < 500 * 1024)
+      return bytes; // Don't compress if small enough
+
+    final result = await FlutterImageCompress.compressWithList(
+      bytes,
+      minHeight: 1080,
+      minWidth: 1920,
+      quality: 85,
+    );
+    return result;
+  }
 
   // Fetch user's vehicles
   Future<void> fetchVehicles() async {
@@ -145,7 +162,7 @@ class GarageCubit extends Cubit<GarageState> {
       if (image != null) {
         final fileName =
             '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-        final bytes = await image.readAsBytes();
+        final bytes = await _compressImage(image);
         await supabase.storage
             .from('vehicle-images')
             .uploadBinary(fileName, bytes);
@@ -192,7 +209,7 @@ class GarageCubit extends Cubit<GarageState> {
       if (newImage != null) {
         final fileName =
             '${DateTime.now().millisecondsSinceEpoch}_${newImage.name}';
-        final bytes = await newImage.readAsBytes();
+        final bytes = await _compressImage(newImage);
         await supabase.storage
             .from('vehicle-images')
             .uploadBinary(fileName, bytes);
@@ -274,7 +291,7 @@ class GarageCubit extends Cubit<GarageState> {
 
       final fileName =
           'doc_${vehicleId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final bytes = await image.readAsBytes();
+      final bytes = await _compressImage(image);
       await supabase.storage
           .from('vehicle-documents')
           .uploadBinary(fileName, bytes);

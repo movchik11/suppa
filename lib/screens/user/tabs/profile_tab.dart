@@ -31,9 +31,10 @@ class ProfileTab extends StatelessWidget {
         }
 
         if (state is ProfileLoaded || state is ProfileActionSuccess) {
-          final profile = (state is ProfileLoaded)
-              ? state.profile
-              : (context.read<ProfileCubit>().state as ProfileLoaded).profile;
+          if (state is! ProfileLoaded) {
+            return const AppLoadingIndicator();
+          }
+          final profile = state.profile;
           return RefreshIndicator(
             onRefresh: () => context.read<ProfileCubit>().fetchProfile(),
             child: SingleChildScrollView(

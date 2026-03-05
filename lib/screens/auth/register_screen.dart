@@ -6,6 +6,7 @@ import 'package:supa/screens/user/profile_setup_screen.dart';
 import 'package:supa/screens/user/initial_vehicle_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/components/glass_container.dart';
+import 'package:supa/utils/animation_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -32,23 +33,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (state.needsProfileSetup) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileSetupScreen(),
+              AnimationUtils.createSharedAxisRoute(
+                page: const ProfileSetupScreen(),
               ),
               (route) => false,
             );
           } else if (state.needsVehicleSetup) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => const InitialVehicleScreen(),
+              AnimationUtils.createSharedAxisRoute(
+                page: const InitialVehicleScreen(),
               ),
               (route) => false,
             );
           } else {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              AnimationUtils.createSharedAxisRoute(page: const HomeScreen()),
               (route) => false,
             );
           }

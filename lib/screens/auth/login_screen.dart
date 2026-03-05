@@ -8,6 +8,7 @@ import 'package:supa/screens/home/home_screen.dart';
 import 'package:supa/screens/user/profile_setup_screen.dart';
 import 'package:supa/screens/user/initial_vehicle_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supa/utils/animation_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,53 @@ class _LoginScreenState extends State<LoginScreen> {
   final password = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _canCheckBiometrics = false;
+  bool _biometricsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final authCubit = context.read<AuthCubit>();
+    final available = await authCubit.isBiometricAvailable();
+    final enabled = await authCubit.isBiometricEnabled();
+    if (mounted) {
+      setState(() {
+        _canCheckBiometrics = available;
+        _biometricsEnabled = enabled;
+      });
+      // Auto-trigger if enabled
+      if (enabled) {
+        authCubit.loginWithBiometrics();
+      }
+    }
+  }
+
+  void _showEnableBiometricDialog(String email, String pass) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('enableBiometricsTitle'.tr()),
+        content: Text('enableBiometricsDesc'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('notNow'.tr()),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              this.context.read<AuthCubit>().enableBiometrics(email, pass);
+              Navigator.pop(context);
+            },
+            child: Text('enable'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,32 +79,39 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
         } else if (state is AuthAuthenticated) {
+          // Check if we should prompt to enable biometrics
+          if (_canCheckBiometrics && !_biometricsEnabled) {
+            _showEnableBiometricDialog(email.text, password.text);
+          }
+
           if (state.role == 'admin') {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
+              AnimationUtils.createSharedAxisRoute(
+                page: const AdminHomeScreen(),
+              ),
               (route) => false,
             );
           } else if (state.needsProfileSetup) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileSetupScreen(),
+              AnimationUtils.createSharedAxisRoute(
+                page: const ProfileSetupScreen(),
               ),
               (route) => false,
             );
           } else if (state.needsVehicleSetup) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => const InitialVehicleScreen(),
+              AnimationUtils.createSharedAxisRoute(
+                page: const InitialVehicleScreen(),
               ),
               (route) => false,
             );
           } else {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
+              AnimationUtils.createSharedAxisRoute(page: const HomeScreen()),
               (route) => false,
             );
           }
@@ -180,6 +235,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                     },
                                     child: Text('login'.tr()),
                                   ),
+                            if (_canCheckBiometrics && _biometricsEnabled) ...[
+                              const SizedBox(height: 16),
+                              Center(
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.fingerprint,
+                                    color: Colors.white,
+                                    size: 40,
+                                  ),
+                                  onPressed: () => context
+                                      .read<AuthCubit>()
+                                      .loginWithBiometrics(),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -192,9 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const RegisterScreen(),
+                                      AnimationUtils.createSharedAxisRoute(
+                                        page: const RegisterScreen(),
                                       ),
                                     );
                                   },

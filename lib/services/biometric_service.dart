@@ -4,45 +4,35 @@ import 'package:local_auth_darwin/local_auth_darwin.dart';
 import 'package:flutter/services.dart';
 
 class BiometricService {
-  final LocalAuthentication _auth = LocalAuthentication();
+  final LocalAuthentication auth = LocalAuthentication();
 
-  Future<bool> isAvailable() async {
-    try {
-      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-      final bool canAuthenticate =
-          canAuthenticateWithBiometrics || await _auth.isDeviceSupported();
-      return canAuthenticate;
-    } catch (e) {
-      return false;
-    }
+  Future<bool> isBiometricAvailable() async {
+    final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
+    final bool canAuthenticate =
+        canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+    return canAuthenticate;
   }
 
-  Future<List<BiometricType>> getAvailableBiometrics() async {
+  Future<bool> authenticate() async {
     try {
-      return await _auth.getAvailableBiometrics();
-    } catch (e) {
-      return <BiometricType>[];
-    }
-  }
-
-  Future<bool> authenticate({required String localizedReason}) async {
-    try {
-      return await _auth.authenticate(
-        localizedReason: localizedReason,
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Please authenticate to log in',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
         authMessages: const <AuthMessages>[
           AndroidAuthMessages(
-            signInTitle: 'Biometric Authentication',
+            signInTitle: 'Biometric login',
+            biometricHint: 'Use fingerprint or face',
             cancelButton: 'No thanks',
           ),
           IOSAuthMessages(cancelButton: 'No thanks'),
         ],
       );
+      return didAuthenticate;
     } on PlatformException catch (e) {
-      if (e.code == 'NotAvailable') {
-        // Add specific handling if needed
-      }
-      return false;
-    } catch (e) {
+      print('DEBUG: Biometric Error: $e');
       return false;
     }
   }

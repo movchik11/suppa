@@ -41,6 +41,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Authentication is required to log in safely.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Permission to use speech recognition for AI Assistant voice input.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Permission to use microphone for AI Assistant voice input.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
