@@ -238,7 +238,11 @@
     "alreadyHaveAccount": "Already have an account?",
     "loginToContinue": "Login to continue",
     "createAccount": "Create Account",
-    "welcomeBack": "Welcome Back!",
+    "aiAssistant": "AI Mechanic Assistant",
+    "howCanIHelp": "How can I help you today?",
+    "aiDiagnosticHint": "Describe your car problem, and our AI will help diagnose it.",
+    "askAiHint": "Type your message...",
+    "welcomeBack": "Welcome back!",
     "tagline": "Your Premium Auto Care Partner",
     "loading": "Loading...",
     "error": "Error",
@@ -284,7 +288,7 @@
     "termsOfService": "Terms of Service",
     "legal": "Legal & Privacy",
     "supportContent": "If you have any questions or issues, please contact our support team. We are available 24/7 to assist you with your vehicle maintenance needs.",
-    "privacyPolicyContent": "Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your personal information. We use your data to provide and improve our services, including appointment booking and vehicle management.",
-    "termsOfServiceContent": "By using the AutoService app, you agree to these Terms of Service. Our services include maintenance scheduling, diagnostics assistance, and vehicle tracking.",
+    "privacyPolicyContent": "Your privacy is a priority for us. This Privacy Policy outlines how we handle your data:\n\n1. Data Collection: We collect your name, phone number, and vehicle information to provide our services.\n2. Usage: This data is used solely for service appointments, maintenance reminders, and support communication.\n3. Security: Your data is stored on secure Supabase servers using industry-standard encryption.\n4. Your Rights: You have the right to access or delete your data at any time via your profile settings or by contacting support.",
+    "termsOfServiceContent": "By using the AutoService app, you agree to the following terms:\n\n1. Service Description: We provide a platform for technical maintenance booking, diagnostics, and vehicle management.\n2. User Responsibilities: You agree to provide accurate information regarding yourself and your vehicles.\n3. Appointments: We reserve the right to reschedule appointments with prior notice to the user.\n4. Liability: AutoService is not responsible for the overall vehicle condition outside of the specific services performed.\n5. Changes: We may update these Terms of Service at any time.",
     "close": "Close"
 }

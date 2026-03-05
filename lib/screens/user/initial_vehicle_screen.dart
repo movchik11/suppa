@@ -59,11 +59,21 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF673AB7), Color(0xFF311B92), Color(0xFF0D47A1)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [
+                    const Color(0xFF673AB7),
+                    const Color(0xFF311B92),
+                    const Color(0xFF0D47A1),
+                  ]
+                : [
+                    const Color(0xFFE3F2FD),
+                    const Color(0xFFBBDEFB),
+                    const Color(0xFF90CAF9),
+                  ],
           ),
         ),
         child: SafeArea(
@@ -78,10 +88,12 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.directions_car,
                           size: 80,
-                          color: Colors.white,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.blue[800],
                         ),
                         const SizedBox(height: 20),
                         Text(
@@ -90,7 +102,11 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.blue[900],
                               ),
                         ),
                         const SizedBox(height: 10),
@@ -98,7 +114,13 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                           'addFirstVehicleSubtitle'.tr(),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: Colors.white70),
+                              ?.copyWith(
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white70
+                                    : Colors.black87,
+                              ),
                         ),
                         const SizedBox(height: 30),
 
@@ -108,9 +130,19 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                           child: Container(
                             height: 120,
                             decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(25),
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white.withAlpha(25)
+                                  : Colors.blue.withAlpha(25),
                               borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Colors.white38),
+                              border: Border.all(
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white38
+                                    : Colors.blue.withAlpha(50),
+                              ),
                             ),
                             child: _image != null
                                 ? ClipRRect(
@@ -148,18 +180,19 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
 
                         // Brand Dropdown
                         DropdownButtonFormField<String>(
-                          dropdownColor: const Color(0xFF1E1E2E),
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: 'brand'.tr(),
-                            prefixIcon: const Icon(
-                              Icons.branding_watermark_outlined,
-                            ),
-                          ),
                           items: BrandModelService.getBrands().map((brand) {
                             return DropdownMenuItem(
                               value: brand,
-                              child: Text(brand),
+                              child: Text(
+                                brand,
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -179,15 +212,6 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
 
                         // Model Dropdown
                         DropdownButtonFormField<String>(
-                          dropdownColor: const Color(0xFF1E1E2E),
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: 'model'.tr(),
-                            prefixIcon: const Icon(
-                              Icons.model_training_outlined,
-                            ),
-                          ),
-                          initialValue: _selectedModel,
                           items: _selectedBrand == null
                               ? []
                               : BrandModelService.getModels(
@@ -195,7 +219,16 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                                 ).map((model) {
                                   return DropdownMenuItem(
                                     value: model,
-                                    child: Text(model),
+                                    child: Text(
+                                      model,
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    ),
                                   );
                                 }).toList(),
                           onChanged: (val) =>
@@ -208,7 +241,13 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                           },
                           disabledHint: Text(
                             'selectBrandFirst'.tr(),
-                            style: const TextStyle(color: Colors.white38),
+                            style: TextStyle(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white38
+                                  : Colors.black38,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -218,8 +257,6 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                           children: [
                             Expanded(
                               child: DropdownButtonFormField<int>(
-                                dropdownColor: const Color(0xFF1E1E2E),
-                                style: const TextStyle(color: Colors.white),
                                 decoration: InputDecoration(
                                   labelText: 'year'.tr(),
                                 ),
@@ -227,7 +264,16 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                                     .map(
                                       (y) => DropdownMenuItem(
                                         value: y,
-                                        child: Text(y.toString()),
+                                        child: Text(
+                                          y.toString(),
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
                                       ),
                                     )
                                     .toList(),
@@ -240,8 +286,6 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                dropdownColor: const Color(0xFF1E1E2E),
-                                style: const TextStyle(color: Colors.white),
                                 decoration: InputDecoration(
                                   labelText: 'color'.tr(),
                                 ),
@@ -249,7 +293,16 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                                     .map(
                                       (c) => DropdownMenuItem(
                                         value: c,
-                                        child: Text(c.toLowerCase().tr()),
+                                        child: Text(
+                                          c.toLowerCase().tr(),
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
                                       ),
                                     )
                                     .toList(),
@@ -266,7 +319,6 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                         // License Plate
                         TextFormField(
                           controller: _plateController,
-                          style: const TextStyle(color: Colors.white),
                           inputFormatters: [LicensePlateFormatter()],
                           decoration: InputDecoration(
                             labelText: 'licensePlate'.tr(),

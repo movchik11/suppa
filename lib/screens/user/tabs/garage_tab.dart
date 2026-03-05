@@ -14,6 +14,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/screens/user/vehicle_service_history_screen.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
+import 'package:supa/services/brand_model_service.dart';
+import 'package:supa/screens/user/ai_assistant_screen.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class GarageTab extends StatelessWidget {
   final VoidCallback? onNavigateToServices;
@@ -53,90 +56,149 @@ class GarageTab extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, GarageState state) {
-    final isLoading = state is GarageLoading;
-    final vehicles = state is VehiclesLoaded ? state.vehicles : <Vehicle>[];
-    final expenses = state is VehiclesLoaded ? state.expenses : [];
+    try {
+      if (state is GarageError) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 60),
+              const SizedBox(height: 16),
+              Text(
+                'errorLoadingData'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  state.message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).hintColor),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.read<GarageCubit>().fetchVehicles(),
+                child: Text('retry'.tr()),
+              ),
+            ],
+          ),
+        );
+      }
 
-    if (state is VehiclesLoaded && vehicles.isEmpty) {
+      final isLoading = state is GarageLoading;
+      final vehicles = state is VehiclesLoaded ? state.vehicles : <Vehicle>[];
+      final expenses = state is VehiclesLoaded ? state.expenses : [];
+
+      if (state is VehiclesLoaded && vehicles.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset(
+                'assets/animations/car_repair.json',
+                height: 150,
+                repeat: true,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.car_repair, size: 100, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'noVehicles'.tr(),
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontSize: 16,
+                ),
+              ),
+              // ...
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  AppHaptics.medium();
+                  _showVehicleDialog(context);
+                },
+                icon: const Icon(Icons.add),
+                label: Text('addVehicle'.tr()),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () async {
+          AppHaptics.light();
+          await context.read<GarageCubit>().fetchVehicles();
+        },
+        child: SkeletonWrapper(
+          isLoading: isLoading,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildSectionHeader(context, 'yourVehicles'.tr()),
+              const SizedBox(height: 12),
+              _buildAiAssistantCard(context),
+              const SizedBox(height: 16),
+              if (isLoading)
+                ...List.generate(
+                  3,
+                  (index) => _VehicleCard(
+                    vehicle: Vehicle(
+                      id: 'loading',
+                      userId: 'loading',
+                      brand: 'Loading',
+                      model: 'Car Model',
+                      year: 2024,
+                      licensePlate: 'XX-0000-XX',
+                      createdAt: DateTime.now(),
+                      updatedAt: DateTime.now(),
+                    ),
+                  ),
+                )
+              else
+                ...vehicles.map((v) => _VehicleCard(vehicle: v)),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, 'recentExpenses'.tr()),
+              const SizedBox(height: 12),
+              _buildExpenseLedger(context, expenses, vehicles),
+              const SizedBox(height: 100), // Space for FAB and Glass Nav Bar
+            ],
+          ),
+        ),
+      );
+    } catch (e, stack) {
+      debugPrint('Garage Rendering Error: $e\n$stack');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Lottie.asset(
-              'assets/animations/car_repair.json',
-              height: 150,
-              repeat: true,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.car_repair, size: 100, color: Colors.grey),
-            ),
+            const Icon(Icons.bug_report, size: 60, color: Colors.orange),
             const SizedBox(height: 16),
             Text(
-              'noVehicles'.tr(),
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
-                fontSize: 16,
-              ),
+              'unexpectedError'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            // ...
+            const SizedBox(height: 8),
+            Text(
+              'tryRestartingApp'.tr(),
+              style: TextStyle(color: Theme.of(context).hintColor),
+            ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                AppHaptics.medium();
-                _showVehicleDialog(context);
-              },
-              icon: const Icon(Icons.add),
-              label: Text('addVehicle'.tr()),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
+            ElevatedButton(
+              onPressed: () => context.read<GarageCubit>().fetchVehicles(),
+              child: Text('refresh'.tr()),
             ),
           ],
         ),
       );
     }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        AppHaptics.light();
-        await context.read<GarageCubit>().fetchVehicles();
-      },
-      child: SkeletonWrapper(
-        isLoading: isLoading,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildSectionHeader(context, 'yourVehicles'.tr()),
-            const SizedBox(height: 12),
-            if (isLoading)
-              ...List.generate(
-                3,
-                (index) => _VehicleCard(
-                  vehicle: Vehicle(
-                    id: 'loading',
-                    userId: 'loading',
-                    brand: 'Loading',
-                    model: 'Car Model',
-                    year: 2024,
-                    licensePlate: 'XX-0000-XX',
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                  ),
-                ),
-              )
-            else
-              ...vehicles.map((v) => _VehicleCard(vehicle: v)),
-            const SizedBox(height: 24),
-            _buildSectionHeader(context, 'recentExpenses'.tr()),
-            const SizedBox(height: 12),
-            _buildExpenseLedger(context, expenses, vehicles),
-            const SizedBox(height: 100), // Space for FAB and Glass Nav Bar
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
@@ -200,6 +262,67 @@ class GarageTab extends StatelessWidget {
     );
   }
 
+  Widget _buildAiAssistantCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AiAssistantScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade900],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withAlpha(80),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.auto_awesome, color: Colors.white, size: 32)
+                .animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 2.seconds),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'aiAssistant'.tr(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Text(
+                    'aiDiagnosticHint'.tr(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white70,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 600.ms).slideX(begin: 0.1, end: 0);
+  }
+
   void _showVehicleDialog(BuildContext context, {Vehicle? initialVehicle}) {
     showDialog(
       context: context,
@@ -220,31 +343,14 @@ class _VehicleFormDialog extends StatefulWidget {
 }
 
 class _VehicleFormDialogState extends State<_VehicleFormDialog> {
-  final _modelController = TextEditingController();
   final _plateController = TextEditingController();
   XFile? _image;
 
   String? _selectedBrand;
+  String? _selectedModel;
   String? _selectedColor;
   int? _selectedYear;
 
-  final List<String> _brands = [
-    'Opel',
-    'BMW',
-    'Mercedes',
-    'Toyota',
-    'Ford',
-    'Hyundai',
-    'Kia',
-    'Honda',
-    'Mazda',
-    'Nissan',
-    'Volkswagen',
-    'Audi',
-    'Lexus',
-    'Tesla',
-    'Other',
-  ];
   final List<String> _colors = [
     'White',
     'Black',
@@ -258,17 +364,29 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
     'Brown',
     'Beige',
   ];
-  final List<int> _years = List.generate(27, (index) => 2026 - index);
+  final List<int> _years = List.generate(
+    30,
+    (index) => DateTime.now().year - index,
+  );
 
   @override
   void initState() {
     super.initState();
     if (widget.initialVehicle != null) {
-      _selectedBrand = _brands.firstWhere(
+      final brands = BrandModelService.getBrands();
+      // Try to find exact match or case-insensitive match
+      _selectedBrand = brands.firstWhere(
         (b) => b.toLowerCase() == widget.initialVehicle!.brand.toLowerCase(),
-        orElse: () => 'Other',
+        orElse: () => brands.contains('Other') ? 'Other' : brands.first,
       );
-      _modelController.text = widget.initialVehicle!.model;
+
+      final models = BrandModelService.getModels(_selectedBrand!);
+      _selectedModel = models.firstWhere(
+        (m) => m.toLowerCase() == widget.initialVehicle!.model.toLowerCase(),
+        orElse: () =>
+            models.isNotEmpty ? models.first : widget.initialVehicle!.model,
+      );
+
       _selectedYear = widget.initialVehicle!.year;
       _plateController.text = widget.initialVehicle!.licensePlate ?? '';
       _selectedColor = _colors.firstWhere(
@@ -368,15 +486,58 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
                 labelText: 'brand'.tr(),
                 border: const OutlineInputBorder(),
               ),
-              items: _brands.map((brand) {
-                return DropdownMenuItem(value: brand, child: Text(brand));
+              items: BrandModelService.getBrands().map((brand) {
+                return DropdownMenuItem(
+                  value: brand,
+                  child: Text(
+                    brand,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
+                );
               }).toList(),
-              onChanged: (val) => setState(() => _selectedBrand = val),
+              onChanged: (val) {
+                setState(() {
+                  _selectedBrand = val;
+                  _selectedModel = null;
+                });
+              },
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _modelController,
-              decoration: InputDecoration(labelText: 'model'.tr()),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedModel,
+              decoration: InputDecoration(
+                labelText: 'model'.tr(),
+                border: const OutlineInputBorder(),
+              ),
+              items: _selectedBrand == null
+                  ? []
+                  : BrandModelService.getModels(_selectedBrand!).map((model) {
+                      return DropdownMenuItem(
+                        value: model,
+                        child: Text(
+                          model,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+              onChanged: (val) => setState(() => _selectedModel = val),
+              disabledHint: Text(
+                'selectBrandFirst'.tr(),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white38
+                      : Colors.black38,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
@@ -388,7 +549,14 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
               items: _years.map((year) {
                 return DropdownMenuItem(
                   value: year,
-                  child: Text(year.toString()),
+                  child: Text(
+                    year.toString(),
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
                 );
               }).toList(),
               onChanged: (val) => setState(() => _selectedYear = val),
@@ -418,7 +586,14 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
               items: _colors.map((c) {
                 return DropdownMenuItem(
                   value: c,
-                  child: Text(c.toLowerCase().tr()),
+                  child: Text(
+                    c.toLowerCase().tr(),
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
                 );
               }).toList(),
               onChanged: (val) => setState(() => _selectedColor = val),
@@ -433,12 +608,12 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (_selectedBrand != null && _modelController.text.isNotEmpty) {
+            if (_selectedBrand != null && _selectedModel != null) {
               if (isEditing) {
                 context.read<GarageCubit>().updateVehicle(
                   vehicleId: widget.initialVehicle!.id,
                   brand: _selectedBrand!,
-                  model: _modelController.text,
+                  model: _selectedModel!,
                   year: _selectedYear,
                   licensePlate: _plateController.text,
                   color: _selectedColor ?? 'Not set',
@@ -448,7 +623,7 @@ class _VehicleFormDialogState extends State<_VehicleFormDialog> {
               } else {
                 context.read<GarageCubit>().addVehicle(
                   brand: _selectedBrand!,
-                  model: _modelController.text,
+                  model: _selectedModel!,
                   year: _selectedYear,
                   licensePlate: _plateController.text,
                   color: _selectedColor ?? 'Not set',
@@ -817,9 +992,15 @@ class _VehicleCard extends StatelessWidget {
                   height: 120,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(20),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withAlpha(20)
+                        : Colors.blue.withAlpha(20),
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.white12),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white12
+                          : Colors.blue.withAlpha(50),
+                    ),
                     image: selectedImage != null
                         ? DecorationImage(
                             image: FileImage(File(selectedImage!.path)),

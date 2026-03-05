@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // States
 abstract class AuthCubitState {}
@@ -38,7 +39,10 @@ class AuthCubit extends Cubit<AuthCubitState> {
 
   AuthCubit()
     : supabase = Supabase.instance.client,
-      _googleSignIn = GoogleSignIn(),
+      _googleSignIn = GoogleSignIn(
+        serverClientId: dotenv.env['WEB_CLIENT'],
+        clientId: kIsWeb ? null : dotenv.env['IOS_CLIENT'],
+      ),
       super(AuthInitial()) {
     _init();
   }
@@ -118,17 +122,10 @@ class AuthCubit extends Cubit<AuthCubitState> {
       );
 
       if (response.user != null) {
-        // Optimistic UI transition: Use cached role or default to 'user' for immediate transition
-        final prefs = await SharedPreferences.getInstance();
-        final cachedRole =
-            prefs.getString('user_role_${response.user!.id}') ?? 'user';
-
-        emit(AuthAuthenticated(response.user!, role: cachedRole));
-
-        // Refresh role and update state in background without blocking the UI transition
-        _fetchRoleAndEmit(response.user!);
+        // Wait for role and setup check to ensure user goes to correct screen
+        await _fetchRoleAndEmit(response.user!);
       } else {
-        emit(AuthError('Google Login failed: Unknown error'));
+        emit(AuthError('Google Login failed: No user found'));
       }
     } catch (e) {
       emit(AuthError('Google Sign-In Error: ${e.toString()}'));
@@ -143,8 +140,15 @@ class AuthCubit extends Cubit<AuthCubitState> {
         password: password,
       );
       if (response.user != null) {
-        // New users default to 'user' role
-        emit(AuthAuthenticated(response.user!, role: 'user'));
+        // New users default to 'user' role and MUST go through setup
+        emit(
+          AuthAuthenticated(
+            response.user!,
+            role: 'user',
+            needsProfileSetup: true,
+            needsVehicleSetup: true,
+          ),
+        );
 
         // Fetch role in background to ensure profile is created and cache is populated
         _fetchRoleAndEmit(response.user!);
@@ -158,6 +162,9 @@ class AuthCubit extends Cubit<AuthCubitState> {
 
   Future<void> _fetchRoleAndEmit(User user) async {
     try {
+      // Small delay for new sign-ups to allow Supabase triggers to create the profile row
+      await Future.delayed(const Duration(seconds: 1));
+
       // 1. Fetch profile for role and completeness
       final profileData = await supabase
           .from('profiles')

@@ -183,41 +183,25 @@ class AdminHomeScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
+            RadioListTile<String>(
               title: Text('userRole'.tr()),
-              leading: Radio<String>(
-                value: 'user',
-                groupValue: currentRole,
-                onChanged: (value) {
-                  if (value != null && context.mounted) {
-                    Navigator.pop(dialogContext);
-                    context.read<AdminCubit>().updateUserRole(userId, value);
-                  }
-                },
-              ),
-              onTap: () {
-                if (context.mounted) {
+              value: 'user',
+              groupValue: currentRole,
+              onChanged: (value) {
+                if (value != null && context.mounted) {
                   Navigator.pop(dialogContext);
-                  context.read<AdminCubit>().updateUserRole(userId, 'user');
+                  context.read<AdminCubit>().updateUserRole(userId, value);
                 }
               },
             ),
-            ListTile(
+            RadioListTile<String>(
               title: Text('adminRole'.tr()),
-              leading: Radio<String>(
-                value: 'admin',
-                groupValue: currentRole,
-                onChanged: (value) {
-                  if (value != null && context.mounted) {
-                    Navigator.pop(dialogContext);
-                    context.read<AdminCubit>().updateUserRole(userId, value);
-                  }
-                },
-              ),
-              onTap: () {
-                if (context.mounted) {
+              value: 'admin',
+              groupValue: currentRole,
+              onChanged: (value) {
+                if (value != null && context.mounted) {
                   Navigator.pop(dialogContext);
-                  context.read<AdminCubit>().updateUserRole(userId, 'admin');
+                  context.read<AdminCubit>().updateUserRole(userId, value);
                 }
               },
             ),

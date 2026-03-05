@@ -207,10 +207,10 @@ class _OrderHistoryCard extends StatelessWidget {
                       children: [
                         Text(
                           order.carModel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                            color: Theme.of(context).primaryColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -220,9 +220,9 @@ class _OrderHistoryCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
                               '${order.vehicle!.brand} ${order.vehicle!.model}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.blue,
+                                color: Theme.of(context).primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
