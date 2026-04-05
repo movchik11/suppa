@@ -142,7 +142,9 @@ class _HistoryTabState extends State<HistoryTab> {
                   child: orders.isEmpty && _searchQuery.isNotEmpty
                       ? Center(child: Text('noMatchesFound'.tr()))
                       : ListView.builder(
-                          physics: const BouncingScrollPhysics(),
+                          physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
+                          ),
                           itemCount: isLoading ? 5 : orders.length,
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                           itemBuilder: (context, index) {
@@ -319,7 +321,9 @@ class _OrderHistoryCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Theme.of(context).hintColor,
+                                color: isDark
+                                    ? Colors.white.withAlpha(200)
+                                    : Colors.black.withAlpha(160),
                               ),
                             ),
                           ],

@@ -12,10 +12,10 @@ import 'package:lottie/lottie.dart';
 import 'package:supa/components/ui/bouncy_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/screens/user/vehicle_service_history_screen.dart';
+import 'package:supa/screens/user/vehicle_blueprint_screen.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
 import 'package:supa/services/brand_model_service.dart';
-import 'package:supa/screens/user/ai_assistant_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:supa/components/glass_container.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -146,8 +146,6 @@ class GarageTab extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               _buildSectionHeader(context, 'yourVehicles'.tr()),
-              const SizedBox(height: 12),
-              _buildAiAssistantCard(context),
               const SizedBox(height: 16),
               if (isLoading)
                 ...List.generate(
@@ -263,67 +261,6 @@ class GarageTab extends StatelessWidget {
         }).toList(),
       ),
     );
-  }
-
-  Widget _buildAiAssistantCard(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AiAssistantScreen()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade900],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.deepPurple.withAlpha(80),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: Colors.white, size: 32)
-                .animate(onPlay: (controller) => controller.repeat())
-                .shimmer(duration: 2.seconds),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'aiAssistant'.tr(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    'aiDiagnosticHint'.tr(),
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white70,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(duration: 600.ms).slideX(begin: 0.1, end: 0);
   }
 
   void _showVehicleDialog(BuildContext context, {Vehicle? initialVehicle}) {
@@ -778,6 +715,20 @@ class _VehicleCard extends StatelessWidget {
                 ),
                 Column(
                   children: [
+                    _buildQuickAction(
+                      icon: Icons.radar, // Tech/Diagnostics icon
+                      color: Colors.green,
+                      onTap: () {
+                        AppHaptics.medium();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                VehicleBlueprintScreen(vehicle: vehicle),
+                          ),
+                        );
+                      },
+                    ),
                     _buildQuickAction(
                       icon: Icons.history_rounded,
                       color: Colors.orange,

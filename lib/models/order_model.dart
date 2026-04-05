@@ -37,6 +37,8 @@ class Order {
   final Vehicle? vehicle;
   @HiveField(14)
   final double? totalPrice;
+  @HiveField(15)
+  final String? tenantId;
 
   Order({
     required this.id,
@@ -54,6 +56,7 @@ class Order {
     this.user,
     this.vehicle,
     this.totalPrice,
+    this.tenantId,
   });
 
   factory Order.fromMap(Map<String, dynamic> map) {
@@ -67,8 +70,12 @@ class Order {
       scheduledAt: map['scheduled_at'] != null
           ? DateTime.parse(map['scheduled_at'])
           : null,
-      createdAt: DateTime.parse(map['created_at']),
-      updatedAt: DateTime.parse(map['updated_at']),
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
+          : DateTime.now(),
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'])
+          : DateTime.now(),
       branchName: map['branch_name'],
       urgencyLevel: map['urgency_level'] ?? 'Normal',
       serviceId: map['service_id'],
@@ -77,6 +84,7 @@ class Order {
       totalPrice: map['total_price'] != null
           ? (map['total_price'] as num).toDouble()
           : null,
+      tenantId: map['tenant_id'],
     );
   }
 
@@ -92,6 +100,7 @@ class Order {
       'urgency_level': urgencyLevel,
       'service_id': serviceId,
       'total_price': totalPrice,
+      'tenant_id': tenantId,
     };
   }
 }

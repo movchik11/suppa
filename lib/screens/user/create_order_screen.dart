@@ -10,6 +10,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supa/screens/user/payment_screen.dart';
 
 class CreateOrderScreen extends StatefulWidget {
   final Service? preSelectedService;
@@ -99,13 +100,39 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         listener: (context, state) {
           if (state is OrderCreated) {
             AppHaptics.success();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('orderSuccess'.tr()),
-                backgroundColor: Colors.green,
+            // Calculate amount
+            double orderAmount = widget.preSelectedService?.price ?? 0.0;
+            if (orderAmount == 0.0 && _selectedServiceId != null) {
+              final serviceState = context.read<ServiceCubit>().state;
+              if (serviceState is ServicesLoaded) {
+                try {
+                  final s = serviceState.services.firstWhere(
+                    (s) => s.id == _selectedServiceId,
+                  );
+                  orderAmount = s.price;
+                } catch (_) {}
+              }
+            }
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentScreen(
+                  amount: orderAmount,
+                  orderId: 'temp_id', // Would be real in production
+                ),
               ),
-            );
-            Navigator.pop(context, true);
+            ).then((paid) {
+              if (paid == true) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('orderSuccess'.tr()),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.pop(context, true);
+              }
+            });
           } else if (state is OrderError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -163,10 +190,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                               ),
                             )
                           else
-                            const Icon(
+                            Icon(
                               Icons.car_repair_outlined,
                               size: 60,
-                              color: Colors.white70,
+                              color: Theme.of(context).hintColor,
                             ),
                           const SizedBox(height: 16),
                           Text(
@@ -191,8 +218,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   isLoading: serviceState is ServiceLoading,
                                   child: DropdownButtonFormField<String>(
                                     initialValue: _selectedServiceId,
-                                    dropdownColor: const Color(0xFF1E1E2E),
-                                    style: const TextStyle(color: Colors.white),
+                                    dropdownColor: Theme.of(context).cardColor,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.color,
+                                    ),
                                     decoration: InputDecoration(
                                       prefixIcon: const Icon(
                                         Icons.build,
@@ -274,16 +305,18 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                         ),
                                         Text(
                                           widget.preSelectedService!.name,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                            color: Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.color,
                                           ),
                                         ),
                                         Text(
                                           '${widget.preSelectedService!.price.toStringAsFixed(2)} TMT • ${widget.preSelectedService!.durationHours}h',
-                                          style: const TextStyle(
-                                            color: Colors.white70,
+                                          style: TextStyle(
+                                            color: Theme.of(context).hintColor,
                                           ),
                                         ),
                                       ],
@@ -309,8 +342,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                 }
                                 return DropdownButtonFormField<String>(
                                   initialValue: _selectedVehicleId,
-                                  dropdownColor: const Color(0xFF1E1E2E),
-                                  style: const TextStyle(color: Colors.white),
+                                  dropdownColor: Theme.of(context).cardColor,
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
+                                  ),
                                   decoration: InputDecoration(
                                     prefixIcon: const Icon(
                                       Icons.directions_car,
@@ -360,8 +397,12 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           _buildLabel('serviceCenter'.tr()),
                           DropdownButtonFormField<String>(
                             initialValue: _selectedBranch,
-                            dropdownColor: const Color(0xFF1E1E2E),
-                            style: const TextStyle(color: Colors.white),
+                            dropdownColor: Theme.of(context).cardColor,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
+                            ),
                             decoration: InputDecoration(
                               prefixIcon: const Icon(
                                 Icons.store,
@@ -402,9 +443,13 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                     _buildLabel('urgency'.tr()),
                                     DropdownButtonFormField<String>(
                                       initialValue: _selectedUrgency,
-                                      dropdownColor: const Color(0xFF1E1E2E),
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      dropdownColor: Theme.of(
+                                        context,
+                                      ).cardColor,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.color,
                                       ),
                                       decoration: InputDecoration(
                                         border: OutlineInputBorder(
@@ -447,7 +492,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           border: Border.all(
-                                            color: Colors.white24,
+                                            color: Theme.of(
+                                              context,
+                                            ).dividerColor,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             12,
@@ -489,7 +536,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           _buildLabel('issueDescription'.tr()),
                           TextFormField(
                             controller: _issueController,
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
+                            ),
                             maxLines: 3,
                             decoration: InputDecoration(
                               hintText: 'describeIssue'.tr(),
@@ -539,6 +590,25 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   }
                                 }
 
+                                // Determine tenantId from selected service
+                                String? tenantId =
+                                    widget.preSelectedService?.tenantId;
+                                if (tenantId == null &&
+                                    _selectedServiceId != null) {
+                                  final serviceState = context
+                                      .read<ServiceCubit>()
+                                      .state;
+                                  if (serviceState is ServicesLoaded) {
+                                    try {
+                                      final s = serviceState.services
+                                          .firstWhere(
+                                            (s) => s.id == _selectedServiceId,
+                                          );
+                                      tenantId = s.tenantId;
+                                    } catch (_) {}
+                                  }
+                                }
+
                                 context.read<OrderCubit>().createOrder(
                                   serviceName ??
                                       widget.suggestedServiceTitle ??
@@ -551,6 +621,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   serviceId:
                                       _selectedServiceId ??
                                       widget.preSelectedService?.id,
+                                  tenantId: tenantId,
                                 );
                               }
                             },
@@ -633,7 +704,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2E),
+          backgroundColor: Theme.of(context).cardColor,
           title: Text(
             'newVehicle'.tr(),
             style: TextStyle(
@@ -648,7 +719,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: sBrand,
-                    dropdownColor: const Color(0xFF1E1E2E),
+                    dropdownColor: Theme.of(context).cardColor,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
@@ -667,7 +738,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                   ),
                   DropdownButtonFormField<int>(
                     initialValue: sYear,
-                    dropdownColor: const Color(0xFF1E1E2E),
+                    dropdownColor: Theme.of(context).cardColor,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
@@ -707,7 +778,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                   ),
                   DropdownButtonFormField<String>(
                     initialValue: sColor,
-                    dropdownColor: const Color(0xFF1E1E2E),
+                    dropdownColor: Theme.of(context).cardColor,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),

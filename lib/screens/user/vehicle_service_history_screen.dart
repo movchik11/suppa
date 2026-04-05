@@ -28,46 +28,63 @@ class VehicleServiceHistoryScreen extends StatelessWidget {
                   )
                   .toList();
 
-              if (history.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.history, size: 80, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text('No service history yet'.tr()),
-                    ],
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: history.length,
-                itemBuilder: (context, index) {
-                  final order = history[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.check, color: Colors.green),
-                      ),
-                      title: Text(order.carModel),
-                      subtitle: Text(
-                        DateFormat('MMM dd, yyyy').format(order.createdAt),
-                      ),
-                      trailing: Text(
-                        order.totalPrice != null
-                            ? '${order.totalPrice!.toStringAsFixed(2)} TMT'
-                            : '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ),
-                  );
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<OrderCubit>().fetchMyOrders();
                 },
+                child: history.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          Container(
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.history,
+                                  size: 80,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text('No service history yet'.tr()),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        itemCount: history.length,
+                        itemBuilder: (context, index) {
+                          final order = history[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: ListTile(
+                              leading: const CircleAvatar(
+                                child: Icon(Icons.check, color: Colors.green),
+                              ),
+                              title: Text(order.carModel),
+                              subtitle: Text(
+                                DateFormat(
+                                  'MMM dd, yyyy',
+                                ).format(order.createdAt),
+                              ),
+                              trailing: Text(
+                                order.totalPrice != null
+                                    ? '${order.totalPrice!.toStringAsFixed(2)} TMT'
+                                    : '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               );
             }
             return const SizedBox.shrink();

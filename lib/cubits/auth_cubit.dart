@@ -19,11 +19,13 @@ class AuthUnauthenticated extends AuthCubitState {}
 class AuthAuthenticated extends AuthCubitState {
   final User user;
   final String role;
+  final String? tenantId;
   final bool needsProfileSetup;
   final bool needsVehicleSetup;
   AuthAuthenticated(
     this.user, {
     this.role = 'user',
+    this.tenantId,
     this.needsProfileSetup = false,
     this.needsVehicleSetup = false,
   });
@@ -59,14 +61,7 @@ class AuthCubit extends Cubit<AuthCubitState> {
   Future<void> _checkSession() async {
     final session = supabase.auth.currentSession;
     if (session != null) {
-      // 1. Try to emit from cache first
-      final prefs = await SharedPreferences.getInstance();
-      final cachedRole = prefs.getString('user_role_${session.user.id}');
-      if (cachedRole != null) {
-        emit(AuthAuthenticated(session.user, role: cachedRole));
-      }
-
-      // 2. Fetch/Refresh from network
+      // Wait for true role fetch before routing
       await _fetchRoleAndEmit(session.user);
     } else {
       emit(AuthUnauthenticated());
@@ -81,14 +76,8 @@ class AuthCubit extends Cubit<AuthCubitState> {
         password: password,
       );
       if (response.user != null) {
-        // Optimistic UI transition
-        final prefs = await SharedPreferences.getInstance();
-        final cachedRole =
-            prefs.getString('user_role_${response.user!.id}') ?? 'user';
-        emit(AuthAuthenticated(response.user!, role: cachedRole));
-
-        // Refresh role in background
-        _fetchRoleAndEmit(response.user!);
+        // Wait for role response before emitting
+        await _fetchRoleAndEmit(response.user!);
       } else {
         emit(AuthError('Login failed: Unknown error'));
       }
@@ -173,11 +162,14 @@ class AuthCubit extends Cubit<AuthCubitState> {
       // 1. Fetch profile for role and completeness
       final profileData = await supabase
           .from('profiles')
-          .select('role, display_name, phone_number')
+          .select('role, display_name, phone_number, tenant_id')
           .eq('id', user.id)
           .maybeSingle();
 
       final role = profileData != null ? profileData['role'] as String : 'user';
+      final tenantId = profileData != null
+          ? profileData['tenant_id'] as String?
+          : null;
       final bool needsProfile =
           profileData == null ||
           profileData['display_name'] == null ||
@@ -191,14 +183,20 @@ class AuthCubit extends Cubit<AuthCubitState> {
           .limit(1);
       final bool needsVehicle = (vehiclesResponse as List).isEmpty;
 
-      // Cache the role
+      // Cache the role and tenantId
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_role_${user.id}', role);
+      if (tenantId != null) {
+        await prefs.setString('user_tenant_${user.id}', tenantId);
+      } else {
+        await prefs.remove('user_tenant_${user.id}');
+      }
 
       emit(
         AuthAuthenticated(
           user,
           role: role,
+          tenantId: tenantId,
           needsProfileSetup: needsProfile,
           needsVehicleSetup: needsVehicle,
         ),
@@ -212,7 +210,27 @@ class AuthCubit extends Cubit<AuthCubitState> {
 
   Future<void> logout() async {
     await supabase.auth.signOut();
+    try {
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
+      }
+    } catch (_) {
+      // Ignore Google Sign-In signout errors if the user wasn't signed in via Google
+    }
     emit(AuthUnauthenticated());
+  }
+
+  Future<void> deleteAccount() async {
+    emit(AuthLoading());
+    try {
+      // Call the RPC function to delete from auth.users (cascades to public tables)
+      await supabase.rpc('delete_user_account');
+
+      // Clear local cache/session
+      await logout();
+    } catch (e) {
+      emit(AuthError('Failed to delete account: ${e.toString()}'));
+    }
   }
 
   // --- Biometric Authentication ---
@@ -224,7 +242,7 @@ class AuthCubit extends Cubit<AuthCubitState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_biometricEnabledKey, true);
     } catch (e) {
-      print('DEBUG: Secure Storage Error: $e');
+      // Diagnostic log removed for production
     }
   }
 

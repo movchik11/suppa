@@ -23,4 +23,10 @@ class AppHaptics {
     await Future.delayed(const Duration(milliseconds: 50));
     await HapticFeedback.lightImpact();
   }
+
+  static Future<void> error() async {
+    await HapticFeedback.heavyImpact();
+    await Future.delayed(const Duration(milliseconds: 50));
+    await HapticFeedback.heavyImpact();
+  }
 }

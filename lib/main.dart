@@ -119,8 +119,10 @@ class MainApp extends StatelessWidget {
     const primaryColor = Color(0xFF673AB7);
     final scaffoldBg = isDark
         ? const Color(0xFF0F0F1E)
-        : const Color(0xFFF8F9FE);
-    final cardBg = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+        : const Color(
+            0xFFEAEFF5,
+          ); // A professional, solid grayish-blue background
+    final cardBg = isDark ? const Color(0xFF1E1E2E) : const Color(0xFFFDFDFE);
 
     return ThemeData(
       useMaterial3: true,
@@ -135,8 +137,8 @@ class MainApp extends StatelessWidget {
           : const ColorScheme.light(
               primary: Color(0xFF673AB7),
               secondary: Color(0xFF512DA8),
-              surface: Colors.white,
-              onSurface: Color(0xFF1A1A2E),
+              surface: Color(0xFFEAEFF5),
+              onSurface: Color(0xFF14171F),
             ),
       scaffoldBackgroundColor: scaffoldBg,
       textTheme:
@@ -160,16 +162,18 @@ class MainApp extends StatelessWidget {
       cardTheme: CardThemeData(
         color: cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        elevation: isDark ? 0 : 8,
-        shadowColor: isDark ? Colors.transparent : Colors.black.withAlpha(40),
+        elevation: isDark ? 0 : 12,
+        shadowColor: isDark
+            ? Colors.transparent
+            : const Color(0xFF673AB7).withAlpha(15),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark
-            ? Colors.white.withAlpha(13)
-            : Colors.grey.withAlpha(30),
-        hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[700]),
-        labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+        fillColor: isDark ? Colors.white.withAlpha(13) : Colors.white,
+        hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[500]),
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white70 : const Color(0xFF14171F),
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,

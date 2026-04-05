@@ -271,6 +271,28 @@ class SettingsTab extends StatelessWidget {
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red.withAlpha(180),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => _confirmDeleteAccount(context),
+                        icon: const Icon(
+                          Icons.delete_forever_outlined,
+                          size: 20,
+                        ),
+                        label: Text(
+                          'deleteAccount'.tr(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.withAlpha(20),
@@ -320,6 +342,20 @@ class SettingsTab extends StatelessWidget {
                   onPressed: () => context.read<ProfileCubit>().fetchProfile(),
                   child: Text('retry'.tr()),
                 ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () async {
+                    context.read<AuthCubit>().logout();
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: Text('logout'.tr()),
+                ),
               ],
             ),
           );
@@ -327,6 +363,38 @@ class SettingsTab extends StatelessWidget {
 
         return const AppLoadingIndicator();
       },
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('deleteAccount'.tr()),
+        content: Text('deleteAccountConfirmation'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              context.read<AuthCubit>().deleteAccount();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+            child: Text(
+              'delete'.tr(),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

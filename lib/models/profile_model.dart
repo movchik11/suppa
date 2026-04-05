@@ -30,6 +30,8 @@ class Profile {
   final bool isLightMode;
   @HiveField(12)
   final DateTime createdAt;
+  @HiveField(13)
+  final String? tenantId;
 
   Profile({
     required this.id,
@@ -45,6 +47,7 @@ class Profile {
     this.referredBy,
     this.isLightMode = false,
     required this.createdAt,
+    this.tenantId,
   });
 
   factory Profile.fromMap(Map<String, dynamic> map) {
@@ -64,6 +67,7 @@ class Profile {
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : DateTime.now(),
+      tenantId: map['tenant_id'],
     );
   }
 
@@ -77,6 +81,7 @@ class Profile {
       'preferred_contact': preferredContact,
       'notifications_enabled': notificationsEnabled,
       'is_light_mode': isLightMode,
+      'tenant_id': tenantId,
     };
   }
 }

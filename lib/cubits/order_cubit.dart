@@ -98,6 +98,7 @@ class OrderCubit extends Cubit<OrderState> {
     String? branchName,
     String urgencyLevel = 'Normal',
     String? serviceId,
+    String? tenantId,
   }) async {
     emit(OrderLoading());
     try {
@@ -117,6 +118,7 @@ class OrderCubit extends Cubit<OrderState> {
         'branch_name': branchName,
         'urgency_level': urgencyLevel,
         'service_id': serviceId,
+        'tenant_id': tenantId,
       }).select();
 
       emit(OrderCreated());

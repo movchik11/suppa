@@ -73,6 +73,7 @@ class ServiceCubit extends Cubit<ServiceState> {
     required double durationHours,
     required double price,
     required String category,
+    String? tenantId,
     XFile? image,
   }) async {
     emit(ServiceLoading());
@@ -103,6 +104,7 @@ class ServiceCubit extends Cubit<ServiceState> {
         'price': price,
         'category': category,
         'image_url': imageUrl,
+        'tenant_id': tenantId,
       });
 
       emit(ServiceCreated());
@@ -112,7 +114,6 @@ class ServiceCubit extends Cubit<ServiceState> {
     }
   }
 
-  // Update service
   Future<void> updateService({
     required String serviceId,
     required String name,
@@ -120,6 +121,7 @@ class ServiceCubit extends Cubit<ServiceState> {
     required double durationHours,
     required double price,
     required String category,
+    String? tenantId,
     XFile? newImage,
     String? existingImageUrl,
   }) async {
@@ -143,17 +145,20 @@ class ServiceCubit extends Cubit<ServiceState> {
             .getPublicUrl(fileName);
       }
 
-      await supabase
-          .from('services')
-          .update({
-            'name': name,
-            'description': description,
-            'duration_hours': durationHours,
-            'price': price,
-            'category': category,
-            'image_url': imageUrl,
-          })
-          .eq('id', serviceId);
+      final Map<String, dynamic> updateData = {
+        'name': name,
+        'description': description,
+        'duration_hours': durationHours,
+        'price': price,
+        'category': category,
+        'image_url': imageUrl,
+      };
+
+      if (tenantId != null) {
+        updateData['tenant_id'] = tenantId;
+      }
+
+      await supabase.from('services').update(updateData).eq('id', serviceId);
 
       await fetchServices();
     } catch (e) {

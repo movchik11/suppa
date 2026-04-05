@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/service_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ServicesManagementScreen extends StatelessWidget {
   const ServicesManagementScreen({super.key});
@@ -138,16 +139,26 @@ class ServicesManagementScreen extends StatelessWidget {
       context: context,
       barrierDismissible: false, // Prevent dismissing while loading
       builder: (dialogContext) => _ServiceFormDialog(
-        onSubmit: (name, description, duration, price, category, image) async {
-          await context.read<ServiceCubit>().createService(
-            name: name,
-            description: description,
-            durationHours: duration,
-            price: price,
-            category: category,
-            image: image,
-          );
-        },
+        onSubmit:
+            (
+              name,
+              description,
+              duration,
+              price,
+              category,
+              tenantId,
+              image,
+            ) async {
+              await context.read<ServiceCubit>().createService(
+                name: name,
+                description: description,
+                durationHours: duration,
+                price: price,
+                category: category,
+                tenantId: tenantId as String?,
+                image: image,
+              );
+            },
       ),
     );
   }
@@ -158,18 +169,28 @@ class ServicesManagementScreen extends StatelessWidget {
       barrierDismissible: false, // Prevent dismissing while loading
       builder: (dialogContext) => _ServiceFormDialog(
         initialService: service,
-        onSubmit: (name, description, duration, price, category, image) async {
-          await context.read<ServiceCubit>().updateService(
-            serviceId: service.id,
-            name: name,
-            description: description,
-            durationHours: duration,
-            price: price,
-            category: category,
-            newImage: image,
-            existingImageUrl: service.imageUrl,
-          );
-        },
+        onSubmit:
+            (
+              name,
+              description,
+              duration,
+              price,
+              category,
+              tenantId,
+              image,
+            ) async {
+              await context.read<ServiceCubit>().updateService(
+                serviceId: service.id,
+                name: name,
+                description: description,
+                durationHours: duration,
+                price: price,
+                category: category,
+                tenantId: tenantId as String?,
+                newImage: image,
+                existingImageUrl: service.imageUrl,
+              );
+            },
       ),
     );
   }
@@ -292,6 +313,7 @@ class _ServiceFormDialog extends StatefulWidget {
     double duration,
     double price,
     String category,
+    String? tenantId,
     XFile? image,
   )
   onSubmit;
@@ -340,6 +362,10 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
     'catAdditional',
   ];
 
+  List<Map<String, dynamic>> _tenants = [];
+  String? _selectedTenantId;
+  bool _isLoadingTenants = true;
+
   @override
   void initState() {
     super.initState();
@@ -356,6 +382,26 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
       text: widget.initialService?.price.toString() ?? '',
     );
     _selectedCategory = widget.initialService?.category ?? 'catMaintenance';
+    _selectedTenantId = widget.initialService?.tenantId;
+    _fetchTenants();
+  }
+
+  Future<void> _fetchTenants() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final data = await supabase.from('tenants').select('id, name');
+      if (mounted) {
+        setState(() {
+          _tenants = List<Map<String, dynamic>>.from(data);
+          if (_selectedTenantId == null && _tenants.isNotEmpty) {
+            _selectedTenantId = _tenants.first['id'] as String;
+          }
+          _isLoadingTenants = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingTenants = false);
+    }
   }
 
   @override
@@ -480,9 +526,35 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                   label: Text('choosePhoto'.tr()),
                 ),
                 const SizedBox(height: 24),
+                // Tenant Selection
+                if (_isLoadingTenants)
+                  const Center(child: CircularProgressIndicator())
+                else if (_tenants.isNotEmpty) ...[
+                  DropdownButtonFormField<String>(
+                    value: _tenants.any((t) => t['id'] == _selectedTenantId)
+                        ? _selectedTenantId
+                        : null,
+                    decoration: InputDecoration(
+                      labelText: 'selectTenant'
+                          .tr(), // Fallback handled by tr itself
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: _tenants.map((t) {
+                      return DropdownMenuItem<String>(
+                        value: t['id'] as String,
+                        child: Text(t['name'] as String),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedTenantId = val),
+                    validator: (value) => value == null ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 // Category Selection First (moved up for better flow)
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedCategory,
+                  value: _categories.contains(_selectedCategory)
+                      ? _selectedCategory
+                      : _categories.first,
                   decoration: InputDecoration(
                     labelText: 'category'.tr(),
                     border: const OutlineInputBorder(),
@@ -607,6 +679,7 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                         double.parse(_durationController.text),
                         double.parse(_priceController.text),
                         _selectedCategory,
+                        _selectedTenantId,
                         _selectedImage,
                       );
                       if (context.mounted) {

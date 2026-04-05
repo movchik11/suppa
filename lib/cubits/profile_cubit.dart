@@ -6,6 +6,7 @@ import 'package:supa/services/cache_service.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // States
 abstract class ProfileState {}
@@ -65,7 +66,12 @@ class ProfileCubit extends Cubit<ProfileState> {
           .from('profiles')
           .select()
           .eq('id', userId)
-          .single();
+          .maybeSingle();
+
+      if (data == null) {
+        emit(ProfileError('profileNotFound'.tr()));
+        return;
+      }
 
       final profile = Profile.fromMap(data);
 

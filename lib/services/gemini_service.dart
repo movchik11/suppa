@@ -6,7 +6,7 @@ class GeminiService {
 
   GeminiService()
     : _model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
         apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
         systemInstruction: Content.system(
           "You are a professional automotive mechanic assistant. "

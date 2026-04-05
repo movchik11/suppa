@@ -180,6 +180,7 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
 
                         // Brand Dropdown
                         DropdownButtonFormField<String>(
+                          decoration: InputDecoration(labelText: 'brand'.tr()),
                           items: BrandModelService.getBrands().map((brand) {
                             return DropdownMenuItem(
                               value: brand,
@@ -212,6 +213,7 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
 
                         // Model Dropdown
                         DropdownButtonFormField<String>(
+                          decoration: InputDecoration(labelText: 'model'.tr()),
                           items: _selectedBrand == null
                               ? []
                               : BrandModelService.getModels(
@@ -252,67 +254,55 @@ class _InitialVehicleScreenState extends State<InitialVehicleScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Year and Color Row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<int>(
-                                decoration: InputDecoration(
-                                  labelText: 'year'.tr(),
+                        // Year and Color Dropdowns
+                        DropdownButtonFormField<int>(
+                          decoration: InputDecoration(labelText: 'year'.tr()),
+                          items: _years
+                              .map(
+                                (y) => DropdownMenuItem(
+                                  value: y,
+                                  child: Text(
+                                    y.toString(),
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
                                 ),
-                                items: _years
-                                    .map(
-                                      (y) => DropdownMenuItem(
-                                        value: y,
-                                        child: Text(
-                                          y.toString(),
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white
-                                                : Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (val) =>
-                                    setState(() => _selectedYear = val),
-                                validator: (val) =>
-                                    val == null ? 'selectYear'.tr() : null,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                decoration: InputDecoration(
-                                  labelText: 'color'.tr(),
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedYear = val),
+                          validator: (val) =>
+                              val == null ? 'selectYear'.tr() : null,
+                        ),
+                        const SizedBox(height: 20),
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(labelText: 'color'.tr()),
+                          items: _colors
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(
+                                    c.toLowerCase().tr(),
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
                                 ),
-                                items: _colors
-                                    .map(
-                                      (c) => DropdownMenuItem(
-                                        value: c,
-                                        child: Text(
-                                          c.toLowerCase().tr(),
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white
-                                                : Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (val) =>
-                                    setState(() => _selectedColor = val),
-                                validator: (val) =>
-                                    val == null ? 'selectColor'.tr() : null,
-                              ),
-                            ),
-                          ],
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedColor = val),
+                          validator: (val) =>
+                              val == null ? 'selectColor'.tr() : null,
                         ),
                         const SizedBox(height: 20),
 

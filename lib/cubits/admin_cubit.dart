@@ -22,18 +22,24 @@ class AdminError extends AdminState {
 // Cubit
 class AdminCubit extends Cubit<AdminState> {
   final SupabaseClient supabase;
+  final String? tenantId;
 
-  AdminCubit() : supabase = Supabase.instance.client, super(AdminInitial()) {
+  AdminCubit({this.tenantId})
+    : supabase = Supabase.instance.client,
+      super(AdminInitial()) {
     fetchProfiles();
   }
 
   Future<void> fetchProfiles() async {
     emit(AdminLoading());
     try {
-      final data = await supabase
-          .from('profiles')
-          .select()
-          .order('created_at', ascending: false);
+      var query = supabase.from('profiles').select();
+
+      if (tenantId != null) {
+        query = query.eq('tenant_id', tenantId!);
+      }
+
+      final data = await query.order('created_at', ascending: false);
 
       final List<Profile> profiles = (data as List)
           .map((item) => Profile.fromMap(item))
@@ -86,10 +92,49 @@ class AdminCubit extends Cubit<AdminState> {
         return;
       }
 
-      // Refresh the list after update
       await fetchProfiles();
     } catch (e) {
       emit(AdminError('Failed to update role: ${e.toString()}'));
+    }
+  }
+
+  Future<void> updateUserTenant(String userId, String? newTenantId) async {
+    try {
+      final response = await supabase
+          .from('profiles')
+          .update({'tenant_id': newTenantId})
+          .eq('id', userId)
+          .select();
+
+      if ((response as List).isEmpty) {
+        emit(
+          AdminError(
+            'Failed to update tenant: No matching user found or permission denied',
+          ),
+        );
+        return;
+      }
+
+      await fetchProfiles();
+    } catch (e) {
+      emit(AdminError('Failed to update tenant: ${e.toString()}'));
+    }
+  }
+
+  Future<void> createTenant(String name) async {
+    try {
+      await supabase.from('tenants').insert({'name': name});
+    } catch (e) {
+      emit(AdminError('Failed to create tenant: ${e.toString()}'));
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchTenants() async {
+    try {
+      final data = await supabase.from('tenants').select('id, name');
+      return (data as List).map((e) => e as Map<String, dynamic>).toList();
+    } catch (e) {
+      return [];
     }
   }
 }
