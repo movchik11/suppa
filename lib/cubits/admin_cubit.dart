@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/profile_model.dart';
+import 'package:supa/models/tenant_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // States
@@ -11,7 +12,8 @@ class AdminLoading extends AdminState {}
 
 class AdminLoaded extends AdminState {
   final List<Profile> profiles;
-  AdminLoaded(this.profiles);
+  final List<Tenant> tenants;
+  AdminLoaded(this.profiles, this.tenants);
 }
 
 class AdminError extends AdminState {
@@ -39,15 +41,16 @@ class AdminCubit extends Cubit<AdminState> {
         query = query.eq('tenant_id', tenantId!);
       }
 
-      final data = await query.order('created_at', ascending: false);
-
-      final List<Profile> profiles = (data as List)
+      final profilesData = await query.order('created_at', ascending: false);
+      final List<Profile> profiles = (profilesData as List)
           .map((item) => Profile.fromMap(item))
           .toList();
 
-      emit(AdminLoaded(profiles));
+      final List<Tenant> tenants = await fetchTenants();
+
+      emit(AdminLoaded(profiles, tenants));
     } catch (e) {
-      emit(AdminError('Failed to load profiles: ${e.toString()}'));
+      emit(AdminError('Failed to load data: ${e.toString()}'));
     }
   }
 
@@ -121,18 +124,27 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
-  Future<void> createTenant(String name) async {
+  Future<void> createTenant({
+    required String name,
+    String? address,
+    String? phone,
+  }) async {
     try {
-      await supabase.from('tenants').insert({'name': name});
+      await supabase.from('tenants').insert({
+        'name': name,
+        'address': address,
+        'phone': phone,
+      });
+      await fetchProfiles();
     } catch (e) {
       emit(AdminError('Failed to create tenant: ${e.toString()}'));
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchTenants() async {
+  Future<List<Tenant>> fetchTenants() async {
     try {
-      final data = await supabase.from('tenants').select('id, name');
-      return (data as List).map((e) => e as Map<String, dynamic>).toList();
+      final data = await supabase.from('tenants').select();
+      return (data as List).map((e) => Tenant.fromMap(e)).toList();
     } catch (e) {
       return [];
     }

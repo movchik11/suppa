@@ -104,87 +104,32 @@ class AdminHomeScreen extends StatelessWidget {
                 if (state is AdminLoading) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is AdminLoaded) {
-                  if (state.profiles.isEmpty) {
-                    return Center(child: Text("noUsersFound".tr()));
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () => context.read<AdminCubit>().fetchProfiles(),
+                  return DefaultTabController(
+                    length: 2,
                     child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            "totalUsers".tr(
-                              args: [state.profiles.length.toString()],
+                        TabBar(
+                          tabs: [
+                            Tab(
+                              text: "users".tr().isEmpty
+                                  ? "Users"
+                                  : "users".tr(),
                             ),
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
+                            Tab(
+                              text: "serviceCenters".tr().isEmpty
+                                  ? "Service Centers"
+                                  : "serviceCenters".tr(),
+                            ),
+                          ],
                         ),
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: state.profiles.length,
-                            itemBuilder: (context, index) {
-                              final profile = state.profiles[index];
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text(profile.email[0].toUpperCase()),
-                                  ),
-                                  title: Text(profile.email),
-                                  subtitle: Text(
-                                    'roleLabel'.tr(args: [profile.role]),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Change Role Button
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.swap_horiz,
-                                          color: Colors.blue,
-                                        ),
-                                        tooltip: 'changeRole'.tr(),
-                                        onPressed: () => _showRoleDialog(
-                                          context,
-                                          profile.id,
-                                          profile.role,
-                                        ),
-                                      ),
-                                      // Change Tenant Button
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.business,
-                                          color: Colors.green,
-                                        ),
-                                        tooltip: 'changeTenant'.tr(),
-                                        onPressed: () => _showTenantDialog(
-                                          context,
-                                          profile.id,
-                                          profile.tenantId,
-                                        ),
-                                      ),
-                                      // Delete Button
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                        tooltip: 'deleteUser'.tr(),
-                                        onPressed: () => _showDeleteDialog(
-                                          context,
-                                          profile.id,
-                                          profile.email,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                          child: TabBarView(
+                            children: [
+                              // Users Tab
+                              _buildUsersList(context, state),
+                              // Service Centers Tab
+                              _buildTenantsList(context, state),
+                            ],
                           ),
                         ),
                       ],
@@ -291,23 +236,20 @@ class AdminHomeScreen extends StatelessWidget {
               }
               final tenant = tenants[index - 1];
               return ListTile(
-                title: Text(tenant['name'] ?? 'Unknown'),
+                title: Text(tenant.name),
                 leading: Radio<String?>(
-                  value: tenant['id'],
+                  value: tenant.id,
                   groupValue: currentTenantId,
                   onChanged: (val) {
                     Navigator.pop(dialogContext);
-                    context.read<AdminCubit>().updateUserTenant(
-                      userId,
-                      val as String?,
-                    );
+                    context.read<AdminCubit>().updateUserTenant(userId, val);
                   },
                 ),
                 onTap: () {
                   Navigator.pop(dialogContext);
                   context.read<AdminCubit>().updateUserTenant(
                     userId,
-                    tenant['id'],
+                    tenant.id,
                   );
                 },
               );
@@ -343,19 +285,52 @@ class AdminHomeScreen extends StatelessWidget {
   }
 
   void _showAddTenantDialog(BuildContext context) {
-    final controller = TextEditingController();
+    final nameController = TextEditingController();
+    final addressController = TextEditingController();
+    final phoneController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('addServiceCenter'.tr()),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: 'serviceCenterName'.tr(),
-            hintText: 'serviceCenterHint'.tr(),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'serviceCenterName'.tr(),
+                  hintText: 'serviceCenterHint'.tr(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: addressController,
+                decoration: InputDecoration(
+                  labelText: 'address'.tr(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneController,
+                decoration: InputDecoration(
+                  labelText: 'phone'.tr(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+            ],
           ),
-          autofocus: true,
         ),
         actions: [
           TextButton(
@@ -364,10 +339,18 @@ class AdminHomeScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (controller.text.trim().isNotEmpty) {
+              if (nameController.text.trim().isNotEmpty) {
                 final cubit = context.read<AdminCubit>();
                 Navigator.pop(dialogContext);
-                await cubit.createTenant(controller.text.trim());
+                await cubit.createTenant(
+                  name: nameController.text.trim(),
+                  address: addressController.text.trim().isEmpty
+                      ? null
+                      : addressController.text.trim(),
+                  phone: phoneController.text.trim().isEmpty
+                      ? null
+                      : phoneController.text.trim(),
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -380,6 +363,133 @@ class AdminHomeScreen extends StatelessWidget {
               }
             },
             child: Text('add'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUsersList(BuildContext context, AdminLoaded state) {
+    if (state.profiles.isEmpty) {
+      return Center(child: Text("noUsersFound".tr()));
+    }
+    return RefreshIndicator(
+      onRefresh: () => context.read<AdminCubit>().fetchProfiles(),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "totalUsers".tr(args: [state.profiles.length.toString()]),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: state.profiles.length,
+              itemBuilder: (context, index) {
+                final profile = state.profiles[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      child: Text(profile.email[0].toUpperCase()),
+                    ),
+                    title: Text(profile.email),
+                    subtitle: Text('roleLabel'.tr(args: [profile.role])),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.swap_horiz,
+                            color: Colors.blue,
+                          ),
+                          tooltip: 'changeRole'.tr(),
+                          onPressed: () => _showRoleDialog(
+                            context,
+                            profile.id,
+                            profile.role,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.business, color: Colors.green),
+                          tooltip: 'changeTenant'.tr(),
+                          onPressed: () => _showTenantDialog(
+                            context,
+                            profile.id,
+                            profile.tenantId,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          tooltip: 'deleteUser'.tr(),
+                          onPressed: () => _showDeleteDialog(
+                            context,
+                            profile.id,
+                            profile.email,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTenantsList(BuildContext context, AdminLoaded state) {
+    if (state.tenants.isEmpty) {
+      return Center(
+        child: Text(
+          "noServiceCentersFound".tr().isEmpty
+              ? "No Service Centers Found"
+              : "noServiceCentersFound".tr(),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () => context.read<AdminCubit>().fetchProfiles(),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "Total Service Centers: ${state.tenants.length}",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: state.tenants.length,
+              itemBuilder: (context, index) {
+                final tenant = state.tenants[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: ListTile(
+                    leading: const CircleAvatar(child: Icon(Icons.business)),
+                    title: Text(tenant.name),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (tenant.address != null) Text(tenant.address!),
+                        if (tenant.phone != null) Text(tenant.phone!),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

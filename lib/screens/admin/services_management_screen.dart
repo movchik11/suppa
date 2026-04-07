@@ -389,17 +389,25 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
   Future<void> _fetchTenants() async {
     try {
       final supabase = Supabase.instance.client;
-      final data = await supabase.from('tenants').select('id, name');
+      // Fetch all tenants to allow linking services
+      final data = await supabase
+          .from('tenants')
+          .select('id, name')
+          .order('name');
       if (mounted) {
         setState(() {
           _tenants = List<Map<String, dynamic>>.from(data);
-          if (_selectedTenantId == null && _tenants.isNotEmpty) {
+          // If editing, keep the initial tenant. If creating and we have tenants, default to first.
+          if (_selectedTenantId == null &&
+              _tenants.isNotEmpty &&
+              widget.initialService == null) {
             _selectedTenantId = _tenants.first['id'] as String;
           }
           _isLoadingTenants = false;
         });
       }
     } catch (e) {
+      debugPrint('Error fetching tenants: $e');
       if (mounted) setState(() => _isLoadingTenants = false);
     }
   }
@@ -528,16 +536,21 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                 const SizedBox(height: 24),
                 // Tenant Selection
                 if (_isLoadingTenants)
-                  const Center(child: CircularProgressIndicator())
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
                 else if (_tenants.isNotEmpty) ...[
                   DropdownButtonFormField<String>(
                     value: _tenants.any((t) => t['id'] == _selectedTenantId)
                         ? _selectedTenantId
                         : null,
                     decoration: InputDecoration(
-                      labelText: 'selectTenant'
-                          .tr(), // Fallback handled by tr itself
+                      labelText: 'selectTenant'.tr().isEmpty
+                          ? 'Select Service Center'
+                          : 'selectTenant'.tr(),
                       border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.business),
                     ),
                     items: _tenants.map((t) {
                       return DropdownMenuItem<String>(
@@ -547,6 +560,30 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                     }).toList(),
                     onChanged: (val) => setState(() => _selectedTenantId = val),
                     validator: (value) => value == null ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withAlpha(30),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.withAlpha(100)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning, color: Colors.orange),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'noServiceCentersAvailable'.tr().isEmpty
+                                ? 'No Service Centers found. Please create one in the Admin Panel first.'
+                                : 'noServiceCentersAvailable'.tr(),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],
