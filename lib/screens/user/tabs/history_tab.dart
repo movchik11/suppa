@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
+import 'package:supa/cubits/review_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
@@ -347,7 +348,15 @@ class _OrderHistoryCard extends StatelessWidget {
                         children: [
                           // Action buttons based on status
                           if (order.status == 'completed') ...[
-                            // Rating removed per user request
+                            OutlinedButton.icon(
+                              onPressed: () => _showReviewDialog(context, order),
+                              icon: const Icon(Icons.star_border, size: 16),
+                              label: Text('leaveReview'.tr().isEmpty ? 'Review' : 'leaveReview'.tr()),
+                              style: OutlinedButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                           ] else if (order.status == 'pending' ||
                               order.status == 'in_progress') ...[
                             OutlinedButton(
@@ -459,6 +468,87 @@ class _OrderHistoryCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showReviewDialog(BuildContext context, Order order) {
+    if (order.serviceId == null) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text('cannotReviewCustomService'.tr().isEmpty ? 'Cannot review custom service' : 'cannotReviewCustomService'.tr()))
+       );
+       return;
+    }
+    double rating = 5.0;
+    final commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('leaveReview'.tr().isEmpty ? 'Leave a Review' : 'leaveReview'.tr()),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('${order.carModel}'),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: 'writeComment'.tr().isEmpty ? 'Write a comment...' : 'writeComment'.tr(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('cancel'.tr()),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+                    final reviewCubit = context.read<ReviewCubit>();
+                    await reviewCubit.submitReview(
+                      orderId: order.id,
+                      serviceId: order.serviceId,
+                      rating: rating,
+                      comment: commentController.text,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('reviewSubmitted'.tr().isEmpty ? 'Review submitted!' : 'reviewSubmitted'.tr())),
+                      );
+                    }
+                  },
+                  child: Text('submit'.tr().isEmpty ? 'Submit' : 'submit'.tr()),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 }

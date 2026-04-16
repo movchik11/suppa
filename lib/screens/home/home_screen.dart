@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
-import 'package:supa/screens/user/tabs/services_tab.dart';
+import 'package:supa/screens/user/tabs/tenants_tab.dart';
 import 'package:supa/screens/user/tabs/garage_tab.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/utils/service_search_delegate.dart';
@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   final List<Widget> _tabs = [
-    const ServicesTab(),
+    const TenantsTab(),
     const AssistantTab(),
     const GarageTab(),
     const HistoryTab(),

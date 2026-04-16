@@ -261,10 +261,6 @@ class _ServiceCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    '${service.durationHours}h',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -335,7 +331,6 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
-  late TextEditingController _durationController;
   late TextEditingController _priceController;
   String _selectedCategory = 'catMaintenance';
   XFile? _selectedImage;
@@ -381,9 +376,6 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
     );
     _descriptionController = TextEditingController(
       text: widget.initialService?.description ?? '',
-    );
-    _durationController = TextEditingController(
-      text: widget.initialService?.durationHours.toString() ?? '',
     );
     _priceController = TextEditingController(
       text: widget.initialService?.price.toString() ?? '',
@@ -446,7 +438,6 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _durationController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -710,24 +701,6 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: _durationController,
-                  decoration: InputDecoration(
-                    labelText: 'durationHoursLabel'.tr(),
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return 'Required';
-                    }
-                    if (double.tryParse(value!) == null) {
-                      return 'Invalid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
                   controller: _priceController,
                   decoration: InputDecoration(
                     labelText: 'priceLabel'.tr(),
@@ -765,7 +738,7 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                       await widget.onSubmit(
                         _nameController.text,
                         _descriptionController.text,
-                        double.parse(_durationController.text),
+                        0.0, // Duration removed, defaulting to 0
                         double.parse(_priceController.text),
                         _selectedCategory,
                         _selectedTenantId,

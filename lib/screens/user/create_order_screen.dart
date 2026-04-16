@@ -10,7 +10,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:supa/screens/user/payment_screen.dart';
 
 class CreateOrderScreen extends StatefulWidget {
@@ -36,45 +35,17 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   String? _selectedVehicleId;
   String? _selectedServiceId; // New state for dropdown
   DateTime? _scheduledAt;
-  String? _selectedBranch;
-  String _selectedUrgency = 'normal';
-
-  final List<String> _urgencies = ['normal', 'urgent', 'emergency'];
-  List<Map<String, dynamic>> _tenants = [];
-  bool _isLoadingTenants = true;
+  
+  // Hardcoded advance payment
+  final double _advancePayment = 100.0;
 
   @override
   void initState() {
     super.initState();
     // Ensure services are loaded
     context.read<ServiceCubit>().fetchServices();
-    _fetchTenants();
     if (widget.preFillDescription != null) {
       _issueController.text = widget.preFillDescription!;
-    }
-  }
-
-  Future<void> _fetchTenants() async {
-    try {
-      final supabase = Supabase.instance.client;
-      final data = await supabase
-          .from('tenants')
-          .select('id, name')
-          .order('name');
-      if (mounted) {
-        setState(() {
-          _tenants = List<Map<String, dynamic>>.from(data);
-          _isLoadingTenants = false;
-          // If we have a pre-selected service, try to matching tenant
-          if (widget.preSelectedService?.tenantId != null) {
-            _selectedBranch = widget.preSelectedService!.tenantId;
-          } else if (_tenants.isNotEmpty) {
-            _selectedBranch = _tenants.first['id'] as String;
-          }
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingTenants = false);
     }
   }
 
@@ -145,8 +116,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => PaymentScreen(
-                  amount: orderAmount,
+                  amount: _advancePayment,
                   orderId: 'temp_id', // Would be real in production
+                  serviceName: 'advancePayment'.tr(),
                 ),
               ),
             ).then((paid) {
@@ -342,7 +314,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '${widget.preSelectedService!.price.toStringAsFixed(2)} TMT • ${widget.preSelectedService!.durationHours}h',
+                                          '${widget.preSelectedService!.price.toStringAsFixed(2)} TMT',
                                           style: TextStyle(
                                             color: Theme.of(context).hintColor,
                                             fontSize: 12,
@@ -436,90 +408,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // --- BRANCH SELECTION ---
-                          _buildLabel('serviceCenter'.tr()),
-                          if (_isLoadingTenants)
-                            const Center(child: CircularProgressIndicator())
-                          else
-                            DropdownButtonFormField<String>(
-                              initialValue: _selectedBranch,
-                              dropdownColor: Theme.of(context).cardColor,
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.color,
-                              ),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(
-                                  Icons.store,
-                                  color: Colors.blue,
-                                ),
-                                hintText: 'selectLocation'.tr(),
-                                hintStyle: TextStyle(
-                                  color: Theme.of(context).hintColor,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              items: _tenants
-                                  .map(
-                                    (t) => DropdownMenuItem(
-                                      value: t['id'] as String,
-                                      child: Text(t['name'] as String),
-                                    ),
-                                  )
-                                  .toList(),
-                              validator: (v) =>
-                                  v == null ? 'locationRequired'.tr() : null,
-                              onChanged: (val) {
-                                AppHaptics.selection();
-                                setState(() => _selectedBranch = val);
-                              },
-                            ),
-                          const SizedBox(height: 20),
-
-                          // --- URGENCY & DATE ---
+                          // --- DATE ---
                           Row(
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildLabel('urgency'.tr()),
-                                    DropdownButtonFormField<String>(
-                                      initialValue: _selectedUrgency,
-                                      dropdownColor: Theme.of(
-                                        context,
-                                      ).cardColor,
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).textTheme.bodyLarge?.color,
-                                      ),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                      ),
-                                      items: _urgencies
-                                          .map(
-                                            (u) => DropdownMenuItem(
-                                              value: u,
-                                              child: Text(u.tr()),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (val) {
-                                        AppHaptics.selection();
-                                        setState(() => _selectedUrgency = val!);
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -662,8 +553,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                   _issueController.text,
                                   vehicleId: _selectedVehicleId,
                                   scheduledAt: _scheduledAt,
-                                  branchName: _selectedBranch,
-                                  urgencyLevel: _selectedUrgency,
+                                  branchName: tenantId != null ? 'Tenant ID: $tenantId' : 'Unknown', // Using tenant fallback
+                                  urgencyLevel: 'normal',
                                   serviceId:
                                       _selectedServiceId ??
                                       widget.preSelectedService?.id,

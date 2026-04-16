@@ -10,6 +10,8 @@ import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/cubits/profile_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
+import 'package:supa/cubits/tenant_cubit.dart';
+import 'package:supa/cubits/review_cubit.dart';
 import 'package:supa/screens/splash/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -61,7 +63,9 @@ class MainApp extends StatelessWidget {
         BlocProvider(create: (context) => GarageCubit()..fetchVehicles()),
         BlocProvider(create: (context) => OrderCubit()..fetchMyOrders()),
         BlocProvider(create: (context) => ServiceCubit()..fetchServices()),
+        BlocProvider(create: (context) => TenantCubit()..fetchTenants()),
         BlocProvider(create: (context) => ProfileCubit()..fetchProfile()),
+        BlocProvider(create: (context) => ReviewCubit()),
         BlocProvider(
           create: (context) => ThemeCubit(context.read<ProfileCubit>()),
         ),

@@ -155,6 +155,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     0,
                     (sum, order) => sum + (order.totalPrice ?? 0),
                   );
+              
+              // Advances calculation (100 TMT per non-cancelled order)
+              final totalAdvances = orders
+                  .where((o) => o.status != 'cancelled')
+                  .length * 100.0;
 
               // daily revenue for chart
               final Map<String, double> dailyRevenue = {};
@@ -225,15 +230,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _StatCard(
-                          title: 'totalRevenue'.tr(),
-                          value: isLoading
-                              ? '000.00 TMT'
-                              : '${totalRevenue.toStringAsFixed(2)} TMT',
-                          icon: Icons.monetization_on,
-                          color: Colors.teal,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                title: 'totalRevenue'.tr(),
+                                value: isLoading
+                                    ? '000.00 TMT'
+                                    : '${totalRevenue.toStringAsFixed(2)} TMT',
+                                icon: Icons.monetization_on,
+                                color: Colors.teal,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _StatCard(
+                                title: 'User Advances', // Will show as User Advances 
+                                value: isLoading 
+                                    ? '000.00 TMT' 
+                                    : '${totalAdvances.toStringAsFixed(2)} TMT',
+                                icon: Icons.account_balance_wallet,
+                                color: Colors.purple,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
                         const SizedBox(height: 32),
 
                         // Pie Chart
