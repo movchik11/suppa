@@ -3,7 +3,6 @@ import 'package:supa/models/vehicle_model.dart';
 import 'package:supa/models/expense_model.dart';
 import 'package:supa/models/document_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supa/services/cache_service.dart';
 import 'package:supa/services/notification_service.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -43,8 +42,9 @@ class GarageCubit extends Cubit<GarageState> {
 
   Future<Uint8List> _compressImage(XFile file) async {
     final bytes = await file.readAsBytes();
-    if (bytes.length < 500 * 1024)
+    if (bytes.length < 500 * 1024) {
       return bytes; // Don't compress if small enough
+    }
 
     final result = await FlutterImageCompress.compressWithList(
       bytes,

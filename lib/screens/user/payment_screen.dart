@@ -181,7 +181,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF6C63FF).withOpacity(0.35),
+                    const Color(0xFF6C63FF).withValues(alpha: 0.35),
                     Colors.transparent,
                   ],
                 ),
@@ -199,7 +199,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00D2FF).withOpacity(0.20),
+                    const Color(0xFF00D2FF).withValues(alpha: 0.20),
                     Colors.transparent,
                   ],
                 ),
@@ -225,9 +225,9 @@ class _PaymentScreenState extends State<PaymentScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withOpacity(0.12)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_new,
@@ -259,7 +259,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         Text(
           widget.serviceName ?? 'totalAmount'.tr(),
           style: TextStyle(
-            color: Colors.white.withOpacity(0.55),
+            color: Colors.white.withValues(alpha: 0.55),
             fontSize: 14,
             letterSpacing: 0.5,
           ),
@@ -274,7 +274,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               child: Text(
                 'TMT',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 20,
                   fontWeight: FontWeight.w500,
                 ),
@@ -307,9 +307,9 @@ class _PaymentScreenState extends State<PaymentScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
         children: methods.map((m) {
@@ -333,7 +333,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF6C63FF).withOpacity(0.4),
+                            color: const Color(
+                              0xFF6C63FF,
+                            ).withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -347,7 +349,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       m['icon'] as IconData,
                       color: isSelected
                           ? Colors.white
-                          : Colors.white.withOpacity(0.45),
+                          : Colors.white.withValues(alpha: 0.45),
                       size: 22,
                     ),
                     const SizedBox(height: 4),
@@ -356,7 +358,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       style: TextStyle(
                         color: isSelected
                             ? Colors.white
-                            : Colors.white.withOpacity(0.45),
+                            : Colors.white.withValues(alpha: 0.45),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -400,7 +402,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4A3AFF).withOpacity(0.5),
+            color: const Color(0xFF4A3AFF).withValues(alpha: 0.5),
             blurRadius: 30,
             spreadRadius: -5,
             offset: const Offset(0, 16),
@@ -443,7 +445,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -477,7 +479,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         Text(
                           'CARDHOLDER',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.55),
+                            color: Colors.white.withValues(alpha: 0.55),
                             fontSize: 9,
                             letterSpacing: 1.5,
                           ),
@@ -500,7 +502,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         Text(
                           'EXPIRES',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.55),
+                            color: Colors.white.withValues(alpha: 0.55),
                             fontSize: 9,
                             letterSpacing: 1.5,
                           ),
@@ -541,7 +543,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF4A3AFF).withOpacity(0.5),
+              color: const Color(0xFF4A3AFF).withValues(alpha: 0.5),
               blurRadius: 30,
               offset: const Offset(0, 16),
             ),
@@ -552,7 +554,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           children: [
             Container(
               height: 45,
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               margin: const EdgeInsets.only(bottom: 20),
             ),
             Row(
@@ -574,7 +576,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   height: 36,
                   margin: const EdgeInsets.only(right: 24),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -709,29 +711,29 @@ class _PaymentScreenState extends State<PaymentScreen>
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
           labelStyle: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 13,
           ),
           prefixIcon: Icon(
             icon,
-            color: Colors.white.withOpacity(0.4),
+            color: Colors.white.withValues(alpha: 0.4),
             size: 20,
           ),
           filled: true,
-          fillColor: Colors.white.withOpacity(0.05),
+          fillColor: Colors.white.withValues(alpha: 0.05),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -770,7 +772,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 boxShadow: [
                   BoxShadow(
                     color: (isApple ? Colors.white : const Color(0xFF4285F4))
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -796,7 +798,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               'Tap to authorize with Face ID or fingerprint',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.45),
+                color: Colors.white.withValues(alpha: 0.45),
                 fontSize: 13,
               ),
             ),
@@ -812,14 +814,14 @@ class _PaymentScreenState extends State<PaymentScreen>
       children: [
         Icon(
           Icons.lock_rounded,
-          color: Colors.white.withOpacity(0.35),
+          color: Colors.white.withValues(alpha: 0.35),
           size: 14,
         ),
         const SizedBox(width: 6),
         Text(
           'SSL Encrypted • PCI DSS Certified',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.35),
+            color: Colors.white.withValues(alpha: 0.35),
             fontSize: 12,
             letterSpacing: 0.3,
           ),
@@ -858,13 +860,13 @@ class _PaymentScreenState extends State<PaymentScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-          color: isProcessing ? Colors.white.withOpacity(0.08) : null,
+          color: isProcessing ? Colors.white.withValues(alpha: 0.08) : null,
           borderRadius: BorderRadius.circular(20),
           boxShadow: isProcessing
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0xFF6C63FF).withOpacity(0.45),
+                    color: const Color(0xFF6C63FF).withValues(alpha: 0.45),
                     blurRadius: 24,
                     spreadRadius: -4,
                     offset: const Offset(0, 10),
@@ -888,7 +890,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     Text(
                       'Processing...',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1012,7 +1014,7 @@ class _CardShimmerPainter extends CustomPainter {
       ..shader = LinearGradient(
         colors: [
           Colors.transparent,
-          Colors.white.withOpacity(0.08),
+          Colors.white.withValues(alpha: 0.08),
           Colors.transparent,
         ],
         stops: const [0.35, 0.5, 0.65],
@@ -1109,7 +1111,7 @@ class _PaymentSuccessScreenState extends State<_PaymentSuccessScreen>
                                   BoxShadow(
                                     color: const Color(
                                       0xFF22C55E,
-                                    ).withOpacity(0.5),
+                                    ).withValues(alpha: 0.5),
                                     blurRadius: 40,
                                     spreadRadius: 5,
                                   ),
@@ -1144,7 +1146,7 @@ class _PaymentSuccessScreenState extends State<_PaymentSuccessScreen>
                           'orderConfirmed'.tr(),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                             fontSize: 15,
                           ),
                         ).animate(delay: 400.ms).fadeIn(),
@@ -1153,10 +1155,10 @@ class _PaymentSuccessScreenState extends State<_PaymentSuccessScreen>
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.06),
+                            color: Colors.white.withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                             ),
                           ),
                           child: Column(
@@ -1195,7 +1197,7 @@ class _PaymentSuccessScreenState extends State<_PaymentSuccessScreen>
                                 BoxShadow(
                                   color: const Color(
                                     0xFF6C63FF,
-                                  ).withOpacity(0.45),
+                                  ).withValues(alpha: 0.45),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -1232,7 +1234,10 @@ class _PaymentSuccessScreenState extends State<_PaymentSuccessScreen>
       children: [
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 13),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.45),
+            fontSize: 13,
+          ),
         ),
         Text(
           value,
@@ -1266,7 +1271,7 @@ class _ParticlePainter extends CustomPainter {
         const Color(0xFF22C55E),
         const Color(0xFFF59E0B),
         Colors.pinkAccent,
-      ][rng.nextInt(5)].withOpacity(0.6 + rng.nextDouble() * 0.4),
+      ][rng.nextInt(5)].withValues(alpha: 0.6 + rng.nextDouble() * 0.4),
       phase: rng.nextDouble() * math.pi * 2,
     );
   });
@@ -1279,7 +1284,7 @@ class _ParticlePainter extends CustomPainter {
       final y = (p.yStart - t * 1.5) * size.height;
       if (y < -20) continue;
       final x = p.x * size.width + math.sin(t * math.pi * 3 + p.phase) * 30;
-      paint.color = p.color.withOpacity(p.color.opacity * (1 - t * 0.6));
+      paint.color = p.color.withValues(alpha: p.color.a * (1 - t * 0.6));
       canvas.drawCircle(Offset(x, y), p.size * (1 - t * 0.5), paint);
     }
   }

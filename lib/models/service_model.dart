@@ -22,6 +22,7 @@ class Service {
   final String? estimatedTime;
   @HiveField(8)
   final String? tenantId;
+  final String? tenantName;
 
   Service({
     required this.id,
@@ -33,6 +34,7 @@ class Service {
     this.imageUrl,
     this.estimatedTime,
     this.tenantId,
+    this.tenantName,
   });
 
   factory Service.fromMap(Map<String, dynamic> map) {
@@ -46,6 +48,7 @@ class Service {
       category: map['category'] ?? 'General',
       estimatedTime: map['estimated_time'],
       tenantId: map['tenant_id'],
+      tenantName: map['tenants'] != null ? map['tenants']['name'] : null,
     );
   }
 

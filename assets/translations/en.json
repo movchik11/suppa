@@ -320,5 +320,14 @@
     "processingPayment": "Processing...",
     "addServiceCenter": "Add Service Center",
     "serviceCenterName": "Service Center Name",
-    "serviceCenterHint": "e.g. Auto Masters VIP"
+    "serviceCenterHint": "e.g. Auto Masters VIP",
+    "noServiceCentersFound": "No Service Centers Found",
+    "totalServiceCenters": "Total Service Centers",
+    "quickActions": "Quick Actions",
+    "centers": "Centers",
+    "allServiceCenters": "All Service Centers",
+    "mechanicPanel": "Mechanic Panel",
+    "orders": "Orders",
+    "create": "Create",
+    "noServiceCentersAvailable": "No service centers found. Please create one in the Admin Panel first."
 }

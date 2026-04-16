@@ -26,8 +26,11 @@ class ServiceError extends ServiceState {
 // Cubit
 class ServiceCubit extends Cubit<ServiceState> {
   final SupabaseClient supabase;
+  final String? tenantId;
 
-  ServiceCubit() : supabase = Supabase.instance.client, super(ServiceInitial());
+  ServiceCubit({this.tenantId})
+    : supabase = Supabase.instance.client,
+      super(ServiceInitial());
 
   // Fetch all services
   Future<void> fetchServices() async {
@@ -43,10 +46,13 @@ class ServiceCubit extends Cubit<ServiceState> {
 
     try {
       // 2. Fetch from network
-      final data = await supabase
-          .from('services')
-          .select()
-          .order('created_at', ascending: false);
+      var query = supabase.from('services').select('*, tenants(name)');
+
+      if (tenantId != null) {
+        query = query.eq('tenant_id', tenantId!);
+      }
+
+      final data = await query.order('created_at', ascending: false);
 
       final List<Service> services = (data as List)
           .map((item) => Service.fromMap(item))

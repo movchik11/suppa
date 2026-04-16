@@ -2,21 +2,112 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
+import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  String? _selectedTenantId;
+  bool _isAdmin = false;
+  List<Map<String, dynamic>> _tenants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      _isAdmin = authState.role == 'admin';
+      _selectedTenantId = authState.tenantId;
+    }
+    if (_isAdmin) {
+      _fetchTenants();
+    }
+  }
+
+  Future<void> _fetchTenants() async {
+    try {
+      final supabase = context.read<AuthCubit>().supabase;
+      final data = await supabase
+          .from('tenants')
+          .select('id, name')
+          .order('name');
+      if (mounted) {
+        setState(() {
+          _tenants = List<Map<String, dynamic>>.from(data);
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => OrderCubit()..fetchAllOrders(),
+      create: (context) =>
+          OrderCubit(tenantId: _selectedTenantId)..fetchAllOrders(),
+      key: ValueKey(
+        _selectedTenantId,
+      ), // Re-create cubit when tenant selection changes
       child: Scaffold(
         appBar: AppBar(
           title: Text('dashboard'.tr()),
+          bottom: _isAdmin && _tenants.isNotEmpty
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(60),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor.withAlpha(150),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor.withAlpha(50),
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: _selectedTenantId,
+                          isExpanded: true,
+                          hint: Text(
+                            'allServiceCenters'.tr().isEmpty
+                                ? 'All Service Centers'
+                                : 'allServiceCenters'.tr(),
+                          ),
+                          items: [
+                            DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                'allServiceCenters'.tr().isEmpty
+                                    ? 'All Service Centers'
+                                    : 'allServiceCenters'.tr(),
+                              ),
+                            ),
+                            ..._tenants.map(
+                              (t) => DropdownMenuItem(
+                                value: t['id'] as String,
+                                child: Text(t['name'] as String),
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            AppHaptics.selection();
+                            setState(() => _selectedTenantId = val);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
           actions: [
             BlocBuilder<ThemeCubit, bool>(
               builder: (context, isLight) {

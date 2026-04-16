@@ -56,9 +56,7 @@ class _HistoryTabState extends State<HistoryTab> {
             final query = _searchQuery.toLowerCase();
             final brand = order.vehicle?.brand.toLowerCase() ?? '';
             final model =
-                (order.vehicle?.model.toLowerCase() ?? '') +
-                ' ' +
-                order.carModel.toLowerCase();
+                '${order.vehicle?.model.toLowerCase() ?? ''} ${order.carModel.toLowerCase()}';
             final desc = order.issueDescription.toLowerCase();
             final status = order.status.toLowerCase();
 

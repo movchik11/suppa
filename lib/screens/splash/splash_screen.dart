@@ -59,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateBasedOnState(AuthCubitState state) {
     if (state is AuthAuthenticated) {
-      if (state.role == 'admin') {
+      if (state.role == 'admin' || state.role == 'mechanic') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const AdminHomeScreen()),

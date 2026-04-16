@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/service_model.dart';
+import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ServicesManagementScreen extends StatelessWidget {
@@ -14,8 +15,14 @@ class ServicesManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthCubit>().state;
+    String? tenantId;
+    if (authState is AuthAuthenticated) {
+      tenantId = authState.tenantId;
+    }
+
     return BlocProvider(
-      create: (context) => ServiceCubit()..fetchServices(),
+      create: (context) => ServiceCubit(tenantId: tenantId)..fetchServices(),
       child: Builder(
         builder: (context) => Scaffold(
           appBar: AppBar(
@@ -155,7 +162,7 @@ class ServicesManagementScreen extends StatelessWidget {
                 durationHours: duration,
                 price: price,
                 category: category,
-                tenantId: tenantId as String?,
+                tenantId: tenantId,
                 image: image,
               );
             },
@@ -186,7 +193,7 @@ class ServicesManagementScreen extends StatelessWidget {
                 durationHours: duration,
                 price: price,
                 category: category,
-                tenantId: tenantId as String?,
+                tenantId: tenantId,
                 newImage: image,
                 existingImageUrl: service.imageUrl,
               );
@@ -383,10 +390,33 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
     );
     _selectedCategory = widget.initialService?.category ?? 'catMaintenance';
     _selectedTenantId = widget.initialService?.tenantId;
+
+    // If tenantId is not set (new service creation) and user is a mechanic,
+    // pre-fill with their assigned tenantId
+    if (_selectedTenantId == null) {
+      final authState = context.read<AuthCubit>().state;
+      if (authState is AuthAuthenticated) {
+        _selectedTenantId = authState.tenantId;
+      }
+    }
+
     _fetchTenants();
   }
 
   Future<void> _fetchTenants() async {
+    final authState = context.read<AuthCubit>().state;
+    bool isAdmin = false;
+    if (authState is AuthAuthenticated) {
+      isAdmin = authState.role == 'admin';
+    }
+
+    if (!isAdmin) {
+      if (mounted) {
+        setState(() => _isLoadingTenants = false);
+      }
+      return;
+    }
+
     try {
       final supabase = Supabase.instance.client;
       // Fetch all tenants to allow linking services
@@ -542,7 +572,8 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                   )
                 else if (_tenants.isNotEmpty) ...[
                   DropdownButtonFormField<String>(
-                    value: _tenants.any((t) => t['id'] == _selectedTenantId)
+                    initialValue:
+                        _tenants.any((t) => t['id'] == _selectedTenantId)
                         ? _selectedTenantId
                         : null,
                     decoration: InputDecoration(
@@ -560,6 +591,27 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                     }).toList(),
                     onChanged: (val) => setState(() => _selectedTenantId = val),
                     validator: (value) => value == null ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                ] else if (_selectedTenantId != null) ...[
+                  // Locked tenant view for Mechanics
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withAlpha(50)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.business, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Service Center Locked',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ] else ...[
@@ -589,7 +641,7 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                 ],
                 // Category Selection First (moved up for better flow)
                 DropdownButtonFormField<String>(
-                  value: _categories.contains(_selectedCategory)
+                  initialValue: _categories.contains(_selectedCategory)
                       ? _selectedCategory
                       : _categories.first,
                   decoration: InputDecoration(

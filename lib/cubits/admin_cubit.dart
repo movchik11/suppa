@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supa/models/tenant_model.dart';
+import 'package:supa/models/service_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // States
@@ -141,9 +142,85 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
+  Future<void> updateTenant({
+    required String id,
+    required String name,
+    String? address,
+    String? phone,
+  }) async {
+    try {
+      await supabase
+          .from('tenants')
+          .update({'name': name, 'address': address, 'phone': phone})
+          .eq('id', id);
+      await fetchProfiles();
+    } catch (e) {
+      emit(AdminError('Failed to update tenant: ${e.toString()}'));
+    }
+  }
+
+  Future<void> deleteTenant(String id) async {
+    try {
+      await supabase.from('tenants').delete().eq('id', id);
+      await fetchProfiles();
+    } catch (e) {
+      emit(AdminError('Failed to delete tenant: ${e.toString()}'));
+    }
+  }
+
+  // --- Service Management Per Tenant ---
+
+  Future<List<Service>> fetchServicesForTenant(String tenantId) async {
+    try {
+      final data = await supabase
+          .from('services')
+          .select('*, tenants(name)')
+          .eq('tenant_id', tenantId);
+      return (data as List).map((e) => Service.fromMap(e)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<void> addService(Service service) async {
+    try {
+      await supabase.from('services').insert(service.toMap());
+      await fetchProfiles(); // Refresh everything
+    } catch (e) {
+      emit(AdminError('Failed to add service: ${e.toString()}'));
+    }
+  }
+
+  Future<void> updateService(Service service) async {
+    try {
+      await supabase
+          .from('services')
+          .update(service.toMap())
+          .eq('id', service.id);
+      await fetchProfiles();
+    } catch (e) {
+      emit(AdminError('Failed to update service: ${e.toString()}'));
+    }
+  }
+
+  Future<void> deleteService(String serviceId) async {
+    try {
+      await supabase.from('services').delete().eq('id', serviceId);
+      await fetchProfiles();
+    } catch (e) {
+      emit(AdminError('Failed to delete service: ${e.toString()}'));
+    }
+  }
+
   Future<List<Tenant>> fetchTenants() async {
     try {
-      final data = await supabase.from('tenants').select();
+      var query = supabase.from('tenants').select();
+
+      if (tenantId != null) {
+        query = query.eq('id', tenantId!);
+      }
+
+      final data = await query;
       return (data as List).map((e) => Tenant.fromMap(e)).toList();
     } catch (e) {
       return [];

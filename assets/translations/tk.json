@@ -228,7 +228,7 @@
     "sortDurationAsc": "Wagt: Gysgadan uzyna",
     "sortDurationDesc": "Wagt: Uzandan gysga",
     "phone": "Telefon",
-    "dashboard": "Daşbord",
+    "dashboard": "Dolandyrysh paneli",
     "totalOrders": "Ähli sargytlar",
     "orderStatusDistribution": "Sargyt ýagdaýlary",
     "noOrdersToStatistics": "Statistika üçin heniz sargyt ýok",
@@ -320,5 +320,14 @@
     "processingPayment": "Işlenilýär...",
     "addServiceCenter": "Awtohyzmat merkezi goş",
     "serviceCenterName": "Awtohyzmat ady",
-    "serviceCenterHint": "mysal üçin: Auto Masters"
+    "serviceCenterHint": "mysal üçin: Auto Masters",
+    "noServiceCentersFound": "Awtohyzmatlar tapylmady",
+    "totalServiceCenters": "Jemi awtohyzmatlar",
+    "quickActions": "Çalt amallar",
+    "centers": "Şahamçalar",
+    "allServiceCenters": "Ähli awtohyzmatlar",
+    "mechanicPanel": "Mehanik paneli",
+    "orders": "Sargytlar",
+    "create": "Döret",
+    "noServiceCentersAvailable": "Awtohyzmat tapylmady. Ilki bilen administrator panelinde dörediň."
 }

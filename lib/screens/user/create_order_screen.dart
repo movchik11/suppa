@@ -10,6 +10,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/utils/haptics.dart';
 import 'package:supa/components/ui/skeleton_wrapper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:supa/screens/user/payment_screen.dart';
 
 class CreateOrderScreen extends StatefulWidget {
@@ -39,15 +40,41 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   String _selectedUrgency = 'normal';
 
   final List<String> _urgencies = ['normal', 'urgent', 'emergency'];
-  final List<String> _branches = ['mainBranch', 'westBranch'];
+  List<Map<String, dynamic>> _tenants = [];
+  bool _isLoadingTenants = true;
 
   @override
   void initState() {
     super.initState();
     // Ensure services are loaded
     context.read<ServiceCubit>().fetchServices();
+    _fetchTenants();
     if (widget.preFillDescription != null) {
       _issueController.text = widget.preFillDescription!;
+    }
+  }
+
+  Future<void> _fetchTenants() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final data = await supabase
+          .from('tenants')
+          .select('id, name')
+          .order('name');
+      if (mounted) {
+        setState(() {
+          _tenants = List<Map<String, dynamic>>.from(data);
+          _isLoadingTenants = false;
+          // If we have a pre-selected service, try to matching tenant
+          if (widget.preSelectedService?.tenantId != null) {
+            _selectedBranch = widget.preSelectedService!.tenantId;
+          } else if (_tenants.isNotEmpty) {
+            _selectedBranch = _tenants.first['id'] as String;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingTenants = false);
     }
   }
 
@@ -123,6 +150,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                 ),
               ),
             ).then((paid) {
+              if (!context.mounted) return;
               if (paid == true) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -317,8 +345,23 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                                           '${widget.preSelectedService!.price.toStringAsFixed(2)} TMT • ${widget.preSelectedService!.durationHours}h',
                                           style: TextStyle(
                                             color: Theme.of(context).hintColor,
+                                            fontSize: 12,
                                           ),
                                         ),
+                                        if (widget
+                                                .preSelectedService!
+                                                .tenantName !=
+                                            null) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Center: ${widget.preSelectedService!.tenantName}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.blue,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -395,42 +438,45 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
 
                           // --- BRANCH SELECTION ---
                           _buildLabel('serviceCenter'.tr()),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedBranch,
-                            dropdownColor: Theme.of(context).cardColor,
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.color,
+                          if (_isLoadingTenants)
+                            const Center(child: CircularProgressIndicator())
+                          else
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedBranch,
+                              dropdownColor: Theme.of(context).cardColor,
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge?.color,
+                              ),
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(
+                                  Icons.store,
+                                  color: Colors.blue,
+                                ),
+                                hintText: 'selectLocation'.tr(),
+                                hintStyle: TextStyle(
+                                  color: Theme.of(context).hintColor,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              items: _tenants
+                                  .map(
+                                    (t) => DropdownMenuItem(
+                                      value: t['id'] as String,
+                                      child: Text(t['name'] as String),
+                                    ),
+                                  )
+                                  .toList(),
+                              validator: (v) =>
+                                  v == null ? 'locationRequired'.tr() : null,
+                              onChanged: (val) {
+                                AppHaptics.selection();
+                                setState(() => _selectedBranch = val);
+                              },
                             ),
-                            decoration: InputDecoration(
-                              prefixIcon: const Icon(
-                                Icons.store,
-                                color: Colors.blue,
-                              ),
-                              hintText: 'selectLocation'.tr(),
-                              hintStyle: TextStyle(
-                                color: Theme.of(context).hintColor,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: _branches
-                                .map(
-                                  (b) => DropdownMenuItem(
-                                    value: b,
-                                    child: Text(b.tr()),
-                                  ),
-                                )
-                                .toList(),
-                            validator: (v) =>
-                                v == null ? 'locationRequired'.tr() : null,
-                            onChanged: (val) {
-                              AppHaptics.selection();
-                              setState(() => _selectedBranch = val);
-                            },
-                          ),
                           const SizedBox(height: 20),
 
                           // --- URGENCY & DATE ---

@@ -320,5 +320,14 @@
     "processingPayment": "Обработка...",
     "addServiceCenter": "Добавить автосервис",
     "serviceCenterName": "Название автосервиса",
-    "serviceCenterHint": "напр.: Auto Masters VIP"
+    "serviceCenterHint": "напр.: Auto Masters VIP",
+    "noServiceCentersFound": "Автосервисы не найдены",
+    "totalServiceCenters": "Всего автосервисов",
+    "quickActions": "Быстрые действия",
+    "centers": "Филиалы",
+    "allServiceCenters": "Все автосервисы",
+    "mechanicPanel": "Панель механика",
+    "orders": "Заказы",
+    "create": "Создать",
+    "noServiceCentersAvailable": "Автосервисы не найдены. Сначала создайте их в панели администратора."
 }

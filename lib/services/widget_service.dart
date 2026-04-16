@@ -17,7 +17,7 @@ class WidgetService {
 
       await HomeWidget.updateWidget(androidName: androidWidgetName);
     } catch (e) {
-      print('Error updating widget: $e');
+      // Diagnostic logging could be added here if needed
     }
   }
 

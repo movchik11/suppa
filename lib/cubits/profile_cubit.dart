@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supa/services/cache_service.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:typed_data';

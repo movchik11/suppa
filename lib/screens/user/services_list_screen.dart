@@ -142,6 +142,27 @@ class _ServiceListItem extends StatelessWidget {
                       fontSize: 20,
                     ),
                   ),
+                  if (service.tenantName != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.business,
+                          size: 14,
+                          color: Colors.blue,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          service.tenantName!,
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
                     service.description,

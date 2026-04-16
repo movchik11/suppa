@@ -26,8 +26,11 @@ class OrderError extends OrderState {
 // Cubit
 class OrderCubit extends Cubit<OrderState> {
   final SupabaseClient supabase;
+  final String? tenantId;
 
-  OrderCubit() : supabase = Supabase.instance.client, super(OrderInitial());
+  OrderCubit({this.tenantId})
+    : supabase = Supabase.instance.client,
+      super(OrderInitial());
 
   // Fetch user's own orders
   Future<void> fetchMyOrders() async {
@@ -74,10 +77,15 @@ class OrderCubit extends Cubit<OrderState> {
   Future<void> fetchAllOrders() async {
     emit(OrderLoading());
     try {
-      final data = await supabase
+      var query = supabase
           .from('orders')
-          .select('*, user:profiles(*), vehicle:vehicles(*)')
-          .order('created_at', ascending: false);
+          .select('*, user:profiles(*), vehicle:vehicles(*)');
+
+      if (tenantId != null) {
+        query = query.eq('tenant_id', tenantId!);
+      }
+
+      final data = await query.order('created_at', ascending: false);
 
       final List<Order> orders = (data as List)
           .map((item) => Order.fromMap(item))

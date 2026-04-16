@@ -4,8 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:supa/services/biometric_service.dart';
 
 // States
 abstract class AuthCubitState {}
@@ -40,9 +38,6 @@ class AuthError extends AuthCubitState {
 class AuthCubit extends Cubit<AuthCubitState> {
   final SupabaseClient supabase;
   final GoogleSignIn _googleSignIn;
-  final BiometricService _biometricService = BiometricService();
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  static const String _biometricEnabledKey = 'biometric_enabled';
 
   AuthCubit()
     : supabase = Supabase.instance.client,
@@ -230,51 +225,6 @@ class AuthCubit extends Cubit<AuthCubitState> {
       await logout();
     } catch (e) {
       emit(AuthError('Failed to delete account: ${e.toString()}'));
-    }
-  }
-
-  // --- Biometric Authentication ---
-
-  Future<void> enableBiometrics(String email, String password) async {
-    try {
-      await _secureStorage.write(key: 'email', value: email);
-      await _secureStorage.write(key: 'password', value: password);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_biometricEnabledKey, true);
-    } catch (e) {
-      // Diagnostic log removed for production
-    }
-  }
-
-  Future<bool> isBiometricAvailable() =>
-      _biometricService.isBiometricAvailable();
-
-  Future<bool> isBiometricEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_biometricEnabledKey) ?? false;
-  }
-
-  Future<void> loginWithBiometrics() async {
-    final bool available = await _biometricService.isBiometricAvailable();
-    final bool enabled = await isBiometricEnabled();
-
-    if (!available || !enabled) {
-      emit(AuthError('Biometric authentication is not enabled or available.'));
-      return;
-    }
-
-    final bool authenticated = await _biometricService.authenticate();
-    if (authenticated) {
-      final emailValue = await _secureStorage.read(key: 'email');
-      final passwordValue = await _secureStorage.read(key: 'password');
-
-      if (emailValue != null && passwordValue != null) {
-        await login(emailValue, passwordValue);
-      } else {
-        emit(
-          AuthError('No saved credentials found. Please login normally once.'),
-        );
-      }
     }
   }
 }

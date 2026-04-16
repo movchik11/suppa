@@ -1,4 +1,5 @@
 import 'package:supa/screens/admin/admin_home_screen.dart';
+import 'package:supa/screens/admin/mechanic_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/components/glass_container.dart';
@@ -22,52 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final password = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
-  bool _canCheckBiometrics = false;
-  bool _biometricsEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _checkBiometrics();
-  }
-
-  Future<void> _checkBiometrics() async {
-    final authCubit = context.read<AuthCubit>();
-    final available = await authCubit.isBiometricAvailable();
-    final enabled = await authCubit.isBiometricEnabled();
-    if (mounted) {
-      setState(() {
-        _canCheckBiometrics = available;
-        _biometricsEnabled = enabled;
-      });
-      // Auto-trigger if enabled
-      if (enabled) {
-        authCubit.loginWithBiometrics();
-      }
-    }
-  }
-
-  void _showEnableBiometricDialog(String email, String pass) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('enableBiometricsTitle'.tr()),
-        content: Text('enableBiometricsDesc'.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('notNow'.tr()),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              this.context.read<AuthCubit>().enableBiometrics(email, pass);
-              Navigator.pop(context);
-            },
-            child: Text('enable'.tr()),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -79,16 +38,19 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
         } else if (state is AuthAuthenticated) {
-          // Check if we should prompt to enable biometrics
-          if (_canCheckBiometrics && !_biometricsEnabled) {
-            _showEnableBiometricDialog(email.text, password.text);
-          }
-
           if (state.role == 'admin') {
             Navigator.pushAndRemoveUntil(
               context,
               AnimationUtils.createSharedAxisRoute(
                 page: const AdminHomeScreen(),
+              ),
+              (route) => false,
+            );
+          } else if (state.role == 'mechanic') {
+            Navigator.pushAndRemoveUntil(
+              context,
+              AnimationUtils.createSharedAxisRoute(
+                page: const MechanicHomeScreen(),
               ),
               (route) => false,
             );
@@ -169,11 +131,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 40),
                             TextFormField(
                               controller: email,
-                              style: const TextStyle(color: Colors.white),
                               keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
                                 labelText: 'emailLabel'.tr(),
                                 prefixIcon: const Icon(Icons.email_outlined),
+                                labelStyle:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? const TextStyle(color: Colors.black54)
+                                    : const TextStyle(color: Colors.white70),
+                                prefixIconColor:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.black54
+                                    : Colors.white70,
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -189,16 +160,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextFormField(
                               controller: password,
                               obscureText: !_isPasswordVisible,
-                              style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
                                 labelText: 'passwordLabel'.tr(),
                                 prefixIcon: const Icon(Icons.lock_outline),
+                                labelStyle:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? const TextStyle(color: Colors.black54)
+                                    : const TextStyle(color: Colors.white70),
+                                prefixIconColor:
+                                    Theme.of(context).brightness ==
+                                        Brightness.light
+                                    ? Colors.black54
+                                    : Colors.white70,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible
                                         ? Icons.visibility_outlined
                                         : Icons.visibility_off_outlined,
-                                    color: Colors.white70,
+                                    color:
+                                        Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Colors.black54
+                                        : Colors.white70,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -235,21 +219,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     },
                                     child: Text('login'.tr()),
                                   ),
-                            if (_canCheckBiometrics && _biometricsEnabled) ...[
-                              const SizedBox(height: 16),
-                              Center(
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.fingerprint,
-                                    color: Colors.white,
-                                    size: 40,
-                                  ),
-                                  onPressed: () => context
-                                      .read<AuthCubit>()
-                                      .loginWithBiometrics(),
-                                ),
-                              ),
-                            ],
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,

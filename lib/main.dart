@@ -10,8 +10,6 @@ import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/cubits/profile_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
-import 'package:supa/cubits/gemini_chat_cubit.dart';
-import 'package:supa/services/gemini_service.dart';
 import 'package:supa/screens/splash/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -67,7 +65,6 @@ class MainApp extends StatelessWidget {
         BlocProvider(
           create: (context) => ThemeCubit(context.read<ProfileCubit>()),
         ),
-        BlocProvider(create: (context) => GeminiChatCubit(GeminiService())),
       ],
       child: BlocListener<AuthCubit, AuthCubitState>(
         listener: (context, state) {

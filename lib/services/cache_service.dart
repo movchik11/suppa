@@ -6,7 +6,6 @@ import 'package:supa/models/profile_model.dart';
 import 'package:supa/models/expense_model.dart';
 import 'package:supa/models/document_model.dart';
 import 'package:supa/models/review_model.dart';
-import 'package:supa/cubits/gemini_chat_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CacheService {
@@ -14,7 +13,6 @@ class CacheService {
   static const String ordersBox = 'orders';
   static const String vehiclesBox = 'vehicles';
   static const String profileBox = 'profile';
-  static const String chatBox = 'chat_history';
   static const String expensesBox = 'expenses';
   static const String documentsBox = 'documents';
   static const String reviewsBox = 'reviews';
@@ -23,23 +21,34 @@ class CacheService {
     await Hive.initFlutter();
 
     // Register Adapters
-    if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(ServiceAdapter());
-    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(VehicleAdapter());
-    if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(OrderAdapter());
-    if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(ProfileAdapter());
-    if (!Hive.isAdapterRegistered(4))
-      Hive.registerAdapter(ChatMessageAdapter());
-    if (!Hive.isAdapterRegistered(5)) Hive.registerAdapter(ExpenseAdapter());
-    if (!Hive.isAdapterRegistered(6))
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(ServiceAdapter());
+    }
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(VehicleAdapter());
+    }
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(OrderAdapter());
+    }
+    if (!Hive.isAdapterRegistered(3)) {
+      Hive.registerAdapter(ProfileAdapter());
+    }
+
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(ExpenseAdapter());
+    }
+    if (!Hive.isAdapterRegistered(6)) {
       Hive.registerAdapter(VehicleDocumentAdapter());
-    if (!Hive.isAdapterRegistered(7)) Hive.registerAdapter(ReviewAdapter());
+    }
+    if (!Hive.isAdapterRegistered(7)) {
+      Hive.registerAdapter(ReviewAdapter());
+    }
 
     // Open Boxes
     await Hive.openBox<Service>(servicesBox);
     await Hive.openBox<Order>(ordersBox);
     await Hive.openBox<Vehicle>(vehiclesBox);
     await Hive.openBox<Profile>(profileBox);
-    await Hive.openBox<ChatMessage>(chatBox);
     await Hive.openBox<Expense>(expensesBox);
     await Hive.openBox<VehicleDocument>(documentsBox);
     await Hive.openBox<Review>(reviewsBox);
@@ -74,7 +83,6 @@ class CacheService {
     await Hive.box<Order>(ordersBox).clear();
     await Hive.box<Vehicle>(vehiclesBox).clear();
     await Hive.box<Profile>(profileBox).clear();
-    await Hive.box<ChatMessage>(chatBox).clear();
     await Hive.box<Expense>(expensesBox).clear();
     await Hive.box<VehicleDocument>(documentsBox).clear();
     await Hive.box<Review>(reviewsBox).clear();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/order_cubit.dart';
+import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/models/order_model.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -15,6 +16,37 @@ class OrdersManagementScreen extends StatefulWidget {
 class _OrdersManagementScreenState extends State<OrdersManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedStatusFilter = 'all';
+  String? _selectedTenantId;
+  bool _isAdmin = false;
+  List<Map<String, dynamic>> _tenants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      _isAdmin = authState.role == 'admin';
+      _selectedTenantId = authState.tenantId;
+    }
+    if (_isAdmin) {
+      _fetchTenants();
+    }
+  }
+
+  Future<void> _fetchTenants() async {
+    try {
+      final supabase = context.read<AuthCubit>().supabase;
+      final data = await supabase
+          .from('tenants')
+          .select('id, name')
+          .order('name');
+      if (mounted) {
+        setState(() {
+          _tenants = List<Map<String, dynamic>>.from(data);
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -25,9 +57,12 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => OrderCubit()
+      create: (context) => OrderCubit(tenantId: _selectedTenantId)
         ..fetchAllOrders()
         ..subscribeToAllOrders(),
+      key: ValueKey(
+        _selectedTenantId,
+      ), // Re-create cubit when tenant selection changes
       child: Scaffold(
         appBar: AppBar(
           title: Text('manageOrders'.tr()),
@@ -65,6 +100,54 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> {
               onPressed: () => context.read<OrderCubit>().fetchAllOrders(),
             ),
           ],
+          bottom: _isAdmin && _tenants.isNotEmpty
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(60),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor.withAlpha(150),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor.withAlpha(50),
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: _selectedTenantId,
+                          isExpanded: true,
+                          hint: Text(
+                            'allServiceCenters'.tr().isEmpty
+                                ? 'All Service Centers'
+                                : 'allServiceCenters'.tr(),
+                          ),
+                          items: [
+                            DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                'allServiceCenters'.tr().isEmpty
+                                    ? 'All Service Centers'
+                                    : 'allServiceCenters'.tr(),
+                              ),
+                            ),
+                            ..._tenants.map(
+                              (t) => DropdownMenuItem(
+                                value: t['id'] as String,
+                                child: Text(t['name'] as String),
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            setState(() => _selectedTenantId = val);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
         ),
         body: Column(
           children: [
@@ -277,7 +360,9 @@ class _OrderCard extends StatelessWidget {
         leading: Icon(_getStatusIcon(), color: _getStatusColor()),
         title: Text(
           order.carModel,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
           _formatDate(order.createdAt),
@@ -343,7 +428,12 @@ class _OrderCard extends StatelessWidget {
                 if (order.user != null) ...[
                   Text(
                     'userDetails'.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _buildDetailRow(
@@ -358,7 +448,12 @@ class _OrderCard extends StatelessWidget {
                 if (order.vehicle != null) ...[
                   Text(
                     'vehicleDetails'.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _buildDetailRow(
@@ -371,14 +466,23 @@ class _OrderCard extends StatelessWidget {
                 ],
                 Text(
                   'serviceIssue'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   order.carModel, // Service title
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
-                Text(order.issueDescription),
+                Text(
+                  order.issueDescription,
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'changeStatus'.tr(),
