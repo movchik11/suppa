@@ -3,6 +3,7 @@ class Tenant {
   final String name;
   final String? address;
   final String? phone;
+  final String? imageUrl;
   final DateTime createdAt;
 
   Tenant({
@@ -10,6 +11,7 @@ class Tenant {
     required this.name,
     this.address,
     this.phone,
+    this.imageUrl,
     required this.createdAt,
   });
 
@@ -19,6 +21,7 @@ class Tenant {
       name: map['name'] ?? '',
       address: map['address'],
       phone: map['phone'],
+      imageUrl: map['image_url'],
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : DateTime.now(),
@@ -26,6 +29,11 @@ class Tenant {
   }
 
   Map<String, dynamic> toMap() {
-    return {'name': name, 'address': address, 'phone': phone};
+    return {
+      'name': name,
+      'address': address,
+      'phone': phone,
+      'image_url': imageUrl,
+    };
   }
 }

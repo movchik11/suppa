@@ -119,6 +119,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                   amount: _advancePayment,
                   orderId: 'temp_id', // Would be real in production
                   serviceName: 'advancePayment'.tr(),
+                  isAdvance: true,
                 ),
               ),
             ).then((paid) {

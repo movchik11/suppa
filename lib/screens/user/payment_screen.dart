@@ -12,12 +12,14 @@ class PaymentScreen extends StatefulWidget {
   final double amount;
   final String orderId;
   final String? serviceName;
+  final bool isAdvance;
 
   const PaymentScreen({
     super.key,
     required this.amount,
     required this.orderId,
     this.serviceName,
+    this.isAdvance = false,
   });
 
   @override
@@ -46,6 +48,10 @@ class _PaymentScreenState extends State<PaymentScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ));
     _flipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -238,7 +244,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           ),
           const Spacer(),
           Text(
-            'checkout'.tr(),
+            widget.isAdvance ? 'advancePayment'.tr() : 'checkout'.tr(),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,

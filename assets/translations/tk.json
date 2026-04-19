@@ -1,6 +1,6 @@
-﻿{
+{
     "appTitle": "AutoService",
-    "services": "Hyzmatlar",
+    "services": "Merkezler",
     "assistant": "Asistent",
     "garage": "Meniň Garajym",
     "history": "Sargyt Taryhy",
@@ -175,7 +175,6 @@
     "ourServices": "Biziň hyzmatlarymyz",
     "adminPanel": "Admin panel",
     "manageOrders": "Sargytlary dolandyrmak",
-    "reviewSubmitted": "Seslenme üstünlikli ugradyldy!",
     "rateService": "Hyzmatymyzy bahalandyryň",
     "howWasYourExperience": "Siziň üçin nähili boldy?",
     "submit": "Ugrat",
@@ -329,5 +328,13 @@
     "mechanicPanel": "Mehanik paneli",
     "orders": "Sargytlar",
     "create": "Döret",
-    "noServiceCentersAvailable": "Awtohyzmat tapylmady. Ilki bilen administrator panelinde dörediň."
+    "noServiceCentersAvailable": "Awtohyzmat tapylmady. Ilki bilen administrator panelinde dörediň.",
+    "advancePayment": "Awans",
+    "leaveReview": "Seslenme goýmak",
+    "writeComment": "Tejribäňiz barada ýazyň...",
+    "reviewSubmitted": "Seslenmäňiz üçin sag boluň!",
+    "cannotReviewCustomService": "Aýratyn hyzmatlara seslenme goýup bolmaýar.",
+    "reviewsLabel": "{} hyzmatynyň seslenmeleri",
+    "writeReviewHint": "Seslenmäňizi şu ýere ýazyň...",
+    "submitReview": "Seslenmäni ugrat"
 }

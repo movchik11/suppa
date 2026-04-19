@@ -1,6 +1,6 @@
 {
     "appTitle": "AutoService",
-    "services": "Услуги",
+    "services": "Центры",
     "assistant": "Ассистент",
     "garage": "Мой Гараж",
     "history": "История заказов",
@@ -175,7 +175,6 @@
     "ourServices": "Наши услуги",
     "adminPanel": "Панель админа",
     "manageOrders": "Управление заказами",
-    "reviewSubmitted": "Отзыв успешно отправлен!",
     "rateService": "Оцените наш сервис",
     "howWasYourExperience": "Как все прошло?",
     "submit": "Отправить",
@@ -329,5 +328,13 @@
     "mechanicPanel": "Панель механика",
     "orders": "Заказы",
     "create": "Создать",
-    "noServiceCentersAvailable": "Автосервисы не найдены. Сначала создайте их в панели администратора."
+    "noServiceCentersAvailable": "Автосервисы не найдены. Сначала создайте их в панели администратора.",
+    "advancePayment": "Аванс",
+    "leaveReview": "Оставить отзыв",
+    "writeComment": "Опишите ваши впечатления...",
+    "reviewSubmitted": "Спасибо за ваш отзыв!",
+    "cannotReviewCustomService": "Отзывы невозможны для спец. услуг.",
+    "reviewsLabel": "Отзывы для {}",
+    "writeReviewHint": "Напишите ваш отзыв здесь...",
+    "submitReview": "Оставить отзыв"
 }

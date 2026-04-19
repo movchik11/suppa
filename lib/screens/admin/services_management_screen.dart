@@ -11,18 +11,19 @@ import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ServicesManagementScreen extends StatelessWidget {
-  const ServicesManagementScreen({super.key});
+  final String? tenantId;
+  const ServicesManagementScreen({super.key, this.tenantId});
 
   @override
   Widget build(BuildContext context) {
     final authState = context.read<AuthCubit>().state;
-    String? tenantId;
-    if (authState is AuthAuthenticated) {
-      tenantId = authState.tenantId;
+    String? effectiveTenantId = tenantId;
+    if (effectiveTenantId == null && authState is AuthAuthenticated) {
+      effectiveTenantId = authState.tenantId;
     }
 
     return BlocProvider(
-      create: (context) => ServiceCubit(tenantId: tenantId)..fetchServices(),
+      create: (context) => ServiceCubit(tenantId: effectiveTenantId)..fetchServices(),
       child: Builder(
         builder: (context) => Scaffold(
           appBar: AppBar(
@@ -240,25 +241,27 @@ class _ServiceCard extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0), // Reduced from 12.0
               child: Column(
+                mainAxisSize: MainAxisSize.min, // Use min size
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     service.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 14, // Reduced from 16
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2), // Reduced from 4
                   Text(
-                    '\$${service.price.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: Colors.green[700],
+                    '${service.price.toStringAsFixed(2)} TMT', // Consistent units
+                    style: const TextStyle(
+                      color: Colors.blue, // Theme color
                       fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
                   const Spacer(),
@@ -267,7 +270,7 @@ class _ServiceCard extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        iconSize: 20,
+                        iconSize: 18,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onPressed: () => _showDeleteDialog(context, service.id),
@@ -593,11 +596,11 @@ class _ServiceFormDialogState extends State<_ServiceFormDialog> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.blue.withAlpha(50)),
                     ),
-                    child: Row(
+                    child: const Row(
                       children: [
-                        const Icon(Icons.business, color: Colors.blue),
-                        const SizedBox(width: 12),
-                        const Text(
+                        Icon(Icons.business, color: Colors.blue),
+                        SizedBox(width: 12),
+                        Text(
                           'Service Center Locked',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),

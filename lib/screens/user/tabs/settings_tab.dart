@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/cubits/profile_cubit.dart';
 import 'package:supa/cubits/theme_cubit.dart';
-import 'package:supa/models/profile_model.dart';
 import 'package:supa/screens/auth/login_screen.dart';
-import 'package:supa/screens/user/locations_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 
@@ -14,6 +13,14 @@ class SettingsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsFlutterBinding.ensureInitialized();
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+    );
     return BlocConsumer<ProfileCubit, ProfileState>(
       listener: (context, state) {
         if (state is ProfileActionSuccess) {
@@ -76,28 +83,6 @@ class SettingsTab extends StatelessWidget {
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withAlpha(30),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.contact_mail,
-                                color: Colors.blue,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text('preferredContact'.tr()),
-                            subtitle: Text(profile.preferredContact),
-                            trailing: const Icon(Icons.chevron_right, size: 20),
-                            onTap: () => _showContactPicker(context, profile),
-                          ),
-                          Divider(
-                            height: 1,
-                            color: Theme.of(context).dividerColor.withAlpha(30),
-                          ),
-                          SwitchListTile(
-                            secondary: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
                                 color: Colors.amber.withAlpha(30),
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -108,16 +93,18 @@ class SettingsTab extends StatelessWidget {
                               ),
                             ),
                             title: Text('notifications'.tr()),
-                            value: profile.notificationsEnabled,
-                            activeThumbColor: Colors.blue,
-                            onChanged: (val) {
-                              context.read<ProfileCubit>().updateProfile(
-                                notificationsEnabled: val,
-                                displayName: profile.displayName,
-                                phoneNumber: profile.phoneNumber,
-                                existingAvatarUrl: profile.avatarUrl,
-                              );
-                            },
+                            trailing: Switch(
+                              value: profile.notificationsEnabled,
+                              activeThumbColor: Colors.blue,
+                              onChanged: (val) {
+                                context.read<ProfileCubit>().updateProfile(
+                                  notificationsEnabled: val,
+                                  displayName: profile.displayName,
+                                  phoneNumber: profile.phoneNumber,
+                                  existingAvatarUrl: profile.avatarUrl,
+                                );
+                              },
+                            ),
                           ),
                           Divider(
                             height: 1,
@@ -146,66 +133,6 @@ class SettingsTab extends StatelessWidget {
                             ),
                             trailing: const Icon(Icons.chevron_right, size: 20),
                             onTap: () => _showLanguagePicker(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(context, 'about'.tr()),
-                    Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: Theme.of(context).dividerColor.withAlpha(20),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.purple.withAlpha(30),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.location_on,
-                                color: Colors.purple,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text('ourBranches'.tr()),
-                            trailing: const Icon(Icons.chevron_right, size: 20),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LocationsScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          Divider(
-                            height: 1,
-                            color: Theme.of(context).dividerColor.withAlpha(30),
-                          ),
-                          ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.teal.withAlpha(30),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.support_agent,
-                                color: Colors.teal,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text('contactUs'.tr()),
-                            trailing: const Icon(Icons.chevron_right, size: 20),
-                            onTap: () => _showContactSupport(context),
                           ),
                         ],
                       ),
@@ -500,79 +427,7 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  void _showContactPicker(BuildContext context, Profile profile) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              'preferredContact'.tr(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ...['Phone', 'WhatsApp', 'Telegram', 'Email'].map(
-            (method) => ListTile(
-              title: Text(
-                method.toLowerCase().tr() != method.toLowerCase()
-                    ? method.toLowerCase().tr()
-                    : method,
-              ),
-              trailing: profile.preferredContact == method
-                  ? const Icon(Icons.check, color: Colors.blue)
-                  : null,
-              onTap: () {
-                context.read<ProfileCubit>().updateProfile(
-                  preferredContact: method,
-                  displayName: profile.displayName,
-                  phoneNumber: profile.phoneNumber,
-                  existingAvatarUrl: profile.avatarUrl,
-                );
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
 
-  void _showContactSupport(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('contactUs'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('supportContent'.tr()),
-            const SizedBox(height: 16),
-            const Text(
-              '+993 61 234567',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const Text(
-              'support@autoservice.com',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('close'.tr()),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showLegalDoc(BuildContext context, String type) {
     showModalBottomSheet(

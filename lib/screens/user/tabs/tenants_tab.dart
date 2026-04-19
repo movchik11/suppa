@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/tenant_cubit.dart';
 import 'package:supa/components/app_loading_indicator.dart';
 import 'package:supa/screens/user/tenant_services_screen.dart';
-import 'package:supa/components/ui/bouncy_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class TenantsTab extends StatefulWidget {
@@ -38,113 +37,148 @@ class _TenantsTabState extends State<TenantsTab> {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () => context.read<TenantCubit>().fetchTenants(),
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              itemCount: tenants.length,
-              itemBuilder: (context, index) {
-                final tenant = tenants[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  elevation: 0,
-                  color: Theme.of(context).cardColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(color: Theme.of(context).dividerColor),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Text(
+                  'centers'.tr(),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: BouncyButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TenantServicesScreen(tenant: tenant),
-                        ),
-                      );
-                    },
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TenantServicesScreen(tenant: tenant),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withAlpha(20),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Icon(Icons.business, color: Colors.blue, size: 32),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        tenant.name,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                          color: Theme.of(context).textTheme.titleLarge?.color,
-                                        ),
-                                      ),
-                                      if (tenant.address != null) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          tenant.address!,
-                                          style: TextStyle(
-                                            color: Theme.of(context).hintColor,
-                                            fontSize: 14,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                      if (tenant.phone != null) ...[
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(Icons.phone, size: 14, color: Theme.of(context).hintColor),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              tenant.phone!,
-                                              style: TextStyle(
-                                                color: Theme.of(context).hintColor,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ]
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.chevron_right, color: Colors.grey),
-                              ],
+                ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => context.read<TenantCubit>().fetchTenants(),
+                  child: GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: tenants.length,
+                    itemBuilder: (context, index) {
+                      final tenant = tenants[index];
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          color: Theme.of(context).cardColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(20),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                      ),
-                    ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TenantServicesScreen(tenant: tenant),
+                                  ),
+                                );
+                              },
+                              child: Stack(
+                                children: [
+                                  // Image or Placeholder
+                                  Positioned.fill(
+                                    child: tenant.imageUrl != null
+                                        ? Image.network(
+                                            tenant.imageUrl!,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  Theme.of(context).primaryColor.withAlpha(40),
+                                                  Theme.of(context).primaryColor.withAlpha(10),
+                                                ],
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              Icons.auto_awesome_outlined,
+                                              size: 40,
+                                              color: Theme.of(context).primaryColor.withAlpha(150),
+                                            ),
+                                          ),
+                                  ),
+                                  // Gradient Overlay
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withAlpha(180),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Content
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          tenant.name,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.3,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (tenant.address != null)
+                                          Text(
+                                            tenant.address!,
+                                            style: TextStyle(
+                                              color: Colors.white.withAlpha(200),
+                                              fontSize: 11,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           );
-        } else if (state is TenantError) {
+  } else if (state is TenantError) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

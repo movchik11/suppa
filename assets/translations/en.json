@@ -1,6 +1,6 @@
-﻿{
+{
     "appTitle": "AutoService",
-    "services": "Services",
+    "services": "Centers",
     "assistant": "Assistant",
     "garage": "My Garage",
     "history": "Order History",
@@ -175,7 +175,6 @@
     "ourServices": "Our Services",
     "adminPanel": "Admin Panel",
     "manageOrders": "Manage Orders",
-    "reviewSubmitted": "Review submitted successfully!",
     "rateService": "Rate our service",
     "howWasYourExperience": "How was your experience?",
     "submit": "Submit",
@@ -329,5 +328,13 @@
     "mechanicPanel": "Mechanic Panel",
     "orders": "Orders",
     "create": "Create",
-    "noServiceCentersAvailable": "No service centers found. Please create one in the Admin Panel first."
+    "noServiceCentersAvailable": "No service centers found. Please create one in the Admin Panel first.",
+    "advancePayment": "Advance Payment",
+    "leaveReview": "Rate Service",
+    "writeComment": "Describe your experience...",
+    "reviewSubmitted": "Thank you for your review!",
+    "cannotReviewCustomService": "Custom services cannot be reviewed.",
+    "reviewsLabel": "Reviews for {}",
+    "writeReviewHint": "Write your review here...",
+    "submitReview": "Submit Review"
 }

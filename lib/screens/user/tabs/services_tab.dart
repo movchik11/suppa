@@ -335,14 +335,8 @@ class _ServiceListItem extends StatelessWidget {
                           Icons.category,
                           service.category.tr(),
                         ),
-                        if (service.tenantName != null) ...[
-                          const SizedBox(width: 12),
-                          _buildBadge(
-                            context,
-                            Icons.business,
-                            service.tenantName!,
-                          ),
-                        ],
+                        // Removed branch name badge as requested
+
                       ],
                     ),
                     const SizedBox(height: 20),

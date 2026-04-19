@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/admin/admin_home_screen.dart';
+import 'package:supa/screens/admin/mechanic_home_screen.dart';
 import 'package:supa/screens/auth/login_screen.dart';
 import 'package:supa/screens/home/home_screen.dart';
 import 'package:supa/screens/user/profile_setup_screen.dart';
@@ -59,10 +60,15 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateBasedOnState(AuthCubitState state) {
     if (state is AuthAuthenticated) {
-      if (state.role == 'admin' || state.role == 'mechanic') {
+      if (state.role == 'admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
+        );
+      } else if (state.role == 'mechanic') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MechanicHomeScreen()),
         );
       } else if (state.needsProfileSetup) {
         Navigator.pushReplacement(

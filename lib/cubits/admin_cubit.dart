@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supa/models/tenant_model.dart';
@@ -43,15 +44,17 @@ class AdminCubit extends Cubit<AdminState> {
       }
 
       final profilesData = await query.order('created_at', ascending: false);
+      if (isClosed) return;
       final List<Profile> profiles = (profilesData as List)
           .map((item) => Profile.fromMap(item))
           .toList();
 
       final List<Tenant> tenants = await fetchTenants();
+      if (isClosed) return;
 
       emit(AdminLoaded(profiles, tenants));
     } catch (e) {
-      emit(AdminError('Failed to load data: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to load data: ${e.toString()}'));
     }
   }
 
@@ -98,7 +101,7 @@ class AdminCubit extends Cubit<AdminState> {
 
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to update role: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to update role: ${e.toString()}'));
     }
   }
 
@@ -111,17 +114,19 @@ class AdminCubit extends Cubit<AdminState> {
           .select();
 
       if ((response as List).isEmpty) {
-        emit(
-          AdminError(
-            'Failed to update tenant: No matching user found or permission denied',
-          ),
-        );
+        if (!isClosed) {
+          emit(
+            AdminError(
+              'Failed to update tenant: No matching user found or permission denied',
+            ),
+          );
+        }
         return;
       }
 
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to update tenant: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to update tenant: ${e.toString()}'));
     }
   }
 
@@ -129,16 +134,18 @@ class AdminCubit extends Cubit<AdminState> {
     required String name,
     String? address,
     String? phone,
+    String? imageUrl,
   }) async {
     try {
       await supabase.from('tenants').insert({
         'name': name,
         'address': address,
         'phone': phone,
+        'image_url': imageUrl,
       });
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to create tenant: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to create tenant: ${e.toString()}'));
     }
   }
 
@@ -147,15 +154,21 @@ class AdminCubit extends Cubit<AdminState> {
     required String name,
     String? address,
     String? phone,
+    String? imageUrl,
   }) async {
     try {
       await supabase
           .from('tenants')
-          .update({'name': name, 'address': address, 'phone': phone})
+          .update({
+            'name': name,
+            'address': address,
+            'phone': phone,
+            'image_url': imageUrl,
+          })
           .eq('id', id);
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to update tenant: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to update tenant: ${e.toString()}'));
     }
   }
 
@@ -164,7 +177,7 @@ class AdminCubit extends Cubit<AdminState> {
       await supabase.from('tenants').delete().eq('id', id);
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to delete tenant: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to delete tenant: ${e.toString()}'));
     }
   }
 
@@ -187,7 +200,7 @@ class AdminCubit extends Cubit<AdminState> {
       await supabase.from('services').insert(service.toMap());
       await fetchProfiles(); // Refresh everything
     } catch (e) {
-      emit(AdminError('Failed to add service: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to add service: ${e.toString()}'));
     }
   }
 
@@ -199,7 +212,7 @@ class AdminCubit extends Cubit<AdminState> {
           .eq('id', service.id);
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to update service: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to update service: ${e.toString()}'));
     }
   }
 
@@ -208,7 +221,7 @@ class AdminCubit extends Cubit<AdminState> {
       await supabase.from('services').delete().eq('id', serviceId);
       await fetchProfiles();
     } catch (e) {
-      emit(AdminError('Failed to delete service: ${e.toString()}'));
+      if (!isClosed) emit(AdminError('Failed to delete service: ${e.toString()}'));
     }
   }
 
@@ -224,6 +237,21 @@ class AdminCubit extends Cubit<AdminState> {
       return (data as List).map((e) => Tenant.fromMap(e)).toList();
     } catch (e) {
       return [];
+    }
+  }
+  Future<String?> uploadImage(String filePath, String bucket) async {
+    try {
+      final file = File(filePath);
+      final fileExt = filePath.split('.').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final path = fileName;
+
+      await supabase.storage.from(bucket).upload(path, file);
+
+      final imageUrl = supabase.storage.from(bucket).getPublicUrl(path);
+      return imageUrl;
+    } catch (e) {
+      return null;
     }
   }
 }

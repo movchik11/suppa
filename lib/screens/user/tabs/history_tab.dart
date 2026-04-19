@@ -491,7 +491,7 @@ class _OrderHistoryCard extends StatelessWidget {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('${order.carModel}'),
+                  Text(order.carModel),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

@@ -188,6 +188,8 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
                             )
                           else
                             ...filteredServices.map((service) => _ServiceListItem(service: service)),
+
+                          const SizedBox(height: 100),
                         ],
                       ),
                     );
@@ -251,10 +253,25 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
   }
 }
 
-class _ServiceListItem extends StatelessWidget {
+class _ServiceListItem extends StatefulWidget {
   final Service service;
 
   const _ServiceListItem({required this.service});
+
+  @override
+  State<_ServiceListItem> createState() => _ServiceListItemState();
+}
+
+class _ServiceListItemState extends State<_ServiceListItem> {
+  bool _isReviewsExpanded = false;
+  final _commentController = TextEditingController();
+  int _selectedRating = 5;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +279,7 @@ class _ServiceListItem extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CreateOrderScreen(preSelectedService: service),
+          builder: (context) => CreateOrderScreen(preSelectedService: widget.service),
         ),
       ).then((value) {
         if (value == true && context.mounted) {
@@ -276,238 +293,275 @@ class _ServiceListItem extends StatelessWidget {
       elevation: 0,
       color: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: Theme.of(context).dividerColor.withAlpha(50)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: BouncyButton(
-        onPressed: navigateToBooking,
-        child: InkWell(
-          onTap: navigateToBooking,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (service.imageUrl != null)
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Hero(
-                    tag: 'service_image_${service.id}',
-                    child: CachedNetworkImage(
-                      imageUrl: service.imageUrl!,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.white12),
-                      errorWidget: (context, url, error) => const Icon(Icons.error),
-                    ),
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.service.imageUrl != null)
+            AspectRatio(
+              aspectRatio: 21 / 9,
+              child: Hero(
+                tag: 'service_image_${widget.service.id}',
+                child: CachedNetworkImage(
+                  imageUrl: widget.service.imageUrl!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: Colors.black12),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            service.name,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              color: Theme.of(context).textTheme.titleLarge?.color,
-                            ),
-                          ),
+                    Expanded(
+                      child: Text(
+                        widget.service.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
                         ),
-                        Text(
-                          '${service.price.toStringAsFixed(2)} TMT',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      service.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Theme.of(context).hintColor,
-                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        if (service.estimatedTime != null) ...[
-                          _buildBadge(context, Icons.timer, service.estimatedTime!),
-                          const SizedBox(width: 12),
-                        ],
-                        _buildBadge(context, Icons.category, service.category.tr()),
-                        if (service.tenantName != null) ...[
-                          const SizedBox(width: 12),
-                          _buildBadge(context, Icons.business, service.tenantName!),
-                        ],
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onTap: () => _showReviewsBottomSheet(context, service),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withAlpha(20),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.amber.withAlpha(100)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.star, size: 14, color: Colors.amber),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'reviews'.tr().isEmpty ? 'Reviews' : 'reviews'.tr(),
-                                  style: const TextStyle(fontSize: 12, color: Colors.amber, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      '${widget.service.price.toStringAsFixed(2)} TMT',
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: BouncyButton(
-                        onPressed: navigateToBooking,
-                        child: ElevatedButton(
-                          onPressed: navigateToBooking,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.service.description,
+                  style: TextStyle(
+                    color: Theme.of(context).hintColor,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (widget.service.durationHours > 0)
+                      _buildChip(context, Icons.timer_outlined, '${widget.service.durationHours} h'),
+                    const SizedBox(width: 8),
+                    _buildChip(context, Icons.category_outlined, widget.service.category.tr()),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() => _isReviewsExpanded = !_isReviewsExpanded);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _isReviewsExpanded ? Colors.amber : Colors.amber.withAlpha(20),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.star, size: 16, color: _isReviewsExpanded ? Colors.white : Colors.amber),
+                            const SizedBox(width: 4),
+                            Text(
+                              '5.0',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _isReviewsExpanded ? Colors.white : Colors.amber,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'bookAppointment'.tr(),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                            Icon(
+                              _isReviewsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                              size: 16,
+                              color: _isReviewsExpanded ? Colors.white : Colors.amber,
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadge(BuildContext context, IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withAlpha(128),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.blue),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
+                
+                // Expandable Reviews Section
+                if (_isReviewsExpanded) _buildReviewsSection(context),
+                
+                const SizedBox(height: 20),
+                BouncyButton(
+                  onPressed: navigateToBooking,
+                  child: ElevatedButton(
+                    onPressed: navigateToBooking,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: Text('bookAppointment'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showReviewsBottomSheet(BuildContext context, Service service) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (bottomSheetContext) {
-        return BlocProvider(
-          create: (context) => ReviewCubit()..fetchReviewsByService(service.id),
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.6,
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
+  Widget _buildChip(BuildContext context, IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).dividerColor.withAlpha(10),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Theme.of(context).hintColor),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ReviewCubit()..fetchReviewsByService(widget.service.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Divider(height: 32),
+          Text('leaveReview'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          StatefulBuilder(
+            builder: (context, setReviewState) => Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'reviewsLabel'.tr().isEmpty ? 'Reviews for ${service.name}' : 'reviewsLabel'.tr(args: [service.name]),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) => IconButton(
+                    icon: Icon(index < _selectedRating ? Icons.star : Icons.star_border, color: Colors.amber, size: 28),
+                    onPressed: () => setReviewState(() => _selectedRating = index + 1),
+                  )),
                 ),
-                const Divider(),
-                Expanded(
-                  child: BlocBuilder<ReviewCubit, ReviewState>(
-                    builder: (context, state) {
-                      if (state is ReviewLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is ReviewsLoaded) {
-                        if (state.reviews.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'noReviewsYet'.tr().isEmpty ? 'No reviews yet' : 'noReviewsYet'.tr()
-                            ),
-                          );
-                        }
-                        return ListView.separated(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: state.reviews.length,
-                          separatorBuilder: (_, __) => const Divider(),
-                          itemBuilder: (context, index) {
-                            final review = state.reviews[index];
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.blue.withAlpha(30),
-                                child: const Icon(Icons.person, color: Colors.blue),
-                              ),
-                              title: Row(
-                                children: [
-                                  ...List.generate(5, (i) => Icon(
-                                    i < review.rating ? Icons.star : Icons.star_border,
-                                    size: 16,
-                                    color: Colors.amber,
-                                  )),
-                                ],
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text(review.comment),
-                              ),
-                              trailing: Text(
-                                DateFormat('dd.MM.yyyy').format(review.createdAt),
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      return const SizedBox();
-                    },
+                TextField(
+                  controller: _commentController,
+                  decoration: InputDecoration(
+                    hintText: 'writeReviewHint'.tr(),
+                    filled: true,
+                    fillColor: Theme.of(context).dividerColor.withAlpha(10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                BlocBuilder<ReviewCubit, ReviewState>(
+                  builder: (context, state) {
+                    return ElevatedButton(
+                      onPressed: (state is ReviewLoading)
+                          ? null
+                          : () async {
+                              if (_commentController.text.trim().isEmpty) {
+                                return;
+                              }
+                              await context.read<ReviewCubit>().addReview(
+                                    serviceId: widget.service.id,
+                                    tenantId: widget.service.tenantId ?? '',
+                                    rating: _selectedRating,
+                                    comment: _commentController.text.trim(),
+                                  );
+                              _commentController.clear();
+                              setReviewState(() => _selectedRating = 5);
+                              if (context.mounted) {
+                                context
+                                    .read<ReviewCubit>()
+                                    .fetchReviewsByService(widget.service.id);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.black,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: state is ReviewLoading 
+                        ? const CircularProgressIndicator(color: Colors.black)
+                        : Text('submitReview'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    );
+                  },
                 ),
               ],
             ),
           ),
-        );
-      },
+          const SizedBox(height: 24),
+          BlocBuilder<ReviewCubit, ReviewState>(
+            builder: (context, state) {
+              if (state is ReviewLoading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              if (state is ReviewsLoaded) {
+                if (state.reviews.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: Text(
+                        'noReviewsYet'.tr(),
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: state.reviews.length,
+                  itemBuilder: (context, index) {
+                    final r = state.reviews[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).dividerColor.withAlpha(10),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Row(children: List.generate(5, (i) => Icon(i < r.rating ? Icons.star : Icons.star_border, color: Colors.amber, size: 14))),
+                              const Spacer(),
+                              Text(DateFormat('dd.MM.yyyy').format(r.createdAt), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(r.comment, style: const TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }
+              return const SizedBox();
+            },
+          ),
+        ],
+      ),
     );
   }
 }

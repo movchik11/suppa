@@ -7,7 +7,8 @@ import 'package:supa/models/order_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class OrdersManagementScreen extends StatefulWidget {
-  const OrdersManagementScreen({super.key});
+  final String? tenantId;
+  const OrdersManagementScreen({super.key, this.tenantId});
 
   @override
   State<OrdersManagementScreen> createState() => _OrdersManagementScreenState();
@@ -26,7 +27,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> {
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
       _isAdmin = authState.role == 'admin';
-      _selectedTenantId = authState.tenantId;
+      _selectedTenantId = widget.tenantId ?? authState.tenantId;
     }
     if (_isAdmin) {
       _fetchTenants();
@@ -374,10 +375,23 @@ class _OrderCard extends StatelessWidget {
             Chip(
               label: Text(
                 order.status.toUpperCase(),
-                style: const TextStyle(fontSize: 10),
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
               ),
               backgroundColor: _getStatusColor().withAlpha(51),
               labelStyle: TextStyle(color: _getStatusColor()),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green.withAlpha(30),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.green.withAlpha(100)),
+              ),
+              child: const Text(
+                "ADVANCE PAID",
+                style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(width: 4),
             IconButton(

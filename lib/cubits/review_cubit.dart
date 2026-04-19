@@ -56,6 +56,64 @@ class ReviewCubit extends Cubit<ReviewState> {
     }
   }
 
+  Future<void> addReview({
+    required String serviceId,
+    required String tenantId,
+    required int rating,
+    required String comment,
+  }) async {
+    emit(ReviewLoading());
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        emit(ReviewError('User not authenticated'));
+        return;
+      }
+
+      await supabase.from('reviews').insert({
+        'user_id': userId,
+        'service_id': serviceId,
+        'rating': rating,
+        'comment': comment,
+      });
+
+      emit(ReviewSuccess());
+    } catch (e) {
+      emit(ReviewError('Failed to add review: ${e.toString()}'));
+    }
+  }
+
+  Future<void> fetchReviewsByTenant(String tenantId) async {
+    emit(ReviewLoading());
+    try {
+      final servicesData = await supabase
+          .from('services')
+          .select('id')
+          .eq('tenant_id', tenantId);
+      
+      final serviceIds = (servicesData as List).map((s) => s['id'] as String).toList();
+      
+      if (serviceIds.isEmpty) {
+        emit(ReviewsLoaded([]));
+        return;
+      }
+
+      final data = await supabase
+          .from('reviews')
+          .select()
+          .inFilter('service_id', serviceIds)
+          .order('created_at', ascending: false);
+
+      final List<Review> reviews = (data as List)
+          .map((item) => Review.fromMap(item))
+          .toList();
+
+      emit(ReviewsLoaded(reviews));
+    } catch (e) {
+      emit(ReviewError('Failed to load reviews: ${e.toString()}'));
+    }
+  }
+
   Future<void> fetchReviewsByService(String serviceId) async {
     emit(ReviewLoading());
     try {

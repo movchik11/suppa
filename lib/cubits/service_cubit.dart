@@ -35,9 +35,14 @@ class ServiceCubit extends Cubit<ServiceState> {
   // Fetch all services
   Future<void> fetchServices() async {
     // 1. Load from cache first
-    final cachedServices = CacheService.getCachedData<Service>(
+    final allCached = CacheService.getCachedData<Service>(
       CacheService.servicesBox,
     );
+    
+    final cachedServices = tenantId != null 
+        ? allCached.where((s) => s.tenantId == tenantId).toList()
+        : allCached;
+
     if (cachedServices.isNotEmpty) {
       emit(ServicesLoaded(cachedServices));
     } else {
@@ -61,8 +66,9 @@ class ServiceCubit extends Cubit<ServiceState> {
       // 3. Update cache
       await CacheService.cacheData<Service>(CacheService.servicesBox, services);
 
-      emit(ServicesLoaded(services));
+      if (!isClosed) emit(ServicesLoaded(services));
     } catch (e) {
+      if (isClosed) return;
       // If network fails and we have no cache, show error
       if (CacheService.getCachedData<Service>(
         CacheService.servicesBox,
@@ -113,10 +119,12 @@ class ServiceCubit extends Cubit<ServiceState> {
         'tenant_id': tenantId,
       });
 
-      emit(ServiceCreated());
-      await fetchServices();
+      if (!isClosed) {
+        emit(ServiceCreated());
+        await fetchServices();
+      }
     } catch (e) {
-      emit(ServiceError('Failed to create service: ${e.toString()}'));
+      if (!isClosed) emit(ServiceError('Failed to create service: ${e.toString()}'));
     }
   }
 
@@ -168,7 +176,7 @@ class ServiceCubit extends Cubit<ServiceState> {
 
       await fetchServices();
     } catch (e) {
-      emit(ServiceError('Failed to update service: ${e.toString()}'));
+      if (!isClosed) emit(ServiceError('Failed to update service: ${e.toString()}'));
     }
   }
 

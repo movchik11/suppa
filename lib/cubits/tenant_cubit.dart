@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:supa/models/tenant_model.dart';
-import 'package:supa/services/cache_service.dart';
 
 abstract class TenantState {}
 
