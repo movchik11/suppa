@@ -28,7 +28,6 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen>
     with TickerProviderStateMixin {
-  String _selectedMethod = 'card';
   bool _isCardFlipped = false;
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
@@ -44,6 +43,11 @@ class _PaymentScreenState extends State<PaymentScreen>
   String _displayCardNumber = '**** **** **** ****';
   String _displayHolder = 'YOUR NAME';
   String _displayExpiry = 'MM/YY';
+
+  bool _shouldSaveCard = true;
+  String? _selectedCardId;
+  bool _showNewCardForm = true;
+  List<Map<String, dynamic>> _savedCards = [];
 
   @override
   void initState() {
@@ -70,6 +74,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     _expiryController.addListener(_updateCardDisplay);
     _cvvController.addListener(_updateCvvDisplay);
   }
+
 
   void _updateCardDisplay() {
     setState(() {
@@ -114,7 +119,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PaymentCubit(),
+      create: (_) => PaymentCubit()..fetchSavedCards(),
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0E21),
         body: BlocConsumer<PaymentCubit, PaymentState>(
@@ -125,6 +130,14 @@ class _PaymentScreenState extends State<PaymentScreen>
             } else if (state is PaymentFailure) {
               AppHaptics.error();
               _showErrorSnackbar(context, state.error);
+            } else if (state is SavedCardsLoaded) {
+              setState(() {
+                _savedCards = state.cards;
+                if (_savedCards.isNotEmpty) {
+                  _showNewCardForm = false;
+                  _selectedCardId = _savedCards.first['id'];
+                }
+              });
             }
           },
           builder: (context, state) {
@@ -144,14 +157,14 @@ class _PaymentScreenState extends State<PaymentScreen>
                           const SizedBox(height: 8),
                           _buildAmountSection(),
                           const SizedBox(height: 28),
-                          _buildPaymentMethodTabs(),
+                          _buildSavedCardsSection(context),
                           const SizedBox(height: 24),
-                          if (_selectedMethod == 'card') ...[
+                          if (_showNewCardForm) ...[
                             _buildAnimatedCard(),
                             const SizedBox(height: 24),
                             _buildCardForm(),
-                          ] else
-                            _buildOneClickPayment(),
+                            _buildSaveCardCheckbox(),
+                          ],
                           const SizedBox(height: 24),
                           _buildSecurityBadge(),
                           const SizedBox(height: 24),
@@ -303,80 +316,136 @@ class _PaymentScreenState extends State<PaymentScreen>
     );
   }
 
-  Widget _buildPaymentMethodTabs() {
-    final methods = [
-      {'id': 'card', 'icon': Icons.credit_card_rounded, 'label': 'Card'},
-      {'id': 'apple', 'icon': Icons.apple_rounded, 'label': 'Apple Pay'},
-      {'id': 'google', 'icon': Icons.g_mobiledata_rounded, 'label': 'G Pay'},
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Row(
-        children: methods.map((m) {
-          final isSelected = _selectedMethod == m['id'];
-          return Expanded(
-            child: GestureDetector(
+  Widget _buildSavedCardsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_savedCards.isNotEmpty) ...[
+          Text(
+            'savedCards'.tr().isEmpty ? 'Saved Cards' : 'savedCards'.tr(),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          ..._savedCards.map((card) {
+            final isSelected = _selectedCardId == card['id'];
+            return GestureDetector(
               onTap: () {
-                AppHaptics.selection();
-                setState(() => _selectedMethod = m['id'] as String);
+                setState(() {
+                  _selectedCardId = card['id'];
+                  _showNewCardForm = false;
+                });
               },
-              child: AnimatedContainer(
-                duration: 250.ms,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  gradient: isSelected
-                      ? const LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF3B82F6)],
-                        )
-                      : null,
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF6C63FF,
-                            ).withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF6C63FF)
+                        : Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
                   children: [
                     Icon(
-                      m['icon'] as IconData,
-                      color: isSelected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.45),
-                      size: 22,
+                      Icons.credit_card_rounded,
+                      color: isSelected ? const Color(0xFF6C63FF) : Colors.white60,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      m['label'] as String,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.45),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            card['card_number_masked'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            card['card_holder'],
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    if (isSelected)
+                      const Icon(Icons.check_circle, color: Color(0xFF6C63FF)),
+                    IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                        onPressed: () => context.read<PaymentCubit>().deleteCard(card['id']),
                     ),
                   ],
                 ),
               ),
+            );
+          }),
+        ],
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _showNewCardForm = true;
+              _selectedCardId = null;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: _showNewCardForm
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _showNewCardForm
+                    ? const Color(0xFF6C63FF)
+                    : Colors.white.withValues(alpha: 0.2),
+              ),
             ),
-          );
-        }).toList(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'addNewCard'.tr().isEmpty ? 'Add New Card' : 'addNewCard'.tr(),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 100.ms);
+  }
+
+  Widget _buildSaveCardCheckbox() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          Checkbox(
+            value: _shouldSaveCard,
+            onChanged: (val) => setState(() => _shouldSaveCard = val ?? false),
+            activeColor: const Color(0xFF6C63FF),
+            side: const BorderSide(color: Colors.white38),
+          ),
+          Text(
+            'saveCardForFuture'.tr().isEmpty ? 'Save card for future payments' : 'saveCardForFuture'.tr(),
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+        ],
       ),
-    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.15);
+    );
   }
 
   Widget _buildAnimatedCard() {
@@ -755,65 +824,6 @@ class _PaymentScreenState extends State<PaymentScreen>
     );
   }
 
-  Widget _buildOneClickPayment() {
-    final isApple = _selectedMethod == 'apple';
-    return GlassContainer(
-      borderRadius: BorderRadius.circular(24),
-      blur: 12,
-      opacity: 0.06,
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isApple
-                      ? [Colors.white, Colors.grey.shade200]
-                      : [const Color(0xFF4285F4), const Color(0xFF34A853)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (isApple ? Colors.white : const Color(0xFF4285F4))
-                        .withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Icon(
-                isApple ? Icons.apple_rounded : Icons.g_mobiledata_rounded,
-                size: 40,
-                color: isApple ? Colors.black : Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isApple ? 'Pay with Apple Pay' : 'Pay with Google Pay',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap to authorize with Face ID or fingerprint',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.45),
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(delay: 150.ms).scale(begin: const Offset(0.95, 0.95));
-  }
-
   Widget _buildSecurityBadge() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -845,15 +855,32 @@ class _PaymentScreenState extends State<PaymentScreen>
       onTap: isProcessing
           ? null
           : () {
-              if (_selectedMethod == 'card') {
+              if (_showNewCardForm) {
                 if (!_formKey.currentState!.validate()) return;
+                
+                context.read<PaymentCubit>().processPayment(
+                  amount: widget.amount,
+                  orderId: widget.orderId,
+                  method: 'card',
+                  shouldSaveCard: _shouldSaveCard,
+                  cardData: {
+                    'number': _cardNumberController.text,
+                    'holder': _cardHolderController.text,
+                    'expiry': _expiryController.text,
+                  },
+                );
+              } else {
+                if (_selectedCardId == null) {
+                  _showErrorSnackbar(context, 'Please select a card');
+                  return;
+                }
+                context.read<PaymentCubit>().processPayment(
+                  amount: widget.amount,
+                  orderId: widget.orderId,
+                  method: 'saved_card',
+                );
               }
               AppHaptics.medium();
-              context.read<PaymentCubit>().processPayment(
-                amount: widget.amount,
-                orderId: widget.orderId,
-                method: _selectedMethod,
-              );
             },
       child: AnimatedContainer(
         duration: 300.ms,
@@ -894,7 +921,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Processing...',
+                      'processing'.tr().isEmpty ? 'Processing...' : 'processing'.tr(),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 16,

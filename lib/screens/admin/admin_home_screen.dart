@@ -6,8 +6,7 @@ import 'package:supa/cubits/admin_cubit.dart';
 import 'package:supa/cubits/order_cubit.dart';
 import 'package:supa/cubits/auth_cubit.dart';
 import 'package:supa/screens/admin/admin_dashboard_screen.dart';
-import 'package:supa/screens/admin/orders_management_screen.dart';
-import 'package:supa/screens/admin/services_management_screen.dart';
+import 'package:supa/cubits/theme_cubit.dart';
 import 'package:supa/screens/auth/login_screen.dart';
 import 'package:supa/screens/user/tenant_services_screen.dart';
 import 'package:supa/models/tenant_model.dart';
@@ -55,131 +54,86 @@ class AdminHomeScreen extends StatelessWidget {
                   } else if (state is AdminLoaded) {
                     return DefaultTabController(
                       length: role == 'admin' ? 3 : 2,
-                      child: NestedScrollView(
-                        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                          SliverAppBar(
-                            expandedHeight: 180,
-                            pinned: true,
-                            flexibleSpace: FlexibleSpaceBar(
-                              title: Text(
-                                'adminPanel'.tr().isEmpty
-                                    ? 'Admin Panel'
-                                    : 'adminPanel'.tr(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.blue.shade900, Colors.indigo.shade800],
                               ),
-                              background: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Colors.blue.shade900,
-                                      Colors.indigo.shade800,
-                                    ],
-                                  ),
-                                ),
-                              ),
+                              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
                             ),
-                            actions: [
-                              IconButton(
-                                icon: const Icon(Icons.dashboard_customize),
-                                tooltip: 'dashboard'.tr(),
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const AdminDashboardScreen(),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'adminPanel'.tr().isEmpty ? 'Admin Panel' : 'adminPanel'.tr(),
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Opacity(
+                                        opacity: 0.7,
+                                        child: Text('liveMonitoring'.tr().isEmpty ? 'Live Service Monitoring' : 'liveMonitoring'.tr(), style: const TextStyle(color: Colors.white, fontSize: 13)),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.logout),
-                                onPressed: () {
-                                  context.read<AuthCubit>().logout();
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LoginScreen(),
-                                    ),
-                                    (context) => false,
-                                  );
-                                },
-                              ),
-                            ],
+                                IconButton(
+                                  icon: const Icon(Icons.settings, color: Colors.white),
+                                  onPressed: () => _showSettingsSheet(context),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.logout, color: Colors.white),
+                                  onPressed: () {
+                                    context.read<AuthCubit>().logout();
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                      (context) => false,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _QuickActionCard(
-                                        title: 'services'.tr(),
-                                        icon: Icons.build,
-                                        color: Colors.orange,
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const ServicesManagementScreen(),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _QuickActionCard(
-                                        title: 'orders'.tr(),
-                                        icon: Icons.assignment,
-                                        color: Colors.green,
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const OrdersManagementScreen(),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  TabBar(
-                                    labelColor: Colors.blue,
-                                    unselectedLabelColor: Colors.grey,
-                                    indicatorColor: Colors.blue,
-                                    tabs: [
-                                      if (role == 'admin')
-                                        Tab(
-                                          text: "management".tr().isEmpty
-                                              ? "Management"
-                                              : "management".tr(),
-                                        ),
-                                      Tab(
-                                        text: "users".tr().isEmpty
-                                            ? "Users"
-                                            : "users".tr(),
-                                      ),
-                                      Tab(
-                                        text: "centers".tr().isEmpty
-                                            ? "Centers"
-                                            : "centers".tr(),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 8),
+                                TabBar(
+                                  labelColor: Colors.blue,
+                                  unselectedLabelColor: Colors.grey[600],
+                                  indicatorColor: Colors.blue,
+                                  indicatorWeight: 3,
+                                  dividerColor: Colors.transparent,
+                                  tabs: [
+                                    if (role == 'admin') Tab(text: "management".tr().isEmpty ? "Management" : "management".tr()),
+                                    Tab(text: "users".tr().isEmpty ? "Users" : "users".tr()),
+                                    Tab(text: "centers".tr().isEmpty ? "Centers" : "centers".tr()),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                if (role == 'admin') const AdminDashboardScreen(),
+                                _buildUsersList(context, state, role),
+                                _buildTenantsList(context, state, role),
+                              ],
                             ),
                           ),
                         ],
-                        body: TabBarView(
-                          children: [
-                            if (role == 'admin') const AdminDashboardScreen(),
-                            _buildUsersList(context, state, role),
-                            _buildTenantsList(context, state, role),
-                          ],
-                        ),
                       ),
                     );
                   } else if (state is AdminError) {
@@ -508,7 +462,8 @@ class AdminHomeScreen extends StatelessWidget {
                           try {
                             String? imageUrl = tenant.imageUrl;
                             if (selectedImage != null) {
-                              imageUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
+                              final newUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
+                              if (newUrl != null) imageUrl = newUrl;
                             }
                             await cubit.updateTenant(
                               id: tenant.id,
@@ -559,7 +514,9 @@ class AdminHomeScreen extends StatelessWidget {
               : 'deleteServiceCenter'.tr(),
         ),
         content: Text(
-          'Confirm delete ${tenant.name}? All associated data may be affected.',
+          'confirmDeleteCenter'.tr(args: [tenant.name]).isEmpty 
+              ? 'Confirm delete ${tenant.name}? All associated data may be affected.'
+              : 'confirmDeleteCenter'.tr(args: [tenant.name]),
         ),
         actions: [
           TextButton(
@@ -599,16 +556,16 @@ class AdminHomeScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (stateContext, setDialogState) => AlertDialog(
-          title: Text('${tenant.name}: Services'),
+          title: Text('${tenant.name}: ${'services'.tr()}'),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (services.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Text('No services found for this center'),
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text('noServicesInCategory'.tr()),
                   )
                 else
                   Flexible(
@@ -620,17 +577,37 @@ class AdminHomeScreen extends StatelessWidget {
                         return ListTile(
                           title: Text(service.name),
                           subtitle: Text('\$${service.price}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              await cubit.deleteService(service.id);
-                              final updated = await cubit
-                                  .fetchServicesForTenant(tenant.id);
-                              setDialogState(() {
-                                services.clear();
-                                services.addAll(updated);
-                              });
-                            },
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                onPressed: () => _showEditServiceDialog(
+                                  context,
+                                  tenant.id,
+                                  service,
+                                  () async {
+                                    final updated = await cubit.fetchServicesForTenant(tenant.id);
+                                    setDialogState(() {
+                                      services.clear();
+                                      services.addAll(updated);
+                                    });
+                                  },
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  await cubit.deleteService(service.id);
+                                  final updated = await cubit
+                                      .fetchServicesForTenant(tenant.id);
+                                  setDialogState(() {
+                                    services.clear();
+                                    services.addAll(updated);
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -649,7 +626,7 @@ class AdminHomeScreen extends StatelessWidget {
                         });
                       }),
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Service'),
+                  label: Text('addService'.tr()),
                 ),
               ],
             ),
@@ -657,7 +634,7 @@ class AdminHomeScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
+              child: Text('close'.tr()),
             ),
           ],
         ),
@@ -702,9 +679,10 @@ class AdminHomeScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          title: const Text(
-            'Новая услуга',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            'addNewService'.tr(),
+            style:
+                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
             child: Form(
@@ -714,9 +692,9 @@ class AdminHomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Suggestions Chips
-                  const Text(
-                    'Предложения',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  Text(
+                    'suggestions'.tr(),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   SingleChildScrollView(
@@ -746,9 +724,9 @@ class AdminHomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Category Dropdown
-                  const Text(
-                    'Категория',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  Text(
+                    'category'.tr(),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
                   DropdownButtonFormField<String>(
@@ -774,17 +752,15 @@ class AdminHomeScreen extends StatelessWidget {
 
                   _buildModernField(
                     controller: nameController,
-                    label: 'Название услуги',
-                    validator: (v) =>
-                        v!.isEmpty ? 'Это поле обязательно' : null,
+                    label: 'serviceName'.tr(),
+                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
                   ),
                   const SizedBox(height: 12),
                   _buildModernField(
                     controller: descController,
-                    label: 'Описание',
+                    label: 'description'.tr(),
                     maxLines: 2,
-                    validator: (v) =>
-                        v!.isEmpty ? 'Это поле обязательно' : null,
+                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -792,7 +768,7 @@ class AdminHomeScreen extends StatelessWidget {
                       Expanded(
                         child: _buildModernField(
                           controller: durationController,
-                          label: 'Длительность (ч)',
+                          label: 'durationHoursLabel'.tr(),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               double.tryParse(v ?? '') == null ? '?' : null,
@@ -802,7 +778,7 @@ class AdminHomeScreen extends StatelessWidget {
                       Expanded(
                         child: _buildModernField(
                           controller: priceController,
-                          label: 'Цена (TMT)',
+                          label: 'priceLabel'.tr(),
                           keyboardType: TextInputType.number,
                           validator: (v) =>
                               double.tryParse(v ?? '') == null ? '?' : null,
@@ -817,9 +793,9 @@ class AdminHomeScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text(
-                'Отмена',
-                style: TextStyle(color: Colors.white54),
+              child: Text(
+                'cancel'.tr(),
+                style: const TextStyle(color: Colors.white54),
               ),
             ),
             SizedBox(
@@ -848,9 +824,167 @@ class AdminHomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'create',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                child: Text(
+                  'create'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditServiceDialog(
+    BuildContext context,
+    String tenantId,
+    Service service,
+    VoidCallback onUpdated,
+  ) {
+    final cubit = context.read<AdminCubit>();
+    final nameController = TextEditingController(text: service.name);
+    final priceController =
+        TextEditingController(text: service.price.toString());
+    final descController = TextEditingController(text: service.description);
+    final durationController =
+        TextEditingController(text: service.durationHours.toString());
+    String selectedCategory = service.category;
+    final formKey = GlobalKey<FormState>();
+
+    final categories = [
+      'Тех. обслуживание',
+      'Ремонт двигателя',
+      'Ходовая часть',
+      'Электрика',
+      'Кузовной ремонт',
+      'Шиномонтаж',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (stateContext, setState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Text(
+            'editService'.tr().isEmpty ? 'Edit Service' : 'editService'.tr(),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category Dropdown
+                  Text(
+                    'category'.tr(),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedCategory,
+                    dropdownColor: const Color(0xFF2E2E3E),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white.withAlpha(13),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: categories
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedCategory = val);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildModernField(
+                    controller: nameController,
+                    label: 'serviceName'.tr(),
+                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildModernField(
+                    controller: descController,
+                    label: 'description'.tr(),
+                    maxLines: 2,
+                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildModernField(
+                          controller: durationController,
+                          label: 'durationHoursLabel'.tr(),
+                          keyboardType: TextInputType.number,
+                          validator: (v) =>
+                              double.tryParse(v ?? '') == null ? '?' : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildModernField(
+                          controller: priceController,
+                          label: 'priceLabel'.tr(),
+                          keyboardType: TextInputType.number,
+                          validator: (v) =>
+                              double.tryParse(v ?? '') == null ? '?' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'cancel'.tr(),
+                style: const TextStyle(color: Colors.white54),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    final updatedService = Service(
+                      id: service.id,
+                      name: nameController.text.trim(),
+                      description: descController.text.trim(),
+                      price: double.parse(priceController.text),
+                      category: selectedCategory,
+                      durationHours: double.parse(durationController.text),
+                      tenantId: tenantId,
+                    );
+                    if (dialogContext.mounted) Navigator.pop(dialogContext);
+                    await cubit.updateService(updatedService);
+                    onUpdated();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'save'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -1221,48 +1355,79 @@ class AdminHomeScreen extends StatelessWidget {
     );
   }
 
-  // Removed old dashboardStats and _buildStatCard as they are replaced by AdminDashboardScreen
-}
-
-class _QuickActionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickActionCard({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: color.withAlpha(20),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: color.withAlpha(50)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: color, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+  // Settings Sheet for Admin/Mechanic
+  void _showSettingsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      backgroundColor: const Color(0xFF1E293B),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('settings'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.language, color: Colors.greenAccent),
+              title: Text('language'.tr(), style: const TextStyle(color: Colors.white)),
+              trailing: const Icon(Icons.chevron_right, color: Colors.white24),
+              onTap: () => _showLanguagePicker(context),
+            ),
+            const Divider(color: Colors.white10),
+            _buildThemeSwitch(context),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildThemeSwitch(BuildContext context) {
+    final isDark = context.watch<ThemeCubit>().state;
+    return ListTile(
+      leading: Icon(isDark ? Icons.dark_mode : Icons.light_mode, color: Colors.orangeAccent),
+      title: Text('themeSettings'.tr(), style: const TextStyle(color: Colors.white)),
+      trailing: Switch(
+        value: isDark,
+        onChanged: (val) => context.read<ThemeCubit>().toggleTheme(),
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text('language'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          _buildLangTile(context, 'English', 'en'),
+          _buildLangTile(context, 'Русский', 'ru'),
+          _buildLangTile(context, 'Türkmençe', 'tk'),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLangTile(BuildContext context, String name, String code) {
+    final isSelected = context.locale.languageCode == code;
+    return ListTile(
+      title: Text(name, style: const TextStyle(color: Colors.white)),
+      trailing: isSelected ? const Icon(Icons.check, color: Colors.blueAccent) : null,
+      onTap: () {
+        context.setLocale(Locale(code));
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  // Removed old dashboardStats and _buildStatCard as they are replaced by AdminDashboardScreen
 }
+

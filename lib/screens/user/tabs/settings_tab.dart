@@ -103,38 +103,40 @@ class SettingsTab extends StatelessWidget {
                                   phoneNumber: profile.phoneNumber,
                                   existingAvatarUrl: profile.avatarUrl,
                                 );
-                              },
+                               },
                             ),
-                          ),
-                          Divider(
-                            height: 1,
-                            color: Theme.of(context).dividerColor.withAlpha(30),
-                          ),
-                          ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withAlpha(30),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.language,
-                                color: Colors.green,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text('language'.tr()),
-                            subtitle: Text(
-                              context.locale.languageCode == 'en'
-                                  ? 'English'
-                                  : context.locale.languageCode == 'ru'
-                                  ? 'Русский'
-                                  : 'Türkmençe',
-                            ),
-                            trailing: const Icon(Icons.chevron_right, size: 20),
-                            onTap: () => _showLanguagePicker(context),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(context, 'appearance'.tr()),
+                    _buildAppThemesSection(context),
+                    const SizedBox(height: 12),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: Theme.of(context).dividerColor.withAlpha(20),
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withAlpha(30),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.language,
+                            color: Colors.green,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text('language'.tr()),
+                        trailing: const Icon(Icons.chevron_right, size: 20),
+                        onTap: () => _showLanguagePicker(context),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -193,8 +195,7 @@ class SettingsTab extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _buildSectionHeader(context, 'appearance'.tr()),
-                    _buildAppThemesSection(context),
+                    const SizedBox(height: 24),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,

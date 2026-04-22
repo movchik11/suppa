@@ -77,7 +77,8 @@ class ReviewCubit extends Cubit<ReviewState> {
         'comment': comment,
       });
 
-      emit(ReviewSuccess());
+      // Automatically refresh the reviews after successful addition
+      await fetchReviewsByService(serviceId);
     } catch (e) {
       emit(ReviewError('Failed to add review: ${e.toString()}'));
     }
