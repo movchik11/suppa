@@ -234,6 +234,7 @@
     "register": "Регистрация",
     "emailLabel": "Email",
     "passwordLabel": "Пароль",
+    "confirmPassword": "Подтвердите пароль",
     "dontHaveAccount": "Нет аккаунта?",
     "alreadyHaveAccount": "Уже есть аккаунт?",
     "loginToContinue": "Войдите, чтобы продолжить",
@@ -259,6 +260,7 @@
     "notNow": "Не сейчас",
     "enable": "Включить",
     "managedUsers": "Пользователи",
+    "users": "Пользователи",
     "statistics": "Статистика",
     "roleLabel": "Роль: {}",
     "userRole": "Пользователь",
@@ -352,5 +354,8 @@
     "allCaughtUp": "Все задачи выполнены!",
     "customer": "Клиент",
     "liveMonitoring": "Мониторинг услуг",
-    "confirmDeleteCenter": "Удалить центр {}? Все связанные данные могут быть затронуты."
+    "confirmDeleteCenter": "Удалить центр {}? Все связанные данные могут быть затронуты.",
+    "deleteServiceCenter": "Удалить сервисный центр",
+    "editServiceCenter": "Редактировать сервисный центр",
+    "address": "Адрес"
 }

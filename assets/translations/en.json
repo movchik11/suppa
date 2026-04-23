@@ -234,6 +234,7 @@
     "register": "Register",
     "emailLabel": "Email",
     "passwordLabel": "Password",
+    "confirmPassword": "Confirm Password",
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?",
     "loginToContinue": "Login to continue",
@@ -259,6 +260,7 @@
     "notNow": "Not Now",
     "enable": "Enable",
     "managedUsers": "Managed Users",
+    "users": "Users",
     "statistics": "Statistics",
     "roleLabel": "Role: {}",
     "userRole": "User",
@@ -346,5 +348,8 @@
     "allCaughtUp": "All caught up!",
     "customer": "Customer",
     "liveMonitoring": "Live Service Monitoring",
-    "confirmDeleteCenter": "Confirm delete {}? All associated data may be affected."
+    "confirmDeleteCenter": "Confirm delete {}? All associated data may be affected.",
+    "deleteServiceCenter": "Delete Service Center",
+    "editServiceCenter": "Edit Service Center",
+    "address": "Address"
 }

@@ -233,6 +233,7 @@
     "register": "Hasap açmak",
     "emailLabel": "Email",
     "passwordLabel": "Parol",
+    "confirmPassword": "Paroly tassyklaň",
     "dontHaveAccount": "Hasabyňyz ýokmy?",
     "alreadyHaveAccount": "Hasabyňyz barmy?",
     "loginToContinue": "Dowam etmek üçin giriň",
@@ -258,6 +259,7 @@
     "notNow": "Häzir däl",
     "enable": "Işjeňleşdir",
     "managedUsers": "Ulanyjylar",
+    "users": "Ulanyjylar",
     "statistics": "Statistika",
     "roleLabel": "Rol: {}",
     "userRole": "Ulanyjy",
@@ -359,5 +361,8 @@
     "allCaughtUp": "Ähli işler ýerine ýetirildi!",
     "customer": "Müşderi",
     "liveMonitoring": "Hyzmatlara gözegçilik",
-    "confirmDeleteCenter": "{} merkezini öçürmelimi? Ähli baglanyşykly maglumatlar täsirlenip biler."
+    "confirmDeleteCenter": "{} merkezini öçürmelimi? Ähli baglanyşykly maglumatlar täsirlenip biler.",
+    "deleteServiceCenter": "Hyzmat merkezini öçür",
+    "editServiceCenter": "Hyzmat merkezini üýtget",
+    "address": "Salgy"
 }

@@ -22,6 +22,15 @@ class TenantServicesScreen extends StatefulWidget {
 
 class _TenantServicesScreenState extends State<TenantServicesScreen> {
   String selectedCategory = 'all';
+  String _currentSort = 'default';
+
+  final List<Map<String, String>> _sortOptions = [
+    {'value': 'default', 'label': 'all'.tr()},
+    {'value': 'price_asc', 'label': 'sortPriceAsc'.tr()},
+    {'value': 'price_desc', 'label': 'sortPriceDesc'.tr()},
+    {'value': 'duration_asc', 'label': 'sortDurationAsc'.tr()},
+    {'value': 'duration_desc', 'label': 'sortDurationDesc'.tr()},
+  ];
 
   final Map<String, List<String>> _subServices = {
     'catMaintenance': ['oilFluidChange', 'filterReplacement', 'sparkPlugCheck'],
@@ -94,7 +103,17 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
               ),
 
             // Category Selector
-            _buildCategorySelector(categories, getCategoryLabel),
+            // Filters Row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(child: _buildCategorySelector(categories, getCategoryLabel)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildSortSelector()),
+                ],
+              ),
+            ),
 
             Expanded(
               child: BlocBuilder<ServiceCubit, ServiceState>(
@@ -102,7 +121,7 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
                   if (state is ServiceLoading) {
                     return const AppLoadingIndicator();
                   } else if (state is ServicesLoaded) {
-                    final filteredServices = selectedCategory == 'all'
+                    var filteredServices = selectedCategory == 'all'
                         ? state.services
                         : state.services
                             .where(
@@ -111,6 +130,17 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
                                   selectedCategory.toLowerCase(),
                             )
                             .toList();
+
+                    // Apply Sorting
+                    if (_currentSort == 'price_asc') {
+                      filteredServices.sort((a, b) => a.price.compareTo(b.price));
+                    } else if (_currentSort == 'price_desc') {
+                      filteredServices.sort((a, b) => b.price.compareTo(a.price));
+                    } else if (_currentSort == 'duration_asc') {
+                      filteredServices.sort((a, b) => a.durationHours.compareTo(b.durationHours));
+                    } else if (_currentSort == 'duration_desc') {
+                      filteredServices.sort((a, b) => b.durationHours.compareTo(a.durationHours));
+                    }
 
                     return RefreshIndicator(
                       onRefresh: () => context.read<ServiceCubit>().fetchServices(),
@@ -228,27 +258,46 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
   }
 
   Widget _buildCategorySelector(List<String> categories, String Function(String) getLabel) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: DropdownButtonFormField<String>(
-        initialValue: selectedCategory,
-        decoration: InputDecoration(
-          labelText: 'category'.tr(),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        items: categories.map((category) {
-          return DropdownMenuItem<String>(
-            value: category,
-            child: Text(getLabel(category)),
-          );
-        }).toList(),
-        onChanged: (val) {
-          if (val != null) {
-            setState(() => selectedCategory = val);
-          }
-        },
+    return DropdownButtonFormField<String>(
+      initialValue: selectedCategory,
+      decoration: InputDecoration(
+        labelText: 'category'.tr(),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
+      items: categories.map((category) {
+        return DropdownMenuItem<String>(
+          value: category,
+          child: Text(getLabel(category), style: const TextStyle(fontSize: 13)),
+        );
+      }).toList(),
+      onChanged: (val) {
+        if (val != null) {
+          setState(() => selectedCategory = val);
+        }
+      },
+    );
+  }
+
+  Widget _buildSortSelector() {
+    return DropdownButtonFormField<String>(
+      initialValue: _currentSort,
+      decoration: InputDecoration(
+        labelText: 'rate'.tr(), // Or 'Sort' if we had a key, but 'rate' exists and is similar in some contexts. Let's use 'all' for now if no better key.
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      items: _sortOptions.map((opt) {
+        return DropdownMenuItem<String>(
+          value: opt['value'],
+          child: Text(opt['label']!, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: (val) {
+        if (val != null) {
+          setState(() => _currentSort = val);
+        }
+      },
     );
   }
 }

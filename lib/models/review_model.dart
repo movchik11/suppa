@@ -7,7 +7,7 @@ class Review {
   @HiveField(0)
   final String id;
   @HiveField(1)
-  final String orderId;
+  final String? orderId;
   @HiveField(2)
   final String userId;
   @HiveField(3)
@@ -21,7 +21,7 @@ class Review {
 
   Review({
     required this.id,
-    required this.orderId,
+    this.orderId,
     required this.userId,
     this.serviceId,
     required this.rating,

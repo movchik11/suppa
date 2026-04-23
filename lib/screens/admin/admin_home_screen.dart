@@ -157,32 +157,37 @@ class AdminHomeScreen extends StatelessWidget {
     final cubit = context.read<AdminCubit>();
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('changeUserRole'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            SegmentedButton<String>(
-              segments: [
-                ButtonSegment(value: 'user', label: Text('userRole'.tr())),
-                ButtonSegment(
-                  value: 'mechanic',
-                  label: Text('mechanicRole'.tr()),
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: AlertDialog(
+            title: Text('changeUserRole'.tr()),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(value: 'user', label: Text('userRole'.tr())),
+                    ButtonSegment(
+                      value: 'mechanic',
+                      label: Text('mechanicRole'.tr()),
+                    ),
+                    ButtonSegment(value: 'admin', label: Text('adminRole'.tr())),
+                  ],
+                  selected: {currentRole},
+                  onSelectionChanged: (Set<String> newSelection) {
+                    final value = newSelection.first;
+                    Navigator.pop(dialogContext);
+                    cubit.updateUserRole(userId, value);
+                  },
                 ),
-                ButtonSegment(value: 'admin', label: Text('adminRole'.tr())),
+                const SizedBox(height: 16),
               ],
-              selected: {currentRole},
-              onSelectionChanged: (Set<String> newSelection) {
-                final value = newSelection.first;
-                Navigator.pop(dialogContext);
-                cubit.updateUserRole(userId, value);
-              },
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -198,50 +203,55 @@ class AdminHomeScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('changeTenant'.tr()),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: tenants.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return ListTile(
-                  title: Text('all'.tr()),
-                  trailing: currentTenantId == null
-                      ? Icon(
-                          Icons.check_circle,
-                          color: Theme.of(context).primaryColor,
-                        )
-                      : null,
-                  onTap: () {
-                    Navigator.pop(dialogContext);
-                    cubit.updateUserTenant(userId, null);
-                  },
-                );
-              }
-              final tenant = tenants[index - 1];
-              return ListTile(
-                title: Text(tenant.name),
-                trailing: currentTenantId == tenant.id
-                    ? Icon(
-                        Icons.check_circle,
-                        color: Theme.of(context).primaryColor,
-                      )
-                    : null,
-                onTap: () {
-                  Navigator.pop(dialogContext);
-                  cubit.updateUserTenant(
-                    userId,
-                    tenant.id,
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: AlertDialog(
+            title: Text('changeTenant'.tr()),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: tenants.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      title: Text('all'.tr()),
+                      trailing: currentTenantId == null
+                          ? Icon(
+                              Icons.check_circle,
+                              color: Theme.of(context).primaryColor,
+                            )
+                          : null,
+                      onTap: () {
+                        Navigator.pop(dialogContext);
+                        cubit.updateUserTenant(userId, null);
+                      },
+                    );
+                  }
+                  final tenant = tenants[index - 1];
+                  return ListTile(
+                    title: Text(tenant.name),
+                    trailing: currentTenantId == tenant.id
+                        ? Icon(
+                            Icons.check_circle,
+                            color: Theme.of(context).primaryColor,
+                          )
+                        : null,
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      cubit.updateUserTenant(
+                        userId,
+                        tenant.id,
+                      );
+                    },
                   );
                 },
-              );
-            },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -249,24 +259,29 @@ class AdminHomeScreen extends StatelessWidget {
     final cubit = context.read<AdminCubit>();
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('deleteUser'.tr()),
-        content: Text('confirmDeleteUser'.tr(args: [email])),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('cancel'.tr()),
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: AlertDialog(
+            title: Text('deleteUser'.tr()),
+            content: Text('confirmDeleteUser'.tr(args: [email])),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text('cancel'.tr()),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  cubit.deleteUser(userId);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text('delete'.tr()),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              cubit.deleteUser(userId);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('delete'.tr()),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -280,98 +295,103 @@ class AdminHomeScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            'addServiceCenter'.tr(),
-            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      final picker = ImagePicker();
-                      final picked = await picker.pickImage(source: ImageSource.gallery);
-                      if (picked != null) {
-                        setState(() => selectedImage = File(picked.path));
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: StatefulBuilder(
+            builder: (stateContext, setState) => AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                'addServiceCenter'.tr(),
+                style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          final picker = ImagePicker();
+                          final picked = await picker.pickImage(source: ImageSource.gallery);
+                          if (picked != null) {
+                            setState(() => selectedImage = File(picked.path));
+                          }
+                        },
+                        child: Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withAlpha(30),
+                            borderRadius: BorderRadius.circular(15),
+                            image: selectedImage != null
+                                ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
+                                : null,
+                          ),
+                          child: selectedImage == null
+                              ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildModernField(
+                        controller: nameController,
+                        label: 'serviceCenterName'.tr(),
+                        validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernField(
+                        controller: addressController,
+                        label: 'address'.tr(),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernField(
+                        controller: phoneController,
+                        label: 'phone'.tr(),
+                        keyboardType: TextInputType.phone,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
+                ),
+                SizedBox(
+                  width: 120,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (formKey.currentState!.validate()) {
+                        String? imageUrl;
+                        if (selectedImage != null) {
+                          imageUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
+                        }
+                        await cubit.createTenant(
+                          name: nameController.text.trim(),
+                          address: addressController.text.trim(),
+                          phone: phoneController.text.trim(),
+                          imageUrl: imageUrl,
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
                       }
                     },
-                    child: Container(
-                      height: 120,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withAlpha(30),
-                        borderRadius: BorderRadius.circular(15),
-                        image: selectedImage != null
-                            ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
-                            : null,
-                      ),
-                      child: selectedImage == null
-                          ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
-                          : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: Text('add'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(height: 16),
-                  _buildModernField(
-                    controller: nameController,
-                    label: 'serviceCenterName'.tr(),
-                    validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernField(
-                    controller: addressController,
-                    label: 'address'.tr(),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernField(
-                    controller: phoneController,
-                    label: 'phone'.tr(),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
-            ),
-            SizedBox(
-              width: 120,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    String? imageUrl;
-                    if (selectedImage != null) {
-                      imageUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
-                    }
-                    await cubit.createTenant(
-                      name: nameController.text.trim(),
-                      address: addressController.text.trim(),
-                      phone: phoneController.text.trim(),
-                      imageUrl: imageUrl,
-                    );
-                    if (dialogContext.mounted) Navigator.pop(dialogContext);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text('add'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -386,154 +406,166 @@ class AdminHomeScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            'editServiceCenter'.tr(),
-            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      final picker = ImagePicker();
-                      final picked = await picker.pickImage(source: ImageSource.gallery);
-                      if (picked != null) {
-                        setState(() => selectedImage = File(picked.path));
-                      }
-                    },
-                    child: Container(
-                      height: 120,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withAlpha(30),
-                        borderRadius: BorderRadius.circular(15),
-                        image: selectedImage != null
-                            ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
-                            : (tenant.imageUrl != null
-                                ? DecorationImage(image: NetworkImage(tenant.imageUrl!), fit: BoxFit.cover)
-                                : null),
-                      ),
-                      child: selectedImage == null && tenant.imageUrl == null
-                          ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildModernField(
-                    controller: nameController,
-                    label: 'serviceCenterName'.tr(),
-                    validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernField(
-                    controller: addressController,
-                    label: 'address'.tr(),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernField(
-                    controller: phoneController,
-                    label: 'phone'.tr(),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: StatefulBuilder(
+            builder: (stateContext, setState) => AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                'editServiceCenter'.tr(),
+                style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
-            ),
-            SizedBox(
-              width: 120,
-              child: ElevatedButton(
-                onPressed: isSaving
-                    ? null
-                    : () async {
-                        if (formKey.currentState!.validate()) {
-                          setState(() => isSaving = true);
-                          try {
-                            String? imageUrl = tenant.imageUrl;
-                            if (selectedImage != null) {
-                              final newUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
-                              if (newUrl != null) imageUrl = newUrl;
-                            }
-                            await cubit.updateTenant(
-                              id: tenant.id,
-                              name: nameController.text.trim(),
-                              address: addressController.text.trim(),
-                              phone: phoneController.text.trim(),
-                              imageUrl: imageUrl,
-                            );
-                            if (dialogContext.mounted) {
-                              Navigator.pop(dialogContext);
-                            }
-                          } catch (e) {
-                            if (stateContext.mounted) {
-                              ScaffoldMessenger.of(stateContext).showSnackBar(
-                                SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                              );
-                            }
-                          } finally {
-                            if (stateContext.mounted) {
-                              setState(() => isSaving = false);
-                            }
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          final picker = ImagePicker();
+                          final picked = await picker.pickImage(source: ImageSource.gallery);
+                          if (picked != null) {
+                            setState(() => selectedImage = File(picked.path));
                           }
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        },
+                        child: Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withAlpha(30),
+                            borderRadius: BorderRadius.circular(15),
+                            image: selectedImage != null
+                                ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
+                                : (tenant.imageUrl != null
+                                    ? DecorationImage(image: NetworkImage(tenant.imageUrl!), fit: BoxFit.cover)
+                                    : null),
+                          ),
+                          child: selectedImage == null && tenant.imageUrl == null
+                              ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildModernField(
+                        controller: nameController,
+                        label: 'serviceCenterName'.tr(),
+                        validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernField(
+                        controller: addressController,
+                        label: 'address'.tr(),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernField(
+                        controller: phoneController,
+                        label: 'phone'.tr(),
+                        keyboardType: TextInputType.phone,
+                      ),
+                    ],
+                  ),
                 ),
-                child: isSaving 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text('save'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
+                ),
+                SizedBox(
+                  width: 120,
+                  child: ElevatedButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            if (formKey.currentState!.validate()) {
+                              setState(() => isSaving = true);
+                              try {
+                                String? imageUrl = tenant.imageUrl;
+                                if (selectedImage != null) {
+                                  final newUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
+                                  if (newUrl != null) imageUrl = newUrl;
+                                }
+                                await cubit.updateTenant(
+                                  id: tenant.id,
+                                  name: nameController.text.trim(),
+                                  address: addressController.text.trim(),
+                                  phone: phoneController.text.trim(),
+                                  imageUrl: imageUrl,
+                                );
+                                if (dialogContext.mounted) {
+                                  Navigator.pop(dialogContext);
+                                }
+                              } catch (e) {
+                                if (stateContext.mounted) {
+                                  ScaffoldMessenger.of(stateContext).showSnackBar(
+                                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                  );
+                                }
+                              } finally {
+                                if (stateContext.mounted) {
+                                  setState(() => isSaving = false);
+                                }
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: isSaving 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text('save'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   void _showDeleteTenantDialog(BuildContext context, Tenant tenant) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          'deleteServiceCenter'.tr().isEmpty
-              ? 'Delete Center'
-              : 'deleteServiceCenter'.tr(),
-        ),
-        content: Text(
-          'confirmDeleteCenter'.tr(args: [tenant.name]).isEmpty 
-              ? 'Confirm delete ${tenant.name}? All associated data may be affected.'
-              : 'confirmDeleteCenter'.tr(args: [tenant.name]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('cancel'.tr()),
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: AlertDialog(
+            title: Text(
+              'deleteServiceCenter'.tr().isEmpty
+                  ? 'Delete Center'
+                  : 'deleteServiceCenter'.tr(),
+              style: const TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              'confirmDeleteCenter'.tr(args: [tenant.name]).isEmpty 
+                  ? 'Confirm delete ${tenant.name}? All associated data may be affected.'
+                  : 'confirmDeleteCenter'.tr(args: [tenant.name]),
+              style: const TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final cubit = context.read<AdminCubit>();
+                  Navigator.pop(dialogContext);
+                  await cubit.deleteTenant(tenant.id);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text('delete'.tr()),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              final cubit = context.read<AdminCubit>();
-              Navigator.pop(dialogContext);
-              await cubit.deleteTenant(tenant.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('delete'.tr()),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -554,91 +586,101 @@ class AdminHomeScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setDialogState) => AlertDialog(
-          title: Text('${tenant.name}: ${'services'.tr()}'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (services.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Text('noServicesInCategory'.tr()),
-                  )
-                else
-                  Flexible(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: services.length,
-                      itemBuilder: (context, index) {
-                        final service = services[index];
-                        return ListTile(
-                          title: Text(service.name),
-                          subtitle: Text('\$${service.price}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                                onPressed: () => _showEditServiceDialog(
-                                  context,
-                                  tenant.id,
-                                  service,
-                                  () async {
-                                    final updated = await cubit.fetchServicesForTenant(tenant.id);
-                                    setDialogState(() {
-                                      services.clear();
-                                      services.addAll(updated);
-                                    });
-                                  },
-                                ),
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: StatefulBuilder(
+            builder: (stateContext, setDialogState) => AlertDialog(
+              backgroundColor: const Color(0xFF1E1E2E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                '${tenant.name}: ${'services'.tr()}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (services.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Text('noServicesInCategory'.tr(), style: const TextStyle(color: Colors.white60)),
+                      )
+                    else
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: services.length,
+                          itemBuilder: (context, index) {
+                            final service = services[index];
+                            return ListTile(
+                              title: Text(service.name, style: const TextStyle(color: Colors.white)),
+                              subtitle: Text('${service.price} TMT', style: const TextStyle(color: Colors.white60)),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                    onPressed: () => _showEditServiceDialog(
+                                      context,
+                                      tenant.id,
+                                      service,
+                                      () async {
+                                        final updated = await cubit.fetchServicesForTenant(tenant.id);
+                                        setDialogState(() {
+                                          services.clear();
+                                          services.addAll(updated);
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () async {
+                                      await cubit.deleteService(service.id);
+                                      final updated = await cubit.fetchServicesForTenant(tenant.id);
+                                      setDialogState(() {
+                                        services.clear();
+                                        services.addAll(updated);
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  await cubit.deleteService(service.id);
-                                  final updated = await cubit
-                                      .fetchServicesForTenant(tenant.id);
-                                  setDialogState(() {
-                                    services.clear();
-                                    services.addAll(updated);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                const Divider(),
-                ElevatedButton.icon(
-                  onPressed: () =>
-                      _showAddServiceDialog(context, tenant.id, () async {
-                        final updated = await cubit.fetchServicesForTenant(
-                          tenant.id,
-                        );
+                            );
+                          },
+                        ),
+                      ),
+                    const Divider(color: Colors.white10),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddServiceDialog(context, tenant.id, () async {
+                        final updated = await cubit.fetchServicesForTenant(tenant.id);
                         setDialogState(() {
                           services.clear();
                           services.addAll(updated);
                         });
                       }),
-                  icon: const Icon(Icons.add),
-                  label: Text('addService'.tr()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent.withAlpha(40),
+                        foregroundColor: Colors.blueAccent,
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: Text('addService'.tr()),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('close'.tr()),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('close'.tr()),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -652,187 +694,173 @@ class AdminHomeScreen extends StatelessWidget {
     final priceController = TextEditingController();
     final descController = TextEditingController();
     final durationController = TextEditingController(text: '1.0');
-    String selectedCategory = 'Тех. обслуживание';
-    final formKey = GlobalKey<FormState>();
-
     final categories = [
-      'Тех. обслуживание',
-      'Ремонт двигателя',
-      'Ходовая часть',
-      'Электрика',
-      'Кузовной ремонт',
-      'Шиномонтаж',
+      'catMaintenance',
+      'catDiagElectronics',
+      'catCoreRepair',
+      'catChassisWheels',
+      'catBodyVisual',
+      'catAdditional'
     ];
 
-    final suggestions = [
-      'Замена масла и жидкостей',
-      'Замена фильтров',
-      'Проверка свечей зажигания',
-      'Диагностика подвески',
-    ];
+    final categorySuggestions = {
+      'catMaintenance': ['oilFluidChange', 'filterReplacement', 'sparkPlugCheck'],
+      'catDiagElectronics': ['computerDiagnostics', 'chassisDiagnostics', 'electricalRepair'],
+      'catCoreRepair': ['engineRepair', 'transmissionRepair', 'suspensionSteering', 'brakingSystem'],
+      'catChassisWheels': ['tireFitting', 'wheelAlignment'],
+      'catBodyVisual': ['bodyWork', 'paintPolishing', 'glassRepair'],
+      'catAdditional': ['airConditioning', 'tuningEquipment', 'preSalePrep'],
+    };
+
+    String selectedCategory = 'catMaintenance';
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            'addNewService'.tr(),
-            style:
-                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Suggestions Chips
-                  Text(
-                    'suggestions'.tr(),
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: suggestions
-                          .map(
-                            (s) => Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ActionChip(
-                                label: Text(
-                                  s,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                onPressed: () =>
-                                    setState(() => nameController.text = s),
-                                backgroundColor: Colors.white10,
-                                labelStyle: const TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Category Dropdown
-                  Text(
-                    'category'.tr(),
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedCategory,
-                    dropdownColor: const Color(0xFF2E2E3E),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white.withAlpha(13),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    items: categories
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => selectedCategory = val);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildModernField(
-                    controller: nameController,
-                    label: 'serviceName'.tr(),
-                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernField(
-                    controller: descController,
-                    label: 'description'.tr(),
-                    maxLines: 2,
-                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: StatefulBuilder(
+            builder: (stateContext, setState) => AlertDialog(
+              backgroundColor: const Color(0xFF1E1E2E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                'addNewService'.tr(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _buildModernField(
-                          controller: durationController,
-                          label: 'durationHoursLabel'.tr(),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              double.tryParse(v ?? '') == null ? '?' : null,
+                      // Suggestions Chips
+                      Text(
+                        'suggestions'.tr(),
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: (categorySuggestions[selectedCategory] ?? [])
+                              .map(
+                                (s) => Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ActionChip(
+                                    label: Text(s.tr(), style: const TextStyle(fontSize: 12)),
+                                    onPressed: () => setState(() => nameController.text = s.tr()),
+                                    backgroundColor: Colors.white10,
+                                    labelStyle: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildModernField(
-                          controller: priceController,
-                          label: 'priceLabel'.tr(),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              double.tryParse(v ?? '') == null ? '?' : null,
+                      const SizedBox(height: 16),
+                      // Category Dropdown
+                      Text(
+                        'category'.tr(),
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      const SizedBox(height: 4),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedCategory,
+                        dropdownColor: const Color(0xFF2E2E3E),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withAlpha(13),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
+                        items: categories
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c.tr())))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => selectedCategory = val);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildModernField(
+                        controller: nameController,
+                        label: 'serviceName'.tr(),
+                        validator: (v) => v!.isEmpty ? 'required'.tr() : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernField(
+                        controller: descController,
+                        label: 'description'.tr(),
+                        maxLines: 2,
+                        validator: (v) => v!.isEmpty ? 'required'.tr() : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildModernField(
+                              controller: durationController,
+                              label: 'durationHoursLabel'.tr(),
+                              keyboardType: TextInputType.number,
+                              validator: (v) => double.tryParse(v ?? '') == null ? '?' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildModernField(
+                              controller: priceController,
+                              label: 'priceLabel'.tr(),
+                              keyboardType: TextInputType.number,
+                              validator: (v) => double.tryParse(v ?? '') == null ? '?' : null,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                'cancel'.tr(),
-                style: const TextStyle(color: Colors.white54),
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    final newService = Service(
-                      id: '',
-                      name: nameController.text.trim(),
-                      description: descController.text.trim(),
-                      price: double.parse(priceController.text),
-                      category: selectedCategory,
-                      durationHours: double.parse(durationController.text),
-                      tenantId: tenantId,
-                    );
-                    if (dialogContext.mounted) Navigator.pop(dialogContext);
-                    await cubit.addService(newService);
-                    onAdded();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white54)),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (formKey.currentState!.validate()) {
+                        final newService = Service(
+                          id: '',
+                          name: nameController.text.trim(),
+                          description: descController.text.trim(),
+                          price: double.parse(priceController.text),
+                          category: selectedCategory,
+                          durationHours: double.parse(durationController.text),
+                          tenantId: tenantId,
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                        await cubit.addService(newService);
+                        onAdded();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('create'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
-                child: Text(
-                  'create'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -853,144 +881,169 @@ class AdminHomeScreen extends StatelessWidget {
     final formKey = GlobalKey<FormState>();
 
     final categories = [
-      'Тех. обслуживание',
-      'Ремонт двигателя',
-      'Ходовая часть',
-      'Электрика',
-      'Кузовной ремонт',
-      'Шиномонтаж',
+      'catMaintenance',
+      'catDiagElectronics',
+      'catCoreRepair',
+      'catChassisWheels',
+      'catBodyVisual',
+      'catAdditional'
     ];
+
+    final categorySuggestions = {
+      'catMaintenance': ['oilFluidChange', 'filterReplacement', 'sparkPlugCheck'],
+      'catDiagElectronics': ['computerDiagnostics', 'chassisDiagnostics', 'electricalRepair'],
+      'catCoreRepair': ['engineRepair', 'transmissionRepair', 'suspensionSteering', 'brakingSystem'],
+      'catChassisWheels': ['tireFitting', 'wheelAlignment'],
+      'catBodyVisual': ['bodyWork', 'paintPolishing', 'glassRepair'],
+      'catAdditional': ['airConditioning', 'tuningEquipment', 'preSalePrep'],
+    };
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            'editService'.tr().isEmpty ? 'Edit Service' : 'editService'.tr(),
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category Dropdown
-                  Text(
-                    'category'.tr(),
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedCategory,
-                    dropdownColor: const Color(0xFF2E2E3E),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white.withAlpha(13),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    items: categories
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => selectedCategory = val);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildModernField(
-                    controller: nameController,
-                    label: 'serviceName'.tr(),
-                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernField(
-                    controller: descController,
-                    label: 'description'.tr(),
-                    maxLines: 2,
-                    validator: (v) => v!.isEmpty ? 'required'.tr() : null,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
+      builder: (dialogContext) {
+        return BlocProvider.value(
+          value: context.read<AdminCubit>(),
+          child: StatefulBuilder(
+            builder: (stateContext, setState) => AlertDialog(
+              backgroundColor: const Color(0xFF1E1E2E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                'editService'.tr().isEmpty ? 'Edit Service' : 'editService'.tr(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _buildModernField(
-                          controller: durationController,
-                          label: 'durationHoursLabel'.tr(),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              double.tryParse(v ?? '') == null ? '?' : null,
+                      // Suggestions Chips
+                      Text(
+                        'suggestions'.tr(),
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: (categorySuggestions[selectedCategory] ?? [])
+                              .map(
+                                (s) => Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ActionChip(
+                                    label: Text(s.tr(), style: const TextStyle(fontSize: 12)),
+                                    onPressed: () => setState(() => nameController.text = s.tr()),
+                                    backgroundColor: Colors.white10,
+                                    labelStyle: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildModernField(
-                          controller: priceController,
-                          label: 'priceLabel'.tr(),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              double.tryParse(v ?? '') == null ? '?' : null,
+                      const SizedBox(height: 16),
+                      // Category Dropdown
+                      Text(
+                        'category'.tr(),
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      const SizedBox(height: 4),
+                      DropdownButtonFormField<String>(
+                        initialValue: categories.contains(selectedCategory) ? selectedCategory : 'catMaintenance',
+                        dropdownColor: const Color(0xFF2E2E3E),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withAlpha(13),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
+                        items: categories
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c.tr())))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => selectedCategory = val);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildModernField(
+                        controller: nameController,
+                        label: 'serviceName'.tr(),
+                        validator: (v) => v!.isEmpty ? 'required'.tr() : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernField(
+                        controller: descController,
+                        label: 'description'.tr(),
+                        maxLines: 2,
+                        validator: (v) => v!.isEmpty ? 'required'.tr() : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildModernField(
+                              controller: durationController,
+                              label: 'durationHoursLabel'.tr(),
+                              keyboardType: TextInputType.number,
+                              validator: (v) => double.tryParse(v ?? '') == null ? '?' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildModernField(
+                              controller: priceController,
+                              label: 'priceLabel'.tr(),
+                              keyboardType: TextInputType.number,
+                              validator: (v) => double.tryParse(v ?? '') == null ? '?' : null,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                'cancel'.tr(),
-                style: const TextStyle(color: Colors.white54),
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    final updatedService = Service(
-                      id: service.id,
-                      name: nameController.text.trim(),
-                      description: descController.text.trim(),
-                      price: double.parse(priceController.text),
-                      category: selectedCategory,
-                      durationHours: double.parse(durationController.text),
-                      tenantId: tenantId,
-                    );
-                    if (dialogContext.mounted) Navigator.pop(dialogContext);
-                    await cubit.updateService(updatedService);
-                    onUpdated();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white54)),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (formKey.currentState!.validate()) {
+                        final updatedService = Service(
+                          id: service.id,
+                          name: nameController.text.trim(),
+                          description: descController.text.trim(),
+                          price: double.parse(priceController.text),
+                          category: selectedCategory,
+                          durationHours: double.parse(durationController.text),
+                          tenantId: tenantId,
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                        await cubit.updateService(updatedService);
+                        onUpdated();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('save'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
-                child: Text(
-                  'save'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1320,36 +1373,39 @@ class AdminHomeScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (modalContext) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.add_task, color: Colors.purple),
-              title: const Text('Manage Services'),
-              onTap: () {
-                Navigator.pop(modalContext);
-                _showManageServicesDialog(context, tenant);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit, color: Colors.blue),
-              title: const Text('Edit Center'),
-              onTap: () {
-                Navigator.pop(modalContext);
-                _showEditTenantDialog(context, tenant);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Center'),
-              onTap: () {
-                Navigator.pop(modalContext);
-                _showDeleteTenantDialog(context, tenant);
-              },
-            ),
-          ],
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<AdminCubit>(),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.add_task, color: Colors.purple),
+                title: const Text('Manage Services'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _showManageServicesDialog(context, tenant);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.blue),
+                title: const Text('Edit Center'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _showEditTenantDialog(context, tenant);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete Center'),
+                onTap: () {
+                  Navigator.pop(dialogContext);
+                  _showDeleteTenantDialog(context, tenant);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

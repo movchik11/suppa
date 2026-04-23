@@ -29,7 +29,7 @@ class ReviewCubit extends Cubit<ReviewState> {
   ReviewCubit() : supabase = Supabase.instance.client, super(ReviewInitial());
 
   Future<void> submitReview({
-    required String orderId,
+    String? orderId,
     required String? serviceId,
     required double rating,
     required String comment,
@@ -42,13 +42,18 @@ class ReviewCubit extends Cubit<ReviewState> {
         return;
       }
 
-      await supabase.from('reviews').insert({
-        'order_id': orderId,
+      final reviewData = {
         'user_id': userId,
         'service_id': serviceId,
         'rating': rating,
         'comment': comment,
-      });
+      };
+
+      if (orderId != null) {
+        reviewData['order_id'] = orderId;
+      }
+
+      await supabase.from('reviews').insert(reviewData);
 
       emit(ReviewSuccess());
     } catch (e) {
