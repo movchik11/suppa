@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +14,7 @@ import 'package:supa/models/tenant_model.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -291,7 +293,9 @@ class AdminHomeScreen extends StatelessWidget {
     final addressController = TextEditingController();
     final phoneController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    File? selectedImage;
+    XFile? selectedImage;
+
+    bool isSaving = false;
 
     showDialog(
       context: context,
@@ -299,7 +303,7 @@ class AdminHomeScreen extends StatelessWidget {
         return BlocProvider.value(
           value: context.read<AdminCubit>(),
           child: StatefulBuilder(
-            builder: (stateContext, setState) => AlertDialog(
+            builder: (stateContext, setDialogState) => AlertDialog(
               backgroundColor: const Color(0xFF1E293B),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
@@ -317,22 +321,44 @@ class AdminHomeScreen extends StatelessWidget {
                           final picker = ImagePicker();
                           final picked = await picker.pickImage(source: ImageSource.gallery);
                           if (picked != null) {
-                            setState(() => selectedImage = File(picked.path));
+                            setDialogState(() => selectedImage = picked);
                           }
                         },
-                        child: Container(
-                          height: 120,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withAlpha(30),
-                            borderRadius: BorderRadius.circular(15),
-                            image: selectedImage != null
-                                ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
-                                : null,
-                          ),
-                          child: selectedImage == null
-                              ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
-                              : null,
+                        child: Stack(
+                          children: [
+                            Container(
+                              height: 120,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withAlpha(30),
+                                borderRadius: BorderRadius.circular(15),
+                                image: selectedImage != null
+                                    ? DecorationImage(
+                                        image: kIsWeb
+                                            ? NetworkImage(selectedImage!.path)
+                                            : FileImage(io.File(selectedImage!.path)) as ImageProvider,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: selectedImage == null
+                                  ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
+                                  : null,
+                            ),
+                            if (selectedImage != null)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(() => selectedImage = null),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                    child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -364,27 +390,63 @@ class AdminHomeScreen extends StatelessWidget {
                 SizedBox(
                   width: 120,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      if (formKey.currentState!.validate()) {
-                        String? imageUrl;
-                        if (selectedImage != null) {
-                          imageUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
-                        }
-                        await cubit.createTenant(
-                          name: nameController.text.trim(),
-                          address: addressController.text.trim(),
-                          phone: phoneController.text.trim(),
-                          imageUrl: imageUrl,
-                        );
-                        if (dialogContext.mounted) Navigator.pop(dialogContext);
-                      }
-                    },
+                    onPressed: isSaving 
+                        ? null 
+                        : () async {
+                            if (formKey.currentState!.validate()) {
+                              setDialogState(() => isSaving = true);
+                              try {
+                                String? imageUrl;
+                                if (selectedImage != null) {
+                                  final bytes = await selectedImage!.readAsBytes();
+                                  imageUrl = await cubit.uploadImage(bytes, selectedImage!.name, 'tenants');
+                                  // If upload failed, imageUrl is null — we still create without photo
+                                  if (imageUrl == null && stateContext.mounted) {
+                                    ScaffoldMessenger.of(stateContext).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Фото не загружено. Центр создан без фото.'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  }
+                                }
+                                
+                                await cubit.createTenant(
+                                  name: nameController.text.trim(),
+                                  address: addressController.text.trim(),
+                                  phone: phoneController.text.trim(),
+                                  imageUrl: imageUrl,
+                                );
+                                
+                                if (stateContext.mounted) {
+                                  final currentState = stateContext.read<AdminCubit>().state;
+                                  if (currentState is! AdminError) {
+                                    if (dialogContext.mounted) {
+                                      Navigator.pop(dialogContext);
+                                    }
+                                  } else {
+                                    // Keep dialog open on error
+                                    setDialogState(() => isSaving = false);
+                                  }
+                                }
+                              } catch (e) {
+                                if (stateContext.mounted) {
+                                  ScaffoldMessenger.of(stateContext).showSnackBar(
+                                    SnackBar(content: Text('Error: ${e.toString()}')),
+                                  );
+                                  setDialogState(() => isSaving = false);
+                                }
+                              }
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('add'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: isSaving
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text('add'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -401,7 +463,7 @@ class AdminHomeScreen extends StatelessWidget {
     final addressController = TextEditingController(text: tenant.address);
     final phoneController = TextEditingController(text: tenant.phone);
     final formKey = GlobalKey<FormState>();
-    File? selectedImage;
+    XFile? selectedImage;
     bool isSaving = false;
 
     showDialog(
@@ -410,7 +472,7 @@ class AdminHomeScreen extends StatelessWidget {
         return BlocProvider.value(
           value: context.read<AdminCubit>(),
           child: StatefulBuilder(
-            builder: (stateContext, setState) => AlertDialog(
+            builder: (stateContext, setDialogState) => AlertDialog(
               backgroundColor: const Color(0xFF1E293B),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(
@@ -428,24 +490,46 @@ class AdminHomeScreen extends StatelessWidget {
                           final picker = ImagePicker();
                           final picked = await picker.pickImage(source: ImageSource.gallery);
                           if (picked != null) {
-                            setState(() => selectedImage = File(picked.path));
+                            setDialogState(() => selectedImage = picked);
                           }
                         },
-                        child: Container(
-                          height: 120,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withAlpha(30),
-                            borderRadius: BorderRadius.circular(15),
-                            image: selectedImage != null
-                                ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
-                                : (tenant.imageUrl != null
-                                    ? DecorationImage(image: NetworkImage(tenant.imageUrl!), fit: BoxFit.cover)
-                                    : null),
-                          ),
-                          child: selectedImage == null && tenant.imageUrl == null
-                              ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
-                              : null,
+                        child: Stack(
+                          children: [
+                            Container(
+                              height: 120,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withAlpha(30),
+                                borderRadius: BorderRadius.circular(15),
+                                image: selectedImage != null
+                                    ? DecorationImage(
+                                        image: kIsWeb
+                                            ? NetworkImage(selectedImage!.path)
+                                            : FileImage(io.File(selectedImage!.path)) as ImageProvider,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : (tenant.imageUrl != null
+                                        ? DecorationImage(image: NetworkImage(tenant.imageUrl!), fit: BoxFit.cover)
+                                        : null),
+                              ),
+                              child: selectedImage == null && tenant.imageUrl == null
+                                  ? const Icon(Icons.add_a_photo, size: 40, color: Colors.grey)
+                                  : null,
+                            ),
+                            if (selectedImage != null)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(() => selectedImage = null),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                    child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -481,12 +565,23 @@ class AdminHomeScreen extends StatelessWidget {
                         ? null
                         : () async {
                             if (formKey.currentState!.validate()) {
-                              setState(() => isSaving = true);
+                              setDialogState(() => isSaving = true);
                               try {
                                 String? imageUrl = tenant.imageUrl;
                                 if (selectedImage != null) {
-                                  final newUrl = await cubit.uploadImage(selectedImage!.path, 'tenants');
-                                  if (newUrl != null) imageUrl = newUrl;
+                                  final bytes = await selectedImage!.readAsBytes();
+                                  final newUrl = await cubit.uploadImage(bytes, selectedImage!.name, 'tenants');
+                                  if (newUrl != null) {
+                                    imageUrl = newUrl;
+                                  } else if (stateContext.mounted) {
+                                    // Upload failed — keep existing image and show warning
+                                    ScaffoldMessenger.of(stateContext).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Фото не загружено. Сохранено без изменения фото.'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                  }
                                 }
                                 await cubit.updateTenant(
                                   id: tenant.id,
@@ -495,18 +590,23 @@ class AdminHomeScreen extends StatelessWidget {
                                   phone: phoneController.text.trim(),
                                   imageUrl: imageUrl,
                                 );
-                                if (dialogContext.mounted) {
-                                  Navigator.pop(dialogContext);
+                                
+                                if (stateContext.mounted) {
+                                  final currentState = stateContext.read<AdminCubit>().state;
+                                  if (currentState is! AdminError) {
+                                    if (dialogContext.mounted) {
+                                      Navigator.pop(dialogContext);
+                                    }
+                                  } else {
+                                    setDialogState(() => isSaving = false);
+                                  }
                                 }
                               } catch (e) {
                                 if (stateContext.mounted) {
                                   ScaffoldMessenger.of(stateContext).showSnackBar(
                                     SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
                                   );
-                                }
-                              } finally {
-                                if (stateContext.mounted) {
-                                  setState(() => isSaving = false);
+                                  setDialogState(() => isSaving = false);
                                 }
                               }
                             }
@@ -693,7 +793,6 @@ class AdminHomeScreen extends StatelessWidget {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
     final descController = TextEditingController();
-    final durationController = TextEditingController(text: '1.0');
     final categories = [
       'catMaintenance',
       'catDiagElectronics',
@@ -803,15 +902,6 @@ class AdminHomeScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildModernField(
-                              controller: durationController,
-                              label: 'durationHoursLabel'.tr(),
-                              keyboardType: TextInputType.number,
-                              validator: (v) => double.tryParse(v ?? '') == null ? '?' : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildModernField(
                               controller: priceController,
                               label: 'priceLabel'.tr(),
                               keyboardType: TextInputType.number,
@@ -840,7 +930,6 @@ class AdminHomeScreen extends StatelessWidget {
                           description: descController.text.trim(),
                           price: double.parse(priceController.text),
                           category: selectedCategory,
-                          durationHours: double.parse(durationController.text),
                           tenantId: tenantId,
                         );
                         if (dialogContext.mounted) Navigator.pop(dialogContext);
@@ -875,8 +964,6 @@ class AdminHomeScreen extends StatelessWidget {
     final priceController =
         TextEditingController(text: service.price.toString());
     final descController = TextEditingController(text: service.description);
-    final durationController =
-        TextEditingController(text: service.durationHours.toString());
     String selectedCategory = service.category;
     final formKey = GlobalKey<FormState>();
 
@@ -986,15 +1073,6 @@ class AdminHomeScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildModernField(
-                              controller: durationController,
-                              label: 'durationHoursLabel'.tr(),
-                              keyboardType: TextInputType.number,
-                              validator: (v) => double.tryParse(v ?? '') == null ? '?' : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildModernField(
                               controller: priceController,
                               label: 'priceLabel'.tr(),
                               keyboardType: TextInputType.number,
@@ -1023,7 +1101,6 @@ class AdminHomeScreen extends StatelessWidget {
                           description: descController.text.trim(),
                           price: double.parse(priceController.text),
                           category: selectedCategory,
-                          durationHours: double.parse(durationController.text),
                           tenantId: tenantId,
                         );
                         if (dialogContext.mounted) Navigator.pop(dialogContext);
@@ -1249,16 +1326,28 @@ class AdminHomeScreen extends StatelessWidget {
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
                                       color: Theme.of(context).primaryColor.withAlpha(30),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
-                                    child: const Icon(
-                                      Icons.business,
-                                      color: Colors.deepPurple,
-                                      size: 32,
-                                    ),
+                                    child: tenant.imageUrl != null
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: CachedNetworkImage(
+                                              imageUrl: tenant.imageUrl!,
+                                              width: 40,
+                                              height: 40,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
+                                              errorWidget: (context, url, error) => const Icon(Icons.business, color: Colors.deepPurple, size: 32),
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.business,
+                                            color: Colors.deepPurple,
+                                            size: 40,
+                                          ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(

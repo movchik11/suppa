@@ -21,6 +21,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   List<Map<String, dynamic>> _tenants = [];
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authState = context.watch<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      final newId = widget.tenantId ?? authState.tenantId;
+      if (newId != _selectedTenantId) {
+        setState(() {
+          _selectedTenantId = newId;
+          _isAdmin = authState.role == 'admin';
+        });
+      }
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     final authState = context.read<AuthCubit>().state;
@@ -51,8 +66,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => OrderCubit(tenantId: _selectedTenantId)..fetchAllOrders(),
       key: ValueKey(_selectedTenantId),
+      create: (context) => OrderCubit(tenantId: _selectedTenantId)..fetchAllOrders(),
       child: Scaffold(
         backgroundColor: const Color(0xFF0F172A),
         body: BlocBuilder<OrderCubit, OrderState>(
@@ -160,7 +175,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   // Orders Body
                   _buildSliverBody(state),
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
             );
@@ -263,24 +277,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final orders = state.orders;
       if (orders.isEmpty) {
         return SliverFillRemaining(
+          hasScrollBody: false,
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.assignment_turned_in_outlined, size: 80, color: Colors.white24),
-                const SizedBox(height: 16),
-                Text(
-                  'noOrdersYet'.tr(),
-                  style: const TextStyle(color: Colors.white60, fontSize: 18),
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.assignment_turned_in_outlined, size: 80, color: Colors.white24),
+                  const SizedBox(height: 16),
+                  Text(
+                    'noOrdersYet'.tr(),
+                    style: const TextStyle(color: Colors.white60, fontSize: 18),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       }
 
       return SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) => _OrderManagementCard(order: orders[index]),

@@ -11,7 +11,8 @@ import 'package:supa/cubits/service_cubit.dart';
 import 'package:supa/screens/admin/admin_dashboard_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:io';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 
 class MechanicHomeScreen extends StatefulWidget {
@@ -49,95 +50,108 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
 
           return DefaultTabController(
             length: 2,
-            child: Scaffold(
-              backgroundColor: const Color(0xFF0F172A),
-              body: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade900, Colors.indigo.shade800],
-                      ),
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'mechanicPanel'.tr().isEmpty ? 'Mechanic Panel' : 'mechanicPanel'.tr(),
-                                style: GoogleFonts.outfit(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  const Icon(Icons.business, size: 14, color: Colors.white70),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    centerName,
-                                    style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.settings, color: Colors.white),
-                          onPressed: () => _showSettingsSheet(context),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.logout, color: Colors.white),
-                          onPressed: () {
-                            context.read<AuthCubit>().logout();
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(builder: (context) => const LoginScreen()),
-                              (route) => false,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TabBar(
-                    tabs: [
-                      Tab(text: 'dashboard'.tr()),
-                      Tab(text: 'services'.tr()),
-                    ],
-                    labelColor: Colors.blueAccent,
-                    unselectedLabelColor: Colors.white60,
-                    indicatorColor: Colors.blueAccent,
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        const AdminDashboardScreen(),
-                        _buildServicesTab(context, tenantId),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              floatingActionButton: Builder(
-                builder: (fabContext) {
-                  return FloatingActionButton(
-                    backgroundColor: Colors.blueAccent,
-                    child: const Icon(Icons.add, color: Colors.white),
-                    onPressed: () {
-                      if (tenantId != null) {
-                        _showAddServiceDialog(fabContext, tenantId);
-                      }
-                    },
+            child: BlocListener<ServiceCubit, ServiceState>(
+              listener: (context, state) {
+                if (state is ServiceCreated) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('serviceCreatedSuccessfully'.tr()), backgroundColor: Colors.green),
                   );
-                },
+                } else if (state is ServiceError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+                  );
+                }
+              },
+              child: Scaffold(
+                backgroundColor: const Color(0xFF0F172A),
+                body: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.blue.shade900, Colors.indigo.shade800],
+                        ),
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'mechanicPanel'.tr().isEmpty ? 'Mechanic Panel' : 'mechanicPanel'.tr(),
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.business, size: 14, color: Colors.white70),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      centerName,
+                                      style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.settings, color: Colors.white),
+                            onPressed: () => _showSettingsSheet(context),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.logout, color: Colors.white),
+                            onPressed: () {
+                              context.read<AuthCubit>().logout();
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                (route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TabBar(
+                      tabs: [
+                        Tab(text: 'dashboard'.tr()),
+                        Tab(text: 'services'.tr()),
+                      ],
+                      labelColor: Colors.blueAccent,
+                      unselectedLabelColor: Colors.white60,
+                      indicatorColor: Colors.blueAccent,
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          AdminDashboardScreen(tenantId: tenantId),
+                          _buildServicesTab(context, tenantId),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                floatingActionButton: Builder(
+                  builder: (fabContext) {
+                    return FloatingActionButton(
+                      backgroundColor: Colors.blueAccent,
+                      child: const Icon(Icons.add, color: Colors.white),
+                      onPressed: () {
+                        if (tenantId != null) {
+                          _showAddServiceDialog(fabContext, tenantId);
+                        }
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           );
@@ -211,10 +225,14 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
       'catAdditional': ['airConditioning', 'tuningEquipment', 'preSalePrep'],
     };
 
+    bool isSaving = false;
+
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setDialogState) => AlertDialog(
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<ServiceCubit>(),
+        child: StatefulBuilder(
+          builder: (stateContext, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text('addNewService'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -232,26 +250,48 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                       setDialogState(() => selectedImage = picked);
                     }
                   },
-                  child: Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(10),
-                      borderRadius: BorderRadius.circular(16),
-                      image: selectedImage != null
-                          ? DecorationImage(image: FileImage(File(selectedImage!.path)), fit: BoxFit.cover)
-                          : null,
-                    ),
-                    child: selectedImage == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.add_a_photo, color: Colors.white70, size: 32),
-                              const SizedBox(height: 8),
-                              Text('addPhoto'.tr(), style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                            ],
-                          )
-                        : null,
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 120,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(10),
+                          borderRadius: BorderRadius.circular(16),
+                          image: selectedImage != null
+                              ? DecorationImage(
+                                  image: kIsWeb
+                                      ? NetworkImage(selectedImage!.path)
+                                      : FileImage(io.File(selectedImage!.path)) as ImageProvider,
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: selectedImage == null
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.add_a_photo, color: Colors.white70, size: 32),
+                                  const SizedBox(height: 8),
+                                  Text('addPhoto'.tr(), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                ],
+                              )
+                            : null,
+                      ),
+                      if (selectedImage != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => setDialogState(() => selectedImage = null),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: const Icon(Icons.close, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -302,6 +342,8 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                   decoration: InputDecoration(
                     labelText: 'serviceName'.tr(),
                     labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withAlpha(10),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -313,6 +355,8 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                   decoration: InputDecoration(
                     labelText: 'description'.tr(),
                     labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withAlpha(10),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -324,6 +368,8 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                   decoration: InputDecoration(
                     labelText: 'priceLabel'.tr(),
                     labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withAlpha(10),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -335,30 +381,59 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
               onPressed: () => Navigator.pop(dialogContext),
               child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
             ),
-            ElevatedButton(
-              onPressed: () {
-                context.read<ServiceCubit>().createService(
-                  name: nameController.text,
-                  description: descController.text,
-                  price: double.tryParse(priceController.text) ?? 0.0,
-                  durationHours: 1.0, // Default to 1 hour as it's removed from UI
-                  category: category,
-                  tenantId: tenantId,
-                  image: selectedImage,
-                );
-                Navigator.pop(dialogContext);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            SizedBox(
+              width: 100,
+              child: ElevatedButton(
+                onPressed: isSaving 
+                  ? null 
+                  : () async {
+                    setDialogState(() => isSaving = true);
+                    try {
+                      await stateContext.read<ServiceCubit>().createService(
+                        name: nameController.text,
+                        description: descController.text,
+                        price: double.tryParse(priceController.text) ?? 0.0,
+                        category: category,
+                        tenantId: tenantId,
+                        image: selectedImage,
+                      );
+                      
+                      if (stateContext.mounted) {
+                        final currentState = stateContext.read<ServiceCubit>().state;
+                        if (currentState is ServiceCreated) {
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        } else {
+                          // It's likely an error (already handled by BlocListener SnackBar)
+                          // Reset loading state so user can try again
+                          setDialogState(() => isSaving = false);
+                        }
+                      }
+                    } catch (e) {
+                      if (stateContext.mounted) {
+                        ScaffoldMessenger.of(stateContext).showSnackBar(
+                          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                        );
+                        setDialogState(() => isSaving = false);
+                      }
+                    }
+                  },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: isSaving 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text('add'.tr(), style: const TextStyle(color: Colors.white)),
               ),
-              child: Text('add'.tr(), style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showEditServiceDialog(BuildContext context, Service service) {
     final nameController = TextEditingController(text: service.name);
@@ -366,6 +441,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
     final priceController = TextEditingController(text: service.price.toString());
     String category = service.category;
     XFile? selectedImage;
+    bool isSaving = false;
 
     final Map<String, List<String>> categorySuggestions = {
       'catMaintenance': ['oilFluidChange', 'filterReplacement', 'sparkPlugCheck'],
@@ -378,8 +454,10 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (stateContext, setDialogState) => AlertDialog(
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<ServiceCubit>(),
+        child: StatefulBuilder(
+          builder: (stateContext, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text('edit'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -397,28 +475,50 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                       setDialogState(() => selectedImage = picked);
                     }
                   },
-                  child: Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(10),
-                      borderRadius: BorderRadius.circular(16),
-                      image: selectedImage != null
-                          ? DecorationImage(image: FileImage(File(selectedImage!.path)), fit: BoxFit.cover)
-                          : (service.imageUrl != null
-                              ? DecorationImage(image: NetworkImage(service.imageUrl!), fit: BoxFit.cover)
-                              : null),
-                    ),
-                    child: selectedImage == null && service.imageUrl == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.add_a_photo, color: Colors.white70, size: 32),
-                              const SizedBox(height: 8),
-                              Text('addPhoto'.tr(), style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                            ],
-                          )
-                        : null,
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 120,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(10),
+                          borderRadius: BorderRadius.circular(16),
+                          image: selectedImage != null
+                              ? DecorationImage(
+                                  image: kIsWeb
+                                      ? NetworkImage(selectedImage!.path)
+                                      : FileImage(io.File(selectedImage!.path)) as ImageProvider,
+                                  fit: BoxFit.cover,
+                                )
+                              : (service.imageUrl != null
+                                  ? DecorationImage(image: NetworkImage(service.imageUrl!), fit: BoxFit.cover)
+                                  : null),
+                        ),
+                        child: selectedImage == null && service.imageUrl == null
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.add_a_photo, color: Colors.white70, size: 32),
+                                  const SizedBox(height: 8),
+                                  Text('addPhoto'.tr(), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                ],
+                              )
+                            : null,
+                      ),
+                      if (selectedImage != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => setDialogState(() => selectedImage = null),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: const Icon(Icons.close, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -469,6 +569,8 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                   decoration: InputDecoration(
                     labelText: 'serviceName'.tr(),
                     labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withAlpha(10),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -480,6 +582,8 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                   decoration: InputDecoration(
                     labelText: 'description'.tr(),
                     labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withAlpha(10),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -491,6 +595,8 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
                   decoration: InputDecoration(
                     labelText: 'priceLabel'.tr(),
                     labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withAlpha(10),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -503,31 +609,55 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
               child: Text('cancel'.tr(), style: const TextStyle(color: Colors.white60)),
             ),
             ElevatedButton(
-              onPressed: () {
-                context.read<ServiceCubit>().updateService(
-                  serviceId: service.id,
-                  name: nameController.text,
-                  description: descController.text,
-                  price: double.tryParse(priceController.text) ?? 0.0,
-                  durationHours: service.durationHours,
-                  category: category,
-                  tenantId: service.tenantId,
-                  newImage: selectedImage,
-                  existingImageUrl: service.imageUrl,
-                );
-                Navigator.pop(dialogContext);
-              },
+              onPressed: isSaving
+                ? null
+                : () async {
+                    setDialogState(() => isSaving = true);
+                    try {
+                      await stateContext.read<ServiceCubit>().updateService(
+                        serviceId: service.id,
+                        name: nameController.text,
+                        description: descController.text,
+                        price: double.tryParse(priceController.text) ?? 0.0,
+                        category: category,
+                        tenantId: service.tenantId,
+                        newImage: selectedImage,
+                        existingImageUrl: service.imageUrl,
+                      );
+                      
+                      if (stateContext.mounted) {
+                        final currentState = stateContext.read<ServiceCubit>().state;
+                        if (currentState is ServiceCreated) {
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                        } else {
+                          setDialogState(() => isSaving = false);
+                        }
+                      }
+                    } catch (e) {
+                      if (stateContext.mounted) {
+                        ScaffoldMessenger.of(stateContext).showSnackBar(
+                          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                        );
+                        setDialogState(() => isSaving = false);
+                      }
+                    }
+                  },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('save'.tr(), style: const TextStyle(color: Colors.white)),
+              child: isSaving
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Text('save'.tr(), style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showDeleteServiceDialog(BuildContext context, Service service) {
     showDialog(

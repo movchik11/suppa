@@ -326,12 +326,6 @@ class _ServiceListItem extends StatelessWidget {
                       children: [
                         _buildBadge(
                           context,
-                          Icons.timer,
-                          service.estimatedTime ?? '${service.durationHours}h',
-                        ),
-                        const SizedBox(width: 12),
-                        _buildBadge(
-                          context,
                           Icons.category,
                           service.category.tr(),
                         ),

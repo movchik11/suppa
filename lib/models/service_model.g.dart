@@ -20,11 +20,11 @@ class ServiceAdapter extends TypeAdapter<Service> {
       id: fields[0] as String,
       name: fields[1] as String,
       description: fields[2] as String,
-      price: fields[4] as double,
-      category: fields[6] as String,
-      durationHours: fields[3] as double,
-      imageUrl: fields[5] as String?,
-      estimatedTime: fields[7] as String?,
+      price: fields[3] as double,
+      imageUrl: fields[4] as String?,
+      category: fields[5] as String,
+      estimatedTime: fields[6] as String?,
+      tenantId: fields[7] as String?,
     );
   }
 
@@ -39,15 +39,15 @@ class ServiceAdapter extends TypeAdapter<Service> {
       ..writeByte(2)
       ..write(obj.description)
       ..writeByte(3)
-      ..write(obj.durationHours)
-      ..writeByte(4)
       ..write(obj.price)
-      ..writeByte(5)
+      ..writeByte(4)
       ..write(obj.imageUrl)
-      ..writeByte(6)
+      ..writeByte(5)
       ..write(obj.category)
+      ..writeByte(6)
+      ..write(obj.estimatedTime)
       ..writeByte(7)
-      ..write(obj.estimatedTime);
+      ..write(obj.tenantId);
   }
 
   @override

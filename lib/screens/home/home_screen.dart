@@ -177,134 +177,150 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           drawer: Drawer(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            child: ListView(
-              padding: EdgeInsets.zero,
+            child: Column(
               children: [
-                DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withAlpha(204),
-                  ),
-                  child: BlocBuilder<ProfileCubit, ProfileState>(
-                    builder: (context, state) {
-                      String name = 'New User';
-                      String email = '';
-                      String? avatarUrl;
-                      if (state is ProfileLoaded) {
-                        name = state.profile.displayName ?? 'New User';
-                        email = state.profile.email;
-                        avatarUrl = state.profile.avatarUrl;
-                      }
-                      return Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.white24,
-                            backgroundImage: avatarUrl != null
-                                ? CachedNetworkImageProvider(avatarUrl)
-                                : null,
-                            child: avatarUrl == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 30,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      DrawerHeader(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor.withAlpha(204),
+                        ),
+                        child: BlocBuilder<ProfileCubit, ProfileState>(
+                          builder: (context, state) {
+                            String name = 'New User';
+                            String email = '';
+                            String? avatarUrl;
+                            if (state is ProfileLoaded) {
+                              name = state.profile.displayName ?? 'New User';
+                              email = state.profile.email;
+                              avatarUrl = state.profile.avatarUrl;
+                            }
+                            return Row(
                               children: [
-                                Text(
-                                  name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.white24,
+                                  backgroundImage: avatarUrl != null
+                                      ? CachedNetworkImageProvider(avatarUrl)
+                                      : null,
+                                  child: avatarUrl == null
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 30,
+                                          color: Colors.white,
+                                        )
+                                      : null,
                                 ),
-                                Text(
-                                  email,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      Text(
+                                        email,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.home_repair_service,
-                    color: Colors.blue,
-                  ),
-                  title: Text('services'.tr()),
-                  onTap: () {
-                    setState(() => _selectedIndex = 0);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.smart_toy, color: Colors.purple),
-                  title: Text('assistant'.tr()),
-                  onTap: () {
-                    setState(() => _selectedIndex = 1);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.garage, color: Colors.orange),
-                  title: Text('garage'.tr()),
-                  onTap: () {
-                    setState(() => _selectedIndex = 2);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.history, color: Colors.green),
-                  title: Text('history'.tr()),
-                  onTap: () {
-                    setState(() => _selectedIndex = 3);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.person, color: Colors.teal),
-                  title: Text('profile'.tr()),
-                  onTap: () {
-                    setState(() => _selectedIndex = 4);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings, color: Colors.blueGrey),
-                  title: Text('settings'.tr()),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsTab(),
+                            );
+                          },
+                        ),
                       ),
-                    );
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: Text(
-                    'logout'.tr(),
-                    style: const TextStyle(color: Colors.red),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.home_repair_service,
+                          color: Colors.blue,
+                        ),
+                        title: Text('services'.tr()),
+                        onTap: () {
+                          setState(() => _selectedIndex = 0);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.smart_toy, color: Colors.purple),
+                        title: Text('assistant'.tr()),
+                        onTap: () {
+                          setState(() => _selectedIndex = 1);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.garage, color: Colors.orange),
+                        title: Text('garage'.tr()),
+                        onTap: () {
+                          setState(() => _selectedIndex = 2);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.history, color: Colors.green),
+                        title: Text('history'.tr()),
+                        onTap: () {
+                          setState(() => _selectedIndex = 3);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.person, color: Colors.teal),
+                        title: Text('profile'.tr()),
+                        onTap: () {
+                          setState(() => _selectedIndex = 4);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.settings, color: Colors.blueGrey),
+                        title: Text('settings'.tr()),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsTab(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+                      ListTile(
+                        leading: const Icon(Icons.logout, color: Colors.red),
+                        title: Text(
+                          'logout'.tr(),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        onTap: () {
+                          context.read<AuthCubit>().logout();
+                        },
+                      ),
+                    ],
                   ),
-                  onTap: () {
-                    context.read<AuthCubit>().logout();
-                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    '${'createdBy'.tr()} Möwlamberdi Süleýmanberdiyew',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
                 ),
               ],
             ),

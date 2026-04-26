@@ -57,7 +57,6 @@ class ServicesListScreen extends StatelessWidget {
                               description:
                                   'Loading service description details...',
                               price: 0.0,
-                              durationHours: 0,
                               category: 'Loading...',
                             )
                           : services[index];
@@ -172,22 +171,6 @@ class _ServiceListItem extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 18,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'hoursArg'.tr(
-                              args: [service.durationHours.toString()],
-                            ),
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
                       Text(
                         '${service.price.toStringAsFixed(2)} TMT',
                         style: TextStyle(

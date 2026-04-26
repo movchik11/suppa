@@ -364,5 +364,11 @@
     "confirmDeleteCenter": "{} merkezini öçürmelimi? Ähli baglanyşykly maglumatlar täsirlenip biler.",
     "deleteServiceCenter": "Hyzmat merkezini öçür",
     "editServiceCenter": "Hyzmat merkezini üýtget",
-    "address": "Salgy"
+    "address": "Salgy",
+    "serviceCreatedSuccessfully": "Hyzmat üstünlikli döredildi!",
+    "aboutApp": "Programma barada",
+    "appIdeaAndImplementation": "Ideýa we durmuşa geçirme",
+    "projectAuthor": "Taslamanyň awtory",
+    "appVersion": "Programmanyň wersiýasy",
+    "createdBy": "Döreden"
 }

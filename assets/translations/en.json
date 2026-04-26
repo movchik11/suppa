@@ -351,5 +351,13 @@
     "confirmDeleteCenter": "Confirm delete {}? All associated data may be affected.",
     "deleteServiceCenter": "Delete Service Center",
     "editServiceCenter": "Edit Service Center",
-    "address": "Address"
+    "address": "Address",
+    "management": "Management",
+    "totalAdvances": "Total Advances",
+    "allCenters": "All Centers",
+    "aboutApp": "About App",
+    "appIdeaAndImplementation": "Idea and Implementation",
+    "projectAuthor": "Project Author",
+    "appVersion": "App Version",
+    "createdBy": "Created by"
 }

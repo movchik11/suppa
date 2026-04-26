@@ -28,27 +28,7 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
     {'value': 'default', 'label': 'all'.tr()},
     {'value': 'price_asc', 'label': 'sortPriceAsc'.tr()},
     {'value': 'price_desc', 'label': 'sortPriceDesc'.tr()},
-    {'value': 'duration_asc', 'label': 'sortDurationAsc'.tr()},
-    {'value': 'duration_desc', 'label': 'sortDurationDesc'.tr()},
   ];
-
-  final Map<String, List<String>> _subServices = {
-    'catMaintenance': ['oilFluidChange', 'filterReplacement', 'sparkPlugCheck'],
-    'catDiagElectronics': [
-      'computerDiagnostics',
-      'chassisDiagnostics',
-      'electricalRepair',
-    ],
-    'catCoreRepair': [
-      'engineRepair',
-      'transmissionRepair',
-      'suspensionSteering',
-      'brakingSystem',
-    ],
-    'catChassisWheels': ['tireFitting', 'wheelAlignment'],
-    'catBodyVisual': ['bodyWork', 'paintPolishing', 'glassRepair'],
-    'catAdditional': ['airConditioning', 'tuningEquipment', 'preSalePrep'],
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -69,38 +49,98 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
     return BlocProvider(
       create: (context) => ServiceCubit(tenantId: widget.tenant.id)..fetchServices(),
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: Text(widget.tenant.name),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const BackButton(color: Colors.white),
         ),
         body: Column(
           children: [
-            // Center Details Header
-            if (widget.tenant.phone != null || widget.tenant.address != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: Theme.of(context).cardColor,
-                child: Row(
-                  children: [
-                    if (widget.tenant.phone != null) ...[
-                      const Icon(Icons.phone, size: 16, color: Colors.blue),
-                      const SizedBox(width: 8),
-                      Text(widget.tenant.phone!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 16),
-                    ],
-                    if (widget.tenant.address != null) ...[
-                      const Icon(Icons.location_on, size: 16, color: Colors.redAccent),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          widget.tenant.address!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            // Premium Header with Tenant Photo
+            Stack(
+              children: [
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade900,
+                    image: widget.tenant.imageUrl != null
+                        ? DecorationImage(
+                            image: CachedNetworkImageProvider(widget.tenant.imageUrl!),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(
+                              Colors.black.withAlpha(100),
+                              BlendMode.darken,
+                            ),
+                          )
+                        : null,
+                  ),
+                  child: widget.tenant.imageUrl == null
+                      ? Center(
+                          child: Icon(
+                            Icons.business,
+                            size: 80,
+                            color: Colors.white.withAlpha(50),
+                          ),
+                        )
+                      : null,
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.tenant.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          shadows: [Shadow(color: Colors.black, blurRadius: 10)],
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          if (widget.tenant.phone != null) ...[
+                            Icon(Icons.phone, size: 16, color: Colors.blue.shade200),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.tenant.phone!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                shadows: [Shadow(color: Colors.black, blurRadius: 5)],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+                          if (widget.tenant.address != null) ...[
+                            Icon(Icons.location_on, size: 16, color: Colors.red.shade300),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                widget.tenant.address!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  shadows: [Shadow(color: Colors.black, blurRadius: 5)],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
+              ],
+            ),
 
             // Category Selector
             // Filters Row
@@ -131,15 +171,10 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
                             )
                             .toList();
 
-                    // Apply Sorting
                     if (_currentSort == 'price_asc') {
                       filteredServices.sort((a, b) => a.price.compareTo(b.price));
                     } else if (_currentSort == 'price_desc') {
                       filteredServices.sort((a, b) => b.price.compareTo(a.price));
-                    } else if (_currentSort == 'duration_asc') {
-                      filteredServices.sort((a, b) => a.durationHours.compareTo(b.durationHours));
-                    } else if (_currentSort == 'duration_desc') {
-                      filteredServices.sort((a, b) => b.durationHours.compareTo(a.durationHours));
                     }
 
                     return RefreshIndicator(
@@ -152,51 +187,6 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
                             _buildSectionHeader(context, 'allServices'.tr()),
                             const SizedBox(height: 12),
                           ] else ...[
-                            if (_subServices[selectedCategory] != null) ...[
-                              _buildSectionHeader(context, 'ourServices'.tr()),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 44,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _subServices[selectedCategory]!.length,
-                                  itemBuilder: (context, index) {
-                                    final sKey = _subServices[selectedCategory]![index];
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 8),
-                                      child: ActionChip(
-                                        label: Text(
-                                          sKey.tr(),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.blue.withAlpha(20),
-                                        side: const BorderSide(color: Colors.blue),
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => CreateOrderScreen(
-                                                suggestedServiceTitle: sKey.tr(),
-                                              ),
-                                            ),
-                                          ).then((value) {
-                                            if (value == true && context.mounted) {
-                                              context.read<ServiceCubit>().fetchServices();
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              _buildSectionHeader(context, 'availableAppointments'.tr()),
-                              const SizedBox(height: 12),
-                            ],
                           ],
 
                           if (filteredServices.isEmpty)
@@ -259,6 +249,7 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
 
   Widget _buildCategorySelector(List<String> categories, String Function(String) getLabel) {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: selectedCategory,
       decoration: InputDecoration(
         labelText: 'category'.tr(),
@@ -268,7 +259,11 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
       items: categories.map((category) {
         return DropdownMenuItem<String>(
           value: category,
-          child: Text(getLabel(category), style: const TextStyle(fontSize: 13)),
+          child: Text(
+            getLabel(category),
+            style: const TextStyle(fontSize: 13),
+            overflow: TextOverflow.ellipsis,
+          ),
         );
       }).toList(),
       onChanged: (val) {
@@ -281,16 +276,21 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
 
   Widget _buildSortSelector() {
     return DropdownButtonFormField<String>(
+      isExpanded: true,
       initialValue: _currentSort,
       decoration: InputDecoration(
-        labelText: 'rate'.tr(), // Or 'Sort' if we had a key, but 'rate' exists and is similar in some contexts. Let's use 'all' for now if no better key.
+        labelText: 'rate'.tr(), // Or 'Sort' if we had a key
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
       items: _sortOptions.map((opt) {
         return DropdownMenuItem<String>(
           value: opt['value'],
-          child: Text(opt['label']!, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
+          child: Text(
+            opt['label']!,
+            style: const TextStyle(fontSize: 13),
+            overflow: TextOverflow.ellipsis,
+          ),
         );
       }).toList(),
       onChanged: (val) {
@@ -401,9 +401,6 @@ class _ServiceListItemState extends State<_ServiceListItem> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    if (widget.service.durationHours > 0)
-                      _buildChip(context, Icons.timer_outlined, '${widget.service.durationHours} h'),
-                    const SizedBox(width: 8),
                     _buildChip(context, Icons.category_outlined, widget.service.category.tr()),
                     const Spacer(),
                     GestureDetector(

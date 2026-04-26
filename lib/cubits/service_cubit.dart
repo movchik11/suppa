@@ -82,7 +82,6 @@ class ServiceCubit extends Cubit<ServiceState> {
   Future<void> createService({
     required String name,
     required String description,
-    required double durationHours,
     required double price,
     required String category,
     String? tenantId,
@@ -93,26 +92,44 @@ class ServiceCubit extends Cubit<ServiceState> {
       String? imageUrl;
 
       if (image != null) {
-        final sanitizedName = image.name.replaceAll(
-          RegExp(r'[^a-zA-Z0-9._-]'),
-          '_',
-        );
-        final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
-        final bytes = await image.readAsBytes();
+        try {
+          final sanitizedName = image.name.replaceAll(
+            RegExp(r'[^a-zA-Z0-9._-]'),
+            '_',
+          );
+          final fileName =
+              '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
+          final bytes = await image.readAsBytes();
 
-        await supabase.storage
-            .from('service-images')
-            .uploadBinary(fileName, bytes);
-        imageUrl = supabase.storage
-            .from('service-images')
-            .getPublicUrl(fileName);
+          await supabase.storage
+              .from('service-images')
+              .uploadBinary(
+                fileName,
+                bytes,
+                fileOptions: const FileOptions(upsert: true),
+              )
+              .timeout(
+                const Duration(seconds: 7),
+                onTimeout: () {
+                  // ignore: avoid_print
+                  print('DEBUG: Image upload timed out (7s)');
+                  throw Exception('Image upload timed out');
+                },
+              );
+          imageUrl = supabase.storage
+              .from('service-images')
+              .getPublicUrl(fileName);
+        } catch (uploadError) {
+          // Image upload failed — create the service without an image
+          // ignore: avoid_print
+          print('Image upload failed, creating service without image: $uploadError');
+          imageUrl = null;
+        }
       }
 
       await supabase.from('services').insert({
         'name': name,
         'description': description,
-        'duration_hours': durationHours,
         'price': price,
         'category': category,
         'image_url': imageUrl,
@@ -132,7 +149,6 @@ class ServiceCubit extends Cubit<ServiceState> {
     required String serviceId,
     required String name,
     required String description,
-    required double durationHours,
     required double price,
     required String category,
     String? tenantId,
@@ -143,26 +159,43 @@ class ServiceCubit extends Cubit<ServiceState> {
       String? imageUrl = existingImageUrl;
 
       if (newImage != null) {
-        final sanitizedName = newImage.name.replaceAll(
-          RegExp(r'[^a-zA-Z0-9._-]'),
-          '_',
-        );
-        final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
-        final bytes = await newImage.readAsBytes();
+        try {
+          final sanitizedName = newImage.name.replaceAll(
+            RegExp(r'[^a-zA-Z0-9._-]'),
+            '_',
+          );
+          final fileName =
+              '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
+          final bytes = await newImage.readAsBytes();
 
-        await supabase.storage
-            .from('service-images')
-            .uploadBinary(fileName, bytes);
-        imageUrl = supabase.storage
-            .from('service-images')
-            .getPublicUrl(fileName);
+          await supabase.storage
+              .from('service-images')
+              .uploadBinary(
+                fileName,
+                bytes,
+                fileOptions: const FileOptions(upsert: true),
+              )
+              .timeout(
+                const Duration(seconds: 7),
+                onTimeout: () {
+                  // ignore: avoid_print
+                  print('DEBUG: Image update upload timed out (7s)');
+                  throw Exception('Image upload timed out');
+                },
+              );
+          imageUrl = supabase.storage
+              .from('service-images')
+              .getPublicUrl(fileName);
+        } catch (uploadError) {
+          // ignore: avoid_print
+          print('Image upload failed, keeping existing image: $uploadError');
+          // imageUrl stays as existingImageUrl
+        }
       }
 
       final Map<String, dynamic> updateData = {
         'name': name,
         'description': description,
-        'duration_hours': durationHours,
         'price': price,
         'category': category,
         'image_url': imageUrl,
@@ -201,10 +234,6 @@ class ServiceCubit extends Cubit<ServiceState> {
       sorted.sort((a, b) => a.price.compareTo(b.price));
     } else if (sortBy == 'price_desc') {
       sorted.sort((a, b) => b.price.compareTo(a.price));
-    } else if (sortBy == 'duration_asc') {
-      sorted.sort((a, b) => a.durationHours.compareTo(b.durationHours));
-    } else if (sortBy == 'duration_desc') {
-      sorted.sort((a, b) => b.durationHours.compareTo(a.durationHours));
     }
 
     emit(ServicesLoaded(sorted));

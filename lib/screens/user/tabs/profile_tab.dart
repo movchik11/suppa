@@ -135,6 +135,35 @@ class ProfileTab extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(context, 'aboutApp'.tr()),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${'appIdeaAndImplementation'.tr()}: Möwlamberdi Süleýmanberdiyew',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${'projectAuthor'.tr()}: Möwlamberdi Süleýmanberdiyew',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${'appVersion'.tr()} 1.0.0',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 100),
                 ],
               ),

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supa/models/tenant_model.dart';
@@ -239,18 +239,31 @@ class AdminCubit extends Cubit<AdminState> {
       return [];
     }
   }
-  Future<String?> uploadImage(String filePath, String bucket) async {
+  Future<String?> uploadImage(Uint8List bytes, String fileName, String bucket) async {
     try {
-      final file = File(filePath);
-      final fileExt = filePath.split('.').last;
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-      final path = fileName;
+      final sanitizedName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final path = '${DateTime.now().microsecondsSinceEpoch}_$sanitizedName';
 
-      await supabase.storage.from(bucket).upload(path, file);
+      // Upload the file
+      await supabase.storage.from(bucket).uploadBinary(
+        path,
+        bytes,
+        fileOptions: const FileOptions(upsert: true),
+      ).timeout(
+        const Duration(seconds: 7),
+        onTimeout: () {
+          // ignore: avoid_print
+          print('DEBUG: Admin image upload timed out (7s)');
+          throw Exception('Image upload timed out');
+        },
+      );
 
+      // Get public URL
       final imageUrl = supabase.storage.from(bucket).getPublicUrl(path);
       return imageUrl;
     } catch (e) {
+      // ignore: avoid_print
+      print('Error uploading image: $e');
       return null;
     }
   }

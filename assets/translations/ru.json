@@ -357,5 +357,14 @@
     "confirmDeleteCenter": "Удалить центр {}? Все связанные данные могут быть затронуты.",
     "deleteServiceCenter": "Удалить сервисный центр",
     "editServiceCenter": "Редактировать сервисный центр",
-    "address": "Адрес"
+    "address": "Адрес",
+    "management": "Управление",
+    "totalAdvances": "Общий аванс",
+    "allCenters": "Все центры",
+    "serviceCreatedSuccessfully": "Услуга успешно создана!",
+    "aboutApp": "О приложении",
+    "appIdeaAndImplementation": "Идея и реализация",
+    "projectAuthor": "Автор проекта",
+    "appVersion": "версия приложения",
+    "createdBy": "Создано"
 }
