@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supa/models/service_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -99,23 +101,24 @@ class ServiceCubit extends Cubit<ServiceState> {
           );
           final fileName =
               '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
-          final bytes = await image.readAsBytes();
-
-          await supabase.storage
-              .from('service-images')
-              .uploadBinary(
-                fileName,
-                bytes,
-                fileOptions: const FileOptions(upsert: true),
-              )
-              .timeout(
-                const Duration(seconds: 7),
-                onTimeout: () {
-                  // ignore: avoid_print
-                  print('DEBUG: Image upload timed out (7s)');
-                  throw Exception('Image upload timed out');
-                },
-              );
+          if (kIsWeb) {
+            final bytes = await image.readAsBytes();
+            await supabase.storage
+                .from('service-images')
+                .uploadBinary(
+                  fileName,
+                  bytes,
+                  fileOptions: const FileOptions(upsert: true),
+                );
+          } else {
+            await supabase.storage
+                .from('service-images')
+                .upload(
+                  fileName,
+                  io.File(image.path),
+                  fileOptions: const FileOptions(upsert: true),
+                );
+          }
           imageUrl = supabase.storage
               .from('service-images')
               .getPublicUrl(fileName);
@@ -166,23 +169,24 @@ class ServiceCubit extends Cubit<ServiceState> {
           );
           final fileName =
               '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
-          final bytes = await newImage.readAsBytes();
-
-          await supabase.storage
-              .from('service-images')
-              .uploadBinary(
-                fileName,
-                bytes,
-                fileOptions: const FileOptions(upsert: true),
-              )
-              .timeout(
-                const Duration(seconds: 7),
-                onTimeout: () {
-                  // ignore: avoid_print
-                  print('DEBUG: Image update upload timed out (7s)');
-                  throw Exception('Image upload timed out');
-                },
-              );
+          if (kIsWeb) {
+            final bytes = await newImage.readAsBytes();
+            await supabase.storage
+                .from('service-images')
+                .uploadBinary(
+                  fileName,
+                  bytes,
+                  fileOptions: const FileOptions(upsert: true),
+                );
+          } else {
+            await supabase.storage
+                .from('service-images')
+                .upload(
+                  fileName,
+                  io.File(newImage.path),
+                  fileOptions: const FileOptions(upsert: true),
+                );
+          }
           imageUrl = supabase.storage
               .from('service-images')
               .getPublicUrl(fileName);

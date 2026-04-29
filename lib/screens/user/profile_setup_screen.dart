@@ -69,7 +69,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             labelText: 'name'.tr(),
-                            prefixIcon: const Icon(Icons.person_outline),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
+                            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
+                            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -86,8 +89,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           inputFormatters: [PhoneNumberFormatter()],
                           decoration: InputDecoration(
                             labelText: 'phone'.tr(),
-                            prefixIcon: const Icon(Icons.phone_outlined),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            prefixIcon: const Icon(Icons.phone_outlined, color: Colors.white70),
                             hintText: '+993-6x-xx-xx-xx',
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
+                            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {

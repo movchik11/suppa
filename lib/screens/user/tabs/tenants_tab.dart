@@ -40,17 +40,7 @@ class _TenantsTabState extends State<TenantsTab> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Text(
-                  'centers'.tr(),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
+
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () => context.read<TenantCubit>().fetchTenants(),

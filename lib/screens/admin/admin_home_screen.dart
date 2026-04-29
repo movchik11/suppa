@@ -398,8 +398,7 @@ class AdminHomeScreen extends StatelessWidget {
                               try {
                                 String? imageUrl;
                                 if (selectedImage != null) {
-                                  final bytes = await selectedImage!.readAsBytes();
-                                  imageUrl = await cubit.uploadImage(bytes, selectedImage!.name, 'tenants');
+                                  imageUrl = await cubit.uploadImage(selectedImage!, 'tenants');
                                   // If upload failed, imageUrl is null — we still create without photo
                                   if (imageUrl == null && stateContext.mounted) {
                                     ScaffoldMessenger.of(stateContext).showSnackBar(
@@ -569,8 +568,7 @@ class AdminHomeScreen extends StatelessWidget {
                               try {
                                 String? imageUrl = tenant.imageUrl;
                                 if (selectedImage != null) {
-                                  final bytes = await selectedImage!.readAsBytes();
-                                  final newUrl = await cubit.uploadImage(bytes, selectedImage!.name, 'tenants');
+                                  final newUrl = await cubit.uploadImage(selectedImage!, 'tenants');
                                   if (newUrl != null) {
                                     imageUrl = newUrl;
                                   } else if (stateContext.mounted) {

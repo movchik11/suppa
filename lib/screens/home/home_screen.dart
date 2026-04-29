@@ -122,29 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.sort),
-                  onSelected: (val) =>
-                      context.read<ServiceCubit>().sortServices(val),
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'price_asc',
-                      child: Text('sortPriceAsc'.tr()),
-                    ),
-                    PopupMenuItem(
-                      value: 'price_desc',
-                      child: Text('sortPriceDesc'.tr()),
-                    ),
-                    PopupMenuItem(
-                      value: 'duration_asc',
-                      child: Text('sortDurationAsc'.tr()),
-                    ),
-                    PopupMenuItem(
-                      value: 'duration_desc',
-                      child: Text('sortDurationDesc'.tr()),
-                    ),
-                  ],
-                ),
                 const SizedBox(width: 4),
                 IconButton(
                   icon: Icon(

@@ -1,5 +1,8 @@
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supa/models/profile_model.dart';
 import 'package:supa/models/tenant_model.dart';
 import 'package:supa/models/service_model.dart';
@@ -239,24 +242,26 @@ class AdminCubit extends Cubit<AdminState> {
       return [];
     }
   }
-  Future<String?> uploadImage(Uint8List bytes, String fileName, String bucket) async {
+  Future<String?> uploadImage(XFile image, String bucket) async {
     try {
-      final sanitizedName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final sanitizedName = image.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
       final path = '${DateTime.now().microsecondsSinceEpoch}_$sanitizedName';
 
       // Upload the file
-      await supabase.storage.from(bucket).uploadBinary(
-        path,
-        bytes,
-        fileOptions: const FileOptions(upsert: true),
-      ).timeout(
-        const Duration(seconds: 7),
-        onTimeout: () {
-          // ignore: avoid_print
-          print('DEBUG: Admin image upload timed out (7s)');
-          throw Exception('Image upload timed out');
-        },
-      );
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        await supabase.storage.from(bucket).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+      } else {
+        await supabase.storage.from(bucket).upload(
+          path,
+          io.File(image.path),
+          fileOptions: const FileOptions(upsert: true),
+        );
+      }
 
       // Get public URL
       final imageUrl = supabase.storage.from(bucket).getPublicUrl(path);

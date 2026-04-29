@@ -10,6 +10,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lottie/lottie.dart';
 import 'package:supa/components/ui/bouncy_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TenantServicesScreen extends StatefulWidget {
   final Tenant tenant;
@@ -114,6 +115,24 @@ class _TenantServicesScreenState extends State<TenantServicesScreen> {
                                 color: Colors.white,
                                 fontSize: 14,
                                 shadows: [Shadow(color: Colors.black, blurRadius: 5)],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: () async {
+                                final url = Uri.parse('tel:${widget.tenant.phone}');
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url);
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withAlpha(200),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.greenAccent.withAlpha(100)),
+                                ),
+                                child: const Icon(Icons.call, color: Colors.white, size: 16),
                               ),
                             ),
                             const SizedBox(width: 16),
